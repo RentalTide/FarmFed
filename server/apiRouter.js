@@ -20,6 +20,7 @@ const deleteAccount = require('./api/delete-account');
 const { getHandler: getDeliverySettings, putHandler: putDeliverySettings } = require('./api/delivery-settings');
 const { getHandler: getGeofenceSettings, putHandler: putGeofenceSettings } = require('./api/geofence-settings');
 const validateGeofence = require('./api/validate-geofence');
+const estimateCartDelivery = require('./api/estimate-cart-delivery');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
 
@@ -56,6 +57,7 @@ router.use((req, res, next) => {
 router.use('/delivery-settings', bodyParser.json());
 router.use('/geofence-settings', bodyParser.json());
 router.use('/validate-geofence', bodyParser.json());
+router.use('/estimate-cart-delivery', bodyParser.json());
 
 // ================ API router endpoints: ================ //
 
@@ -74,6 +76,7 @@ router.put('/delivery-settings', putDeliverySettings);
 router.get('/geofence-settings', getGeofenceSettings);
 router.put('/geofence-settings', putGeofenceSettings);
 router.post('/validate-geofence', validateGeofence);
+router.post('/estimate-cart-delivery', estimateCartDelivery);
 
 // Create user with identity provider (e.g. Facebook or Google)
 // This endpoint is called to create a new user after user has confirmed

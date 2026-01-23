@@ -32,37 +32,46 @@ const getItemQuantityAndLineItems = async (orderData, publicData, currency, geol
   let shippingFee = null;
 
   if (isShipping) {
-    const ratePerMileCents = getDeliveryRate();
-    const shippingAddress = orderData && orderData.shippingAddress;
-    const hasGeolocation = geolocation && geolocation.lat && geolocation.lng;
-
-    if (ratePerMileCents > 0 && hasGeolocation && shippingAddress) {
-      try {
-        const buyerCoords = await geocodeAddress(shippingAddress);
-        const distance = haversineDistanceMiles(
-          geolocation.lat,
-          geolocation.lng,
-          buyerCoords.lat,
-          buyerCoords.lng
-        );
-        const deliveryFeeCents = Math.round(distance * ratePerMileCents);
-        if (deliveryFeeCents > 0) {
-          shippingFee = new Money(deliveryFeeCents, currency);
-        }
-      } catch (e) {
-        // Geocoding failed — fall back to per-listing flat rate
-        console.error('Distance-based delivery fee failed, using flat rate:', e.message);
+    // If a custom shipping fee is provided (e.g. from cart route calculation), use it directly
+    const customShippingFeeCents = orderData && orderData.customShippingFeeCents;
+    if (typeof customShippingFeeCents === 'number' && customShippingFeeCents >= 0) {
+      if (customShippingFeeCents > 0) {
+        shippingFee = new Money(customShippingFeeCents, currency);
       }
-    }
+      // If customShippingFeeCents is 0, shippingFee stays null (no shipping line item)
+    } else {
+      const ratePerMileCents = getDeliveryRate();
+      const shippingAddress = orderData && orderData.shippingAddress;
+      const hasGeolocation = geolocation && geolocation.lat && geolocation.lng;
 
-    // Fallback: use per-listing flat shipping rate
-    if (!shippingFee) {
-      shippingFee = calculateShippingFee(
-        shippingPriceInSubunitsOneItem,
-        shippingPriceInSubunitsAdditionalItems,
-        currency,
-        quantity
-      );
+      if (ratePerMileCents > 0 && hasGeolocation && shippingAddress) {
+        try {
+          const buyerCoords = await geocodeAddress(shippingAddress);
+          const distance = haversineDistanceMiles(
+            geolocation.lat,
+            geolocation.lng,
+            buyerCoords.lat,
+            buyerCoords.lng
+          );
+          const deliveryFeeCents = Math.round(distance * ratePerMileCents);
+          if (deliveryFeeCents > 0) {
+            shippingFee = new Money(deliveryFeeCents, currency);
+          }
+        } catch (e) {
+          // Geocoding failed — fall back to per-listing flat rate
+          console.error('Distance-based delivery fee failed, using flat rate:', e.message);
+        }
+      }
+
+      // Fallback: use per-listing flat shipping rate
+      if (!shippingFee) {
+        shippingFee = calculateShippingFee(
+          shippingPriceInSubunitsOneItem,
+          shippingPriceInSubunitsAdditionalItems,
+          currency,
+          quantity
+        );
+      }
     }
   }
 

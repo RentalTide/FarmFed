@@ -1,9 +1,12 @@
 @import '../../styles/customMediaQueries.css';
 
 .root {
-  max-width: 600px;
+  width: 100%;
+  max-width: 960px;
   margin: 0 auto;
   padding: 24px 16px 48px;
+  min-height: 100vh;
+  box-sizing: border-box;
 
   @media (--viewportMedium) {
     padding: 48px 24px 72px;
@@ -22,11 +25,39 @@
   }
 }
 
-/* Checkout Form */
-.checkoutForm {
+/* Checkout Layout */
+.checkoutLayout {
   display: flex;
   flex-direction: column;
   gap: 24px;
+
+  @media (--viewportLarge) {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 32px;
+    align-items: start;
+  }
+}
+
+.formColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  order: 2;
+
+  @media (--viewportLarge) {
+    order: 1;
+  }
+}
+
+.summaryColumn {
+  order: 1;
+
+  @media (--viewportLarge) {
+    order: 2;
+    position: sticky;
+    top: 24px;
+  }
 }
 
 .sectionTitle {
@@ -89,6 +120,46 @@
   flex-shrink: 0;
 }
 
+.subtotalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  margin-top: 8px;
+  border-top: 1px solid var(--colorGrey100);
+}
+
+.subtotalLabel {
+  font-size: 14px;
+  font-weight: var(--fontWeightRegular);
+  color: var(--colorGrey700);
+}
+
+.subtotalAmount {
+  font-size: 14px;
+  font-weight: var(--fontWeightMedium);
+  color: var(--colorGrey700);
+}
+
+.deliveryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 6px;
+}
+
+.deliveryMath {
+  font-size: 12px;
+  color: var(--colorGrey400);
+  font-weight: var(--fontWeightRegular);
+}
+
+.estimatingText {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--colorGrey400);
+}
+
 .totalRow {
   display: flex;
   justify-content: space-between;
@@ -107,6 +178,42 @@
 .totalAmount {
   font-size: 18px;
   font-weight: var(--fontWeightBold);
+  color: var(--colorGrey900);
+}
+
+/* Delivery Method Selector */
+.deliveryMethodSection {
+  padding: 16px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 8px;
+
+  @media (--viewportMedium) {
+    padding: 20px;
+  }
+}
+
+.deliveryOptions {
+  display: flex;
+  gap: 16px;
+}
+
+.deliveryOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.radioInput {
+  accent-color: var(--marketplaceColor);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.radioLabel {
+  font-size: 14px;
+  font-weight: var(--fontWeightMedium);
   color: var(--colorGrey900);
 }
 
@@ -205,6 +312,37 @@
   margin: 8px 0 0;
   font-size: 13px;
   color: var(--colorFail);
+}
+
+.paymentOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.paymentOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.savedCardInfo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--colorGrey900);
+}
+
+.cardBrand {
+  font-weight: var(--fontWeightMedium);
+  text-transform: capitalize;
+}
+
+.cardLast4 {
+  color: var(--colorGrey700);
 }
 
 /* Submit */

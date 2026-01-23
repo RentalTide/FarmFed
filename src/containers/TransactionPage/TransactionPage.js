@@ -343,27 +343,18 @@ export const TransactionPageComponent = props => {
     );
   };
 
-  // If payment is pending, redirect to CheckoutPage
+  // If payment is pending, redirect to CheckoutPage (only for booking-based transactions).
+  // Product purchases (from cart checkout) don't redirect — they show transaction details instead.
   if (
     transaction?.id &&
     isTxOnPaymentPending(transaction) &&
     isCustomerRole &&
+    isBookingProcess(processName) &&
     transaction.attributes.lineItems
   ) {
-    // Note: we don't need to pass orderData since those are already saved to transaction.
-    //       However, we could do that by extracting the values from transaction entity.
-    //
-    // const bookingMaybe = booking?.id ? { bookingDates: { bookingStart: booking?.attributes?.start, bookingEnd: booking?.attributes?.end } } : {};
-    // const purchaseLineItem = transaction.attributes.lineItems.find(item => item.code === LINE_ITEM_ITEM);
-    // const quantity = purchaseLineItem?.quantity?.toNumber();
-    // const quantityMaybe = quantity ? { quantity } : {};
-
     const initialValues = {
       listing,
-      // Transaction with payment pending should be passed to CheckoutPage
       transaction,
-      // Original orderData content is not available,
-      // but it is already saved since tx is in state: payment-pending.
       orderData: {},
     };
 

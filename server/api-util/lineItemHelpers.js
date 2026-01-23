@@ -80,9 +80,9 @@ exports.calculateShippingFee = (
     quantity > 1 &&
     (!isNumber(shippingPriceInSubunitsOneItem) || !isNumber(shippingPriceInSubunitsAdditionalItems))
   ) {
-    // If both shippingPriceInSubunitsOneItem and shippingPriceInSubunitsAdditionalItems are NOT set,
-    // when quantity is greater than 1, there's an error somewhere in the code
-    throw new Error('Shipping fee is not set correctly for multiple items');
+    // Per-listing flat rates not set — expected when marketplace uses distance-based delivery.
+    // Return null; the distance-based calculation or customShippingFeeCents handles the fee.
+    return null;
   }
   return null;
 };

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { initiatePrivileged } from '../../util/api';
+import { initiatePrivileged, estimateCartDelivery } from '../../util/api';
 import { storableError } from '../../util/errors';
 import * as log from '../../util/log';
 import { clearCart, removeItems } from '../../ducks/cart.duck';
@@ -9,14 +9,94 @@ import { setCurrentUserHasOrders } from '../../ducks/user.duck';
 
 /**
  * Process cart checkout: creates one transaction per cart item sequentially.
- * Reuses the payment method from the first Stripe confirmation for subsequent items.
+ * For new cards, sets up a reusable PaymentMethod via SetupIntent before processing.
  */
 const processCartCheckoutPayloadCreator = async (
-  { cartItems, stripe, card, billingDetails, shippingDetails, processAlias },
+  { cartItems, stripe, card, billingDetails, shippingDetails, processAlias, savedPaymentMethodId, stripeCustomer },
   { dispatch, extra: sdk, rejectWithValue }
 ) => {
   const results = [];
-  let paymentMethodId = null;
+  let paymentMethodId = savedPaymentMethodId || null;
+
+  // If using a new card, create a SetupIntent to save it as a reusable PaymentMethod.
+  // This is the proper Stripe Connect flow: the PM is created on the platform account
+  // and can be reused across multiple PaymentIntents on connected accounts.
+  if (!paymentMethodId && card) {
+    try {
+      // Step A: Create a SetupIntent via Sharetribe SDK
+      const setupIntentResponse = await sdk.stripeSetupIntents.create();
+      const setupIntent = setupIntentResponse.data.data;
+      const setupIntentClientSecret =
+        setupIntent.attributes.clientSecret || setupIntent.attributes.client_secret;
+
+      // Step B: Confirm the SetupIntent with the card element
+      const setupResult = await stripe.confirmCardSetup(setupIntentClientSecret, {
+        payment_method: {
+          card,
+          billing_details: billingDetails,
+        },
+      });
+
+      if (setupResult.error) {
+        return rejectWithValue({
+          results: [],
+          error: setupResult.error.message || 'Card setup failed',
+        });
+      }
+
+      // Step C: Save the PM to the user's Stripe Customer (call SDK directly)
+      const newPaymentMethodId = setupResult.setupIntent.payment_method;
+      if (stripeCustomer?.id) {
+        // User already has a Stripe Customer — add or replace payment method
+        await sdk.stripeCustomer.addPaymentMethod(
+          { stripePaymentMethodId: newPaymentMethodId },
+          { expand: true }
+        );
+      } else {
+        // Create a new Stripe Customer with this payment method
+        await sdk.stripeCustomer.create(
+          { stripePaymentMethodId: newPaymentMethodId },
+          { expand: true, include: ['defaultPaymentMethod'] }
+        );
+      }
+      paymentMethodId = newPaymentMethodId;
+    } catch (e) {
+      log.error(e, 'cart-checkout-card-setup-failed');
+      return rejectWithValue({
+        results: [],
+        error: 'Failed to set up payment method. Please try again.',
+      });
+    }
+  }
+
+  // Pre-compute route-based delivery fee for shipping items
+  let routeShippingFeeCents = null;
+  const shippingAddr = shippingDetails?.protectedData?.shippingAddress;
+  const hasShippingItems = cartItems.some(item => item.deliveryMethod === 'shipping');
+
+  if (hasShippingItems && shippingAddr) {
+    try {
+      const shippingListingIds = cartItems
+        .filter(item => item.deliveryMethod === 'shipping')
+        .map(item => item.listingId);
+      const routeEstimate = await estimateCartDelivery({
+        listingIds: shippingListingIds,
+        shippingAddress: {
+          line1: shippingAddr.addressLine1,
+          city: shippingAddr.city,
+          state: shippingAddr.state,
+          postalCode: shippingAddr.postalCode,
+          country: shippingAddr.country,
+        },
+      });
+      routeShippingFeeCents = routeEstimate.totalFeeCents || 0;
+    } catch (e) {
+      log.error(e, 'cart-checkout-route-estimate-failed');
+      // Continue without custom fee — server will calculate per-item
+    }
+  }
+
+  let shippingFeeAssigned = false;
 
   for (let i = 0; i < cartItems.length; i++) {
     const item = cartItems[i];
@@ -26,7 +106,6 @@ const processCartCheckoutPayloadCreator = async (
       // Step 1: Initiate the transaction via privileged API
       const { deliveryMethod, quantity } = item;
       const quantityMaybe = quantity ? { stockReservationQuantity: quantity } : {};
-      const shippingAddr = shippingDetails?.protectedData?.shippingAddress;
       const shippingAddressMaybe =
         deliveryMethod === 'shipping' && shippingAddr
           ? {
@@ -39,9 +118,21 @@ const processCartCheckoutPayloadCreator = async (
               },
             }
           : {};
+
+      // Assign route-based shipping: full fee on first shipping item, $0 on rest
+      const customShippingMaybe =
+        deliveryMethod === 'shipping' && routeShippingFeeCents != null
+          ? { customShippingFeeCents: shippingFeeAssigned ? 0 : routeShippingFeeCents }
+          : {};
+
+      if (deliveryMethod === 'shipping' && routeShippingFeeCents != null && !shippingFeeAssigned) {
+        shippingFeeAssigned = true;
+      }
+
       const orderData = {
         ...(deliveryMethod ? { deliveryMethod } : {}),
         ...shippingAddressMaybe,
+        ...customShippingMaybe,
       };
 
       const listingProcessAlias =
@@ -80,29 +171,13 @@ const processCartCheckoutPayloadCreator = async (
 
       const { stripePaymentIntentClientSecret } = stripePaymentIntents.default;
 
-      let stripeResult;
-      if (i === 0) {
-        // First item: use card element
-        stripeResult = await stripe.confirmCardPayment(stripePaymentIntentClientSecret, {
-          payment_method: {
-            card,
-            billing_details: billingDetails,
-          },
-        });
-      } else {
-        // Subsequent items: reuse payment method from first confirmation
-        stripeResult = await stripe.confirmCardPayment(stripePaymentIntentClientSecret, {
-          payment_method: paymentMethodId,
-        });
-      }
+      // paymentMethodId is always set: either from saved card or SetupIntent flow above
+      const stripeResult = await stripe.confirmCardPayment(stripePaymentIntentClientSecret, {
+        payment_method: paymentMethodId,
+      });
 
       if (stripeResult.error) {
         throw new Error(stripeResult.error.message || 'Payment failed');
-      }
-
-      // Save payment method ID from first successful confirmation
-      if (i === 0 && stripeResult.paymentIntent?.payment_method) {
-        paymentMethodId = stripeResult.paymentIntent.payment_method;
       }
 
       // Step 3: Confirm payment transition on Marketplace API

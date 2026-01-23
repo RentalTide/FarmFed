@@ -169,6 +169,15 @@ export const updateDeliverySettings = body => {
   });
 };
 
+// Estimate delivery fee for a cart using consecutive route (supplier → supplier → buyer).
+export const estimateCartDelivery = ({ listingIds, shippingAddress }) => {
+  return request('/api/estimate-cart-delivery', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ listingIds, shippingAddress }),
+  });
+};
+
 // Fetch the geofence polygon settings.
 export const fetchGeofenceSettings = () => {
   return request('/api/geofence-settings', {

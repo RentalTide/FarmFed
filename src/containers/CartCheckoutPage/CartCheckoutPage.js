@@ -7,6 +7,7 @@ import { useRouteConfiguration } from '../../context/routeConfigurationContext';
 import { useIntl } from '../../util/reactIntl';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 import { getCartItems } from '../../ducks/cart.duck';
+import { fetchCurrentUser } from '../../ducks/user.duck';
 
 import { Page, LayoutSingleColumn } from '../../components';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
@@ -24,6 +25,7 @@ export const CartCheckoutPageComponent = props => {
     checkoutState,
     onProcessCheckout,
     onResetCheckout,
+    onFetchCurrentUser,
     currentUser,
   } = props;
 
@@ -31,7 +33,13 @@ export const CartCheckoutPageComponent = props => {
   const routeConfiguration = useRouteConfiguration();
   const intl = useIntl();
 
+  // Fetch user with stripe customer + default payment method
   useEffect(() => {
+    onFetchCurrentUser({
+      callParams: { include: ['stripeCustomer.defaultPaymentMethod'] },
+      updateHasListings: false,
+      updateNotifications: false,
+    });
     return () => {
       onResetCheckout();
     };
@@ -50,6 +58,7 @@ export const CartCheckoutPageComponent = props => {
           checkoutState={checkoutState}
           onProcessCheckout={onProcessCheckout}
           currentUser={currentUser}
+          stripeCustomer={currentUser?.stripeCustomer}
           config={config}
           routeConfiguration={routeConfiguration}
           intl={intl}
@@ -72,6 +81,7 @@ const mapStateToProps = state => {
 const mapDispatchToProps = dispatch => ({
   onProcessCheckout: params => dispatch(processCartCheckout(params)),
   onResetCheckout: () => dispatch(resetCheckout()),
+  onFetchCurrentUser: params => dispatch(fetchCurrentUser(params)),
 });
 
 const CartCheckoutPage = compose(
