@@ -5,6 +5,7 @@ import { FormattedMessage } from '../../../../util/reactIntl';
 import { ACCOUNT_SETTINGS_PAGES } from '../../../../routing/routeConfiguration';
 import {
   Avatar,
+  CartIcon,
   InlineTextButton,
   LinkedLogo,
   Menu,
@@ -152,6 +153,8 @@ const TopbarDesktop = props => {
     showSearchForm,
     showCreateListingsLink,
     inboxTab,
+    cartItemCount = 0,
+    onOpenCart,
   } = props;
   const [mounted, setMounted] = useState(false);
 
@@ -220,6 +223,14 @@ const TopbarDesktop = props => {
         hasClientSideContentReady={authenticatedOnClientSide || !isAuthenticatedOrJustHydrated}
         showCreateListingsLink={showCreateListingsLink}
       />
+
+      {authenticatedOnClientSide ? (
+        <CartIcon
+          count={cartItemCount}
+          onClick={onOpenCart}
+          className={css.cartIcon}
+        />
+      ) : null}
 
       {inboxLinkMaybe}
       {profileMenuMaybe}

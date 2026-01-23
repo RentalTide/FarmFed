@@ -592,7 +592,7 @@ const OrderPanel = props => {
             ) : isOutOfStock ? (
               <FormattedMessage id="OrderPanel.ctaButtonMessageNoStock" />
             ) : isPurchase ? (
-              <FormattedMessage id="OrderPanel.ctaButtonMessagePurchase" />
+              <FormattedMessage id="OrderPanel.ctaButtonMessageAddToCart" />
             ) : showNegotiationForm ? (
               <FormattedMessage id="OrderPanel.ctaButtonMessageMakeOffer" />
             ) : showRequestQuoteForm ? (

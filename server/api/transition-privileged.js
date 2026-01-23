@@ -85,7 +85,7 @@ module.exports = (req, res) => {
   let metadataMaybe = {};
 
   Promise.all([transactionPromise(sdk, bodyParams?.id), fetchCommission(sdk)])
-    .then(responses => {
+    .then(async responses => {
       const [showTransactionResponse, fetchAssetsResponse] = responses;
       const transaction = showTransactionResponse.data.data;
       const listing = getListingRelationShip(showTransactionResponse.data);
@@ -105,7 +105,7 @@ module.exports = (req, res) => {
       const { providerCommission, customerCommission } =
         commissionAsset?.type === 'jsonAsset' ? commissionAsset.attributes.data : {};
 
-      lineItems = transactionLineItems(
+      lineItems = await transactionLineItems(
         listing,
         getFullOrderData(orderData, bodyParams, currency, existingOffers),
         providerCommission,

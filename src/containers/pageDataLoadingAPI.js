@@ -1,6 +1,7 @@
 /**
  * Export loadData calls from ducks modules of different containers
  */
+import { loadData as AdminDeliverySettingsPageLoader } from './AdminDeliverySettingsPage/AdminDeliverySettingsPage.duck';
 import { loadData as AuthenticationPageLoader } from './AuthenticationPage/AuthenticationPage.duck';
 import { loadData as LandingPageLoader } from './LandingPage/LandingPage.duck';
 import { setInitialValues as CheckoutPageInitialValues } from './CheckoutPage/CheckoutPage.duck';
@@ -26,6 +27,9 @@ import {
 
 const getPageDataLoadingAPI = () => {
   return {
+    AdminDeliverySettingsPage: {
+      loadData: AdminDeliverySettingsPageLoader,
+    },
     AuthenticationPage: {
       loadData: AuthenticationPageLoader,
     },

@@ -7,35 +7,65 @@ const {
 } = require('./lineItemHelpers');
 const { types } = require('sharetribe-flex-sdk');
 const { Money } = types;
+const { getDeliveryRate } = require('./deliveryRate');
+const { haversineDistanceMiles } = require('./distance');
+const { geocodeAddress } = require('./geocode');
 
 /**
- * Get quantity and add extra line-items that are related to delivery method
+ * Get quantity and add extra line-items that are related to delivery method.
+ * Uses marketplace-wide per-mile delivery rate when available, falling back
+ * to the per-listing flat shipping rate.
  *
  * @param {Object} orderData should contain stockReservationQuantity and deliveryMethod
- * @param {*} publicData should contain shipping prices
- * @param {*} currency should point to the currency of listing's price.
+ * @param {Object} publicData should contain shipping prices
+ * @param {string} currency should point to the currency of listing's price
+ * @param {Object|null} geolocation listing geolocation { lat, lng }
+ * @returns {Promise<{quantity: number, extraLineItems: Array}>}
  */
-const getItemQuantityAndLineItems = (orderData, publicData, currency) => {
-  // Check delivery method and shipping prices
+const getItemQuantityAndLineItems = async (orderData, publicData, currency, geolocation) => {
   const quantity = orderData ? orderData.stockReservationQuantity : null;
   const deliveryMethod = orderData && orderData.deliveryMethod;
   const isShipping = deliveryMethod === 'shipping';
-  const isPickup = deliveryMethod === 'pickup';
   const { shippingPriceInSubunitsOneItem, shippingPriceInSubunitsAdditionalItems } =
     publicData || {};
 
-  // Calculate shipping fee if applicable
-  const shippingFee = isShipping
-    ? calculateShippingFee(
+  let shippingFee = null;
+
+  if (isShipping) {
+    const ratePerMileCents = getDeliveryRate();
+    const shippingAddress = orderData && orderData.shippingAddress;
+    const hasGeolocation = geolocation && geolocation.lat && geolocation.lng;
+
+    if (ratePerMileCents > 0 && hasGeolocation && shippingAddress) {
+      try {
+        const buyerCoords = await geocodeAddress(shippingAddress);
+        const distance = haversineDistanceMiles(
+          geolocation.lat,
+          geolocation.lng,
+          buyerCoords.lat,
+          buyerCoords.lng
+        );
+        const deliveryFeeCents = Math.round(distance * ratePerMileCents);
+        if (deliveryFeeCents > 0) {
+          shippingFee = new Money(deliveryFeeCents, currency);
+        }
+      } catch (e) {
+        // Geocoding failed — fall back to per-listing flat rate
+        console.error('Distance-based delivery fee failed, using flat rate:', e.message);
+      }
+    }
+
+    // Fallback: use per-listing flat shipping rate
+    if (!shippingFee) {
+      shippingFee = calculateShippingFee(
         shippingPriceInSubunitsOneItem,
         shippingPriceInSubunitsAdditionalItems,
         currency,
         quantity
-      )
-    : null;
+      );
+    }
+  }
 
-  // Add line-item for given delivery method.
-  // Note: by default, pickup considered as free and, therefore, we don't add pickup fee line-item
   const deliveryLineItem = !!shippingFee
     ? [
         {
@@ -135,8 +165,9 @@ const getDateRangeQuantityAndLineItems = (orderData, code) => {
  * @param {Object} customerCommission
  * @returns {Array} lineItems
  */
-exports.transactionLineItems = (listing, orderData, providerCommission, customerCommission) => {
+exports.transactionLineItems = async (listing, orderData, providerCommission, customerCommission) => {
   const publicData = listing.attributes.publicData;
+  const geolocation = listing.attributes.geolocation || null;
   // Note: the unitType needs to be one of the following:
   // day, night, hour, fixed, or item (these are related to payment processes)
   const { unitType, priceVariants, priceVariationsEnabled } = publicData;
@@ -177,7 +208,7 @@ exports.transactionLineItems = (listing, orderData, providerCommission, customer
   // E.g. by default, "shipping-fee" is tied to 'item' aka buying products.
   const quantityAndExtraLineItems =
     unitType === 'item'
-      ? getItemQuantityAndLineItems(orderData, publicData, currency)
+      ? await getItemQuantityAndLineItems(orderData, publicData, currency, geolocation)
       : unitType === 'fixed'
       ? getFixedQuantityAndLineItems(orderData)
       : unitType === 'hour'

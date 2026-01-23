@@ -17,6 +17,8 @@ const initiatePrivileged = require('./api/initiate-privileged');
 const transitionPrivileged = require('./api/transition-privileged');
 const deleteAccount = require('./api/delete-account');
 
+const { getHandler: getDeliverySettings, putHandler: putDeliverySettings } = require('./api/delivery-settings');
+
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
 
 const { authenticateFacebook, authenticateFacebookCallback } = require('./api/auth/facebook');
@@ -48,6 +50,9 @@ router.use((req, res, next) => {
   next();
 });
 
+// Parse JSON body for delivery-settings endpoint
+router.use('/delivery-settings', bodyParser.json());
+
 // ================ API router endpoints: ================ //
 
 router.get('/initiate-login-as', initiateLoginAs);
@@ -56,6 +61,10 @@ router.post('/transaction-line-items', transactionLineItems);
 router.post('/initiate-privileged', initiatePrivileged);
 router.post('/transition-privileged', transitionPrivileged);
 router.post('/delete-account', deleteAccount);
+
+// Delivery settings endpoints
+router.get('/delivery-settings', getDeliverySettings);
+router.put('/delivery-settings', putDeliverySettings);
 
 // Create user with identity provider (e.g. Facebook or Google)
 // This endpoint is called to create a new user after user has confirmed

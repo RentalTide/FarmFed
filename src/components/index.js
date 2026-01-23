@@ -43,6 +43,7 @@ export { default as IconSuccess } from './IconSuccess/IconSuccess';
 export { Heading, H1, H2, H3, H4, H5, H6  } from './Heading/Heading';
 
 // Other independent components
+export { default as CartIcon } from './CartIcon/CartIcon';
 export { default as AspectRatioWrapper } from './AspectRatioWrapper/AspectRatioWrapper';
 export { default as ExternalLink } from './ExternalLink/ExternalLink';
 export { default as ExpandingTextarea } from './ExpandingTextarea/ExpandingTextarea';
@@ -74,6 +75,7 @@ export { default as ValidationError } from './ValidationError/ValidationError';
 //////////////////////////////////////////////////////////
 
 export { default as Button, PrimaryButton, PrimaryButtonInline, SecondaryButton, SecondaryButtonInline, InlineTextButton, SocialLoginButton } from './Button/Button';
+export { default as CartPanel } from './CartPanel/CartPanel';
 export { default as ErrorMessage } from './ErrorMessage/ErrorMessage';
 export { default as ImageFromFile } from './ImageFromFile/ImageFromFile';
 export { default as LinkedLogo } from './Logo/LinkedLogo';

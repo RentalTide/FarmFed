@@ -12,6 +12,8 @@ import { parse, stringify } from '../../../util/urlHelpers';
 import { createResourceLocatorString, matchPathname, pathByRouteName } from '../../../util/routes';
 import {
   Button,
+  CartIcon,
+  CartPanel,
   IconArrowHead,
   LimitedAccessBanner,
   LinkedLogo,
@@ -156,6 +158,13 @@ const TopbarComponent = props => {
     showGenericError,
     config,
     routeConfiguration,
+    cartItems = [],
+    cartItemCount = 0,
+    isCartOpen = false,
+    onOpenCart,
+    onCloseCart,
+    onRemoveCartItem,
+    onUpdateCartItemQuantity,
   } = props;
 
   const handleSubmit = values => {
@@ -364,6 +373,11 @@ const TopbarComponent = props => {
           alt={intl.formatMessage({ id: 'Topbar.logoIcon' })}
           linkToExternalSite={config?.topbar?.logoLink}
         />
+        <CartIcon
+          count={cartItemCount}
+          onClick={onOpenCart}
+          className={css.mobileCartIcon}
+        />
         {mobileSearchButtonMaybe}
       </nav>
       <div className={css.desktop}>
@@ -383,6 +397,8 @@ const TopbarComponent = props => {
           showSearchForm={showSearchForm}
           showCreateListingsLink={showCreateListingsLink}
           inboxTab={topbarInboxTab}
+          cartItemCount={cartItemCount}
+          onOpenCart={onOpenCart}
         />
       </div>
       <Modal
@@ -428,6 +444,16 @@ const TopbarComponent = props => {
         onResendVerificationEmail={onResendVerificationEmail}
         sendVerificationEmailInProgress={sendVerificationEmailInProgress}
         sendVerificationEmailError={sendVerificationEmailError}
+      />
+
+      <CartPanel
+        isOpen={isCartOpen}
+        items={cartItems}
+        onClose={onCloseCart}
+        onRemoveItem={onRemoveCartItem}
+        onUpdateQuantity={onUpdateCartItemQuantity}
+        onManageDisableScrolling={onManageDisableScrolling}
+        history={history}
       />
 
       <GenericError show={showGenericError} />

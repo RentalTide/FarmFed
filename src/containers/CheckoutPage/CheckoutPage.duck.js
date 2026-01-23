@@ -23,7 +23,15 @@ const initiateOrderPayloadCreator = (
   const bookingParamsMaybe = bookingDates || {};
 
   // Parameters only for client app's server
-  const orderData = deliveryMethod ? { deliveryMethod } : {};
+  const shippingAddr = orderParams.shippingDetails?.address;
+  const shippingAddressMaybe =
+    deliveryMethod === 'shipping' && shippingAddr
+      ? { shippingAddress: shippingAddr }
+      : {};
+  const orderData = {
+    ...(deliveryMethod ? { deliveryMethod } : {}),
+    ...shippingAddressMaybe,
+  };
 
   // Parameters for Marketplace API
   const transitionParams = {
@@ -297,9 +305,15 @@ const speculateTransactionPayloadCreator = (
   const bookingParamsMaybe = bookingDates || {};
 
   // Parameters only for client app's server
+  const shippingAddr = orderParams.shippingDetails?.address;
+  const shippingAddressMaybe =
+    deliveryMethod === 'shipping' && shippingAddr
+      ? { shippingAddress: shippingAddr }
+      : {};
   const orderData = {
     ...(deliveryMethod ? { deliveryMethod } : {}),
     ...(priceVariantName ? { priceVariantName } : {}),
+    ...shippingAddressMaybe,
   };
 
   // Parameters for Marketplace API

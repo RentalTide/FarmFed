@@ -56,7 +56,7 @@ const request = (path, options = {}) => {
   // If headers are not set, we assume that the body should be serialized as transit format.
   const shouldSerializeBody =
     (!headers || headers['Content-Type'] === 'application/transit+json') && body;
-  const bodyMaybe = shouldSerializeBody ? { body: serialize(body) } : {};
+  const bodyMaybe = shouldSerializeBody ? { body: serialize(body) } : body ? { body } : {};
 
   const fetchOptions = {
     credentials: credentials || 'include',
@@ -150,4 +150,21 @@ export const createUserWithIdp = body => {
 // the marketplace.
 export const deleteUserAccount = body => {
   return post('/api/delete-account', body);
+};
+
+// Fetch the marketplace-wide delivery rate settings.
+export const fetchDeliverySettings = () => {
+  return request('/api/delivery-settings', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
+// Update the marketplace-wide delivery rate settings (admin only).
+export const updateDeliverySettings = body => {
+  return request('/api/delivery-settings', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
 };

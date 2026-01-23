@@ -156,6 +156,12 @@
   }
 }
 
+/* Cart icon */
+.cartIcon {
+  flex-shrink: 0;
+  height: 100%;
+}
+
 /* Profile menu */
 .profileMenuLabel {
   border-bottom: 0px solid;

@@ -12,7 +12,9 @@ import { NamedRedirect } from '../components';
 
 const pageDataLoadingAPI = getPageDataLoadingAPI();
 
+const AdminDeliverySettingsPage = loadable(() => import(/* webpackChunkName: "AdminDeliverySettingsPage" */ '../containers/AdminDeliverySettingsPage/AdminDeliverySettingsPage'));
 const AuthenticationPage = loadable(() => import(/* webpackChunkName: "AuthenticationPage" */ '../containers/AuthenticationPage/AuthenticationPage'));
+const CartCheckoutPage = loadable(() => import(/* webpackChunkName: "CartCheckoutPage" */ '../containers/CartCheckoutPage/CartCheckoutPage'));
 const CheckoutPage = loadable(() => import(/* webpackChunkName: "CheckoutPage" */ '../containers/CheckoutPage/CheckoutPage'));
 const CMSPage = loadable(() => import(/* webpackChunkName: "CMSPage" */ '../containers/CMSPage/CMSPage'));
 const ContactDetailsPage = loadable(() => import(/* webpackChunkName: "ContactDetailsPage" */ '../containers/ContactDetailsPage/ContactDetailsPage'));
@@ -138,6 +140,19 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       auth: true,
       component: CheckoutPage,
       setInitialValues: pageDataLoadingAPI.CheckoutPage.setInitialValues,
+    },
+    {
+      path: '/cart/checkout',
+      name: 'CartCheckoutPage',
+      auth: true,
+      component: CartCheckoutPage,
+    },
+    {
+      path: '/admin/delivery-settings',
+      name: 'AdminDeliverySettingsPage',
+      auth: true,
+      component: AdminDeliverySettingsPage,
+      loadData: pageDataLoadingAPI.AdminDeliverySettingsPage.loadData,
     },
     {
       path: '/l/:slug/:id/:variant',

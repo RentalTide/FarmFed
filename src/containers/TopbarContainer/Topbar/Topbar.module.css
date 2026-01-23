@@ -113,6 +113,15 @@
   }
 }
 
+.mobileCartIcon {
+  height: var(--topbarHeight);
+  padding: 0 8px;
+
+  @media (--viewportLarge) {
+    display: none;
+  }
+}
+
 .menuIcon,
 .searchMenuIcon {
   margin: 9px 0;

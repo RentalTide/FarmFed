@@ -13,6 +13,7 @@ import {
 import { REQUEST } from '../../transactions/transaction';
 
 import { Page, LayoutSingleColumn } from '../../components';
+import { addItem, openCartPanel } from '../../ducks/cart.duck';
 import FooterContainer from '../../containers/FooterContainer/FooterContainer';
 
 import css from './ListingPage.module.css';
@@ -230,6 +231,7 @@ export const handleSubmit = parameters => values => {
     callSetInitialValues,
     onInitializeCardPaymentData,
     routes,
+    dispatch,
   } = parameters;
   const listingId = new UUID(params.id);
   const listing = getListing(listingId);
@@ -262,10 +264,46 @@ export const handleSubmit = parameters => values => {
         },
       }
     : {};
-  // priceVariantName is relevant for bookings
-  const priceVariantNameMaybe = priceVariantName ? { priceVariantName } : {};
+
   const quantity = Number.parseInt(quantityRaw, 10);
   const quantityMaybe = Number.isInteger(quantity) ? { quantity } : {};
+
+  // For purchase-type listings (no booking dates), add to cart instead
+  const isPurchase = !bookingDates && !bookingStartTime && !bookingEndTime && dispatch;
+  if (isPurchase) {
+    const listingSnapshot = {
+      id: listing.id,
+      attributes: {
+        title: listing.attributes.title,
+        price: listing.attributes.price,
+        publicData: listing.attributes.publicData,
+      },
+      images: listing.images?.map(img => ({
+        id: img.id,
+        attributes: img.attributes,
+      })),
+      author: listing.author
+        ? {
+            id: listing.author.id,
+            attributes: { profile: { displayName: listing.author.attributes?.profile?.displayName } },
+          }
+        : null,
+    };
+
+    dispatch(
+      addItem({
+        listingId: listing.id.uuid,
+        listing: listingSnapshot,
+        quantity: quantityMaybe.quantity || 1,
+        deliveryMethod: deliveryMethod || null,
+      })
+    );
+    dispatch(openCartPanel());
+    return;
+  }
+
+  // priceVariantName is relevant for bookings
+  const priceVariantNameMaybe = priceVariantName ? { priceVariantName } : {};
   const seats = Number.parseInt(seatsRaw, 10);
   const seatsMaybe = Number.isInteger(seats) ? { seats } : {};
   const deliveryMethodMaybe = deliveryMethod ? { deliveryMethod } : {};

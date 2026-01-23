@@ -34,7 +34,7 @@ describe('transactionLineItems', () => {
   };
 
   describe('Default Booking Process - Day Unit Type', () => {
-    it('should create line items for day-based booking without seats', () => {
+    it('should create line items for day-based booking without seats', async () => {
       const listing = {
         ...mockListing,
         attributes: {
@@ -51,7 +51,7 @@ describe('transactionLineItems', () => {
         bookingEnd: '2024-01-03T00:00:00.000Z',
       };
 
-      const result = transactionLineItems(
+      const result = await transactionLineItems(
         listing,
         orderData,
         mockProviderCommission,
@@ -77,7 +77,7 @@ describe('transactionLineItems', () => {
       expect(result[2].includeFor).toEqual(['customer']);
     });
 
-    it('should create line items for day-based booking with seats', () => {
+    it('should create line items for day-based booking with seats', async () => {
       const listing = {
         ...mockListing,
         attributes: {
@@ -95,7 +95,7 @@ describe('transactionLineItems', () => {
         seats: 3,
       };
 
-      const result = transactionLineItems(
+      const result = await transactionLineItems(
         listing,
         orderData,
         mockProviderCommission,
@@ -116,7 +116,7 @@ describe('transactionLineItems', () => {
   });
 
   describe('Default Booking Process - Night Unit Type', () => {
-    it('should create line items for night-based booking without seats', () => {
+    it('should create line items for night-based booking without seats', async () => {
       const listing = {
         ...mockListing,
         attributes: {
@@ -133,7 +133,7 @@ describe('transactionLineItems', () => {
         bookingEnd: '2024-01-03T00:00:00.000Z',
       };
 
-      const result = transactionLineItems(
+      const result = await transactionLineItems(
         listing,
         orderData,
         mockProviderCommission,
@@ -151,7 +151,7 @@ describe('transactionLineItems', () => {
       });
     });
 
-    it('should create line items for night-based booking with seats', () => {
+    it('should create line items for night-based booking with seats', async () => {
       const listing = {
         ...mockListing,
         attributes: {
@@ -169,7 +169,7 @@ describe('transactionLineItems', () => {
         seats: 4,
       };
 
-      const result = transactionLineItems(
+      const result = await transactionLineItems(
         listing,
         orderData,
         mockProviderCommission,
@@ -190,7 +190,7 @@ describe('transactionLineItems', () => {
   });
 
   describe('Default Booking Process - Hour Unit Type', () => {
-    it('should create line items for hour-based booking without seats', () => {
+    it('should create line items for hour-based booking without seats', async () => {
       const listing = {
         ...mockListing,
         attributes: {
@@ -207,7 +207,7 @@ describe('transactionLineItems', () => {
         bookingEnd: '2024-01-01T03:00:00.000Z', // 3 hours
       };
 
-      const result = transactionLineItems(
+      const result = await transactionLineItems(
         listing,
         orderData,
         mockProviderCommission,
@@ -225,7 +225,7 @@ describe('transactionLineItems', () => {
       });
     });
 
-    it('should create line items for hour-based booking with seats', () => {
+    it('should create line items for hour-based booking with seats', async () => {
       const listing = {
         ...mockListing,
         attributes: {
@@ -243,7 +243,7 @@ describe('transactionLineItems', () => {
         seats: 2,
       };
 
-      const result = transactionLineItems(
+      const result = await transactionLineItems(
         listing,
         orderData,
         mockProviderCommission,
@@ -264,7 +264,7 @@ describe('transactionLineItems', () => {
   });
 
   describe('Default Booking Process - Fixed Unit Type', () => {
-    it('should create line items for fixed-duration booking without seats', () => {
+    it('should create line items for fixed-duration booking without seats', async () => {
       const listing = {
         ...mockListing,
         attributes: {
@@ -281,7 +281,7 @@ describe('transactionLineItems', () => {
         bookingEnd: '2024-01-01T02:00:00.000Z',
       };
 
-      const result = transactionLineItems(
+      const result = await transactionLineItems(
         listing,
         orderData,
         mockProviderCommission,
@@ -299,7 +299,7 @@ describe('transactionLineItems', () => {
       });
     });
 
-    it('should create line items for fixed-duration booking with seats', () => {
+    it('should create line items for fixed-duration booking with seats', async () => {
       const listing = {
         ...mockListing,
         attributes: {
@@ -317,7 +317,7 @@ describe('transactionLineItems', () => {
         seats: 5,
       };
 
-      const result = transactionLineItems(
+      const result = await transactionLineItems(
         listing,
         orderData,
         mockProviderCommission,
@@ -338,7 +338,7 @@ describe('transactionLineItems', () => {
   });
 
   describe('Default Purchase Process - Item Unit Type', () => {
-    it('should create line items for item purchase with pickup delivery', () => {
+    it('should create line items for item purchase with pickup delivery', async () => {
       const listing = {
         ...mockListing,
         attributes: {
@@ -358,7 +358,7 @@ describe('transactionLineItems', () => {
         currency: 'EUR',
       };
 
-      const result = transactionLineItems(
+      const result = await transactionLineItems(
         listing,
         orderData,
         mockProviderCommission,
@@ -376,7 +376,7 @@ describe('transactionLineItems', () => {
       });
     });
 
-    it('should create line items for item purchase with shipping delivery', () => {
+    it('should create line items for item purchase with shipping delivery', async () => {
       const listing = {
         ...mockListing,
         attributes: {
@@ -396,7 +396,7 @@ describe('transactionLineItems', () => {
         currency: 'EUR',
       };
 
-      const result = transactionLineItems(
+      const result = await transactionLineItems(
         listing,
         orderData,
         mockProviderCommission,
@@ -422,7 +422,7 @@ describe('transactionLineItems', () => {
       });
     });
 
-    it('should create line items for single item purchase with shipping', () => {
+    it('should create line items for single item purchase with shipping', async () => {
       const listing = {
         ...mockListing,
         attributes: {
@@ -442,7 +442,7 @@ describe('transactionLineItems', () => {
         currency: 'EUR',
       };
 
-      const result = transactionLineItems(
+      const result = await transactionLineItems(
         listing,
         orderData,
         mockProviderCommission,
@@ -462,7 +462,7 @@ describe('transactionLineItems', () => {
   });
 
   describe('Default Negotiation Process - Request Unit Type (Reverse Flow)', () => {
-    it('should create line items for negotiation request with offer', () => {
+    it('should create line items for negotiation request with offer', async () => {
       const listing = {
         ...mockListing,
         attributes: {
@@ -479,7 +479,7 @@ describe('transactionLineItems', () => {
         currency: 'EUR',
       };
 
-      const result = transactionLineItems(
+      const result = await transactionLineItems(
         listing,
         orderData,
         mockProviderCommission,
@@ -497,7 +497,7 @@ describe('transactionLineItems', () => {
       });
     });
 
-    it('should create line items for negotiation request without offer (uses listing price)', () => {
+    it('should create line items for negotiation request without offer (uses listing price)', async () => {
       const listing = {
         ...mockListing,
         attributes: {
@@ -513,7 +513,7 @@ describe('transactionLineItems', () => {
         currency: 'EUR',
       };
 
-      const result = transactionLineItems(
+      const result = await transactionLineItems(
         listing,
         orderData,
         mockProviderCommission,
@@ -533,7 +533,7 @@ describe('transactionLineItems', () => {
   });
 
   describe('Price Variants', () => {
-    it('should use price variant when priceVariationsEnabled is true', () => {
+    it('should use price variant when priceVariationsEnabled is true', async () => {
       const listing = {
         ...mockListing,
         attributes: {
@@ -558,7 +558,7 @@ describe('transactionLineItems', () => {
         priceVariantName: 'weekend',
       };
 
-      const result = transactionLineItems(
+      const result = await transactionLineItems(
         listing,
         orderData,
         mockProviderCommission,
@@ -570,7 +570,7 @@ describe('transactionLineItems', () => {
   });
 
   describe('Commission Handling', () => {
-    it('should not add commission line items when commissions are not provided', () => {
+    it('should not add commission line items when commissions are not provided', async () => {
       const listing = {
         ...mockListing,
         attributes: {
@@ -587,13 +587,13 @@ describe('transactionLineItems', () => {
         bookingEnd: '2024-01-03T00:00:00.000Z',
       };
 
-      const result = transactionLineItems(listing, orderData, null, null);
+      const result = await transactionLineItems(listing, orderData, null, null);
 
       expect(result).toHaveLength(1); // Only order line item
       expect(result[0].code).toBe('line-item/day');
     });
 
-    it('should use minimum commission when it is greater than percentage-based commission', () => {
+    it('should use minimum commission when it is greater than percentage-based commission', async () => {
       const listing = {
         ...mockListing,
         attributes: {
@@ -615,7 +615,7 @@ describe('transactionLineItems', () => {
         minimum_amount: 3000, // €30.00 minimum (greater than 5% of €200 = €10)
       };
 
-      const result = transactionLineItems(listing, orderData, providerCommission, null);
+      const result = await transactionLineItems(listing, orderData, providerCommission, null);
 
       expect(result).toHaveLength(2); // order + provider commission
       expect(result[1].code).toBe('line-item/provider-commission');
@@ -623,7 +623,7 @@ describe('transactionLineItems', () => {
       expect(result[1].quantity).toBe(-1); // Negative for provider commission
     });
 
-    it('should use percentage-based commission when it is greater than minimum', () => {
+    it('should use percentage-based commission when it is greater than minimum', async () => {
       const listing = {
         ...mockListing,
         attributes: {
@@ -645,7 +645,7 @@ describe('transactionLineItems', () => {
         minimum_amount: 100, // €1.00 minimum (less than 15% of €200 = €30)
       };
 
-      const result = transactionLineItems(listing, orderData, providerCommission, null);
+      const result = await transactionLineItems(listing, orderData, providerCommission, null);
 
       expect(result).toHaveLength(2); // order + provider commission
       expect(result[1].code).toBe('line-item/provider-commission');
@@ -654,7 +654,7 @@ describe('transactionLineItems', () => {
   });
 
   describe('Error Handling', () => {
-    it('should throw error when orderData is missing required quantity information', () => {
+    it('should throw error when orderData is missing required quantity information', async () => {
       const listing = {
         ...mockListing,
         attributes: {
@@ -670,14 +670,12 @@ describe('transactionLineItems', () => {
         // Missing bookingStart and bookingEnd
       };
 
-      expect(() => {
-        transactionLineItems(listing, orderData, mockProviderCommission, mockCustomerCommission);
-      }).toThrow(
+      await expect(transactionLineItems(listing, orderData, mockProviderCommission, mockCustomerCommission)).rejects.toThrow(
         'Error: orderData is missing the following information: quantity, units, seats. Quantity or either units & seats is required.'
       );
     });
 
-    it('should throw error when orderData is missing units and seats for seat-based booking', () => {
+    it('should throw error when orderData is missing units and seats for seat-based booking', async () => {
       const listing = {
         ...mockListing,
         attributes: {
@@ -694,14 +692,12 @@ describe('transactionLineItems', () => {
         seats: 2,
       };
 
-      expect(() => {
-        transactionLineItems(listing, orderData, mockProviderCommission, mockCustomerCommission);
-      }).toThrow(
+      await expect(transactionLineItems(listing, orderData, mockProviderCommission, mockCustomerCommission)).rejects.toThrow(
         'Error: orderData is missing the following information: quantity, units. Quantity or either units & seats is required.'
       );
     });
 
-    it('should throw error when minimum commission is greater than transaction amount', () => {
+    it('should throw error when minimum commission is greater than transaction amount', async () => {
       const listing = {
         ...mockListing,
         attributes: {
@@ -723,14 +719,12 @@ describe('transactionLineItems', () => {
         minimum_amount: 50000, // €500.00 minimum (greater than transaction amount)
       };
 
-      expect(() => {
-        transactionLineItems(listing, orderData, providerCommission, null);
-      }).toThrow('Minimum commission amount is greater than the amount of money paid in');
+      await expect(transactionLineItems(listing, orderData, providerCommission, null)).rejects.toThrow('Minimum commission amount is greater than the amount of money paid in');
     });
   });
 
   describe('Currency Handling', () => {
-    it('should use currency from orderData when listing price has no currency', () => {
+    it('should use currency from orderData when listing price has no currency', async () => {
       const listing = {
         ...mockListing,
         attributes: {
@@ -748,12 +742,12 @@ describe('transactionLineItems', () => {
         currency: 'USD',
       };
 
-      const result = transactionLineItems(listing, orderData, null, null);
+      const result = await transactionLineItems(listing, orderData, null, null);
 
       expect(result[0].unitPrice).toBeNull(); // No unit price when no listing price
     });
 
-    it('should use currency from listing price when available', () => {
+    it('should use currency from listing price when available', async () => {
       const listing = {
         ...mockListing,
         attributes: {
@@ -771,7 +765,7 @@ describe('transactionLineItems', () => {
         currency: 'EUR', // Different currency in orderData
       };
 
-      const result = transactionLineItems(listing, orderData, null, null);
+      const result = await transactionLineItems(listing, orderData, null, null);
 
       expect(result[0].unitPrice.currency).toBe('USD'); // Uses listing currency
     });

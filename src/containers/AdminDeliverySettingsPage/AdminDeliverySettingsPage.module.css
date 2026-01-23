@@ -1,0 +1,94 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  padding: 24px;
+}
+
+.content {
+  max-width: 564px;
+  margin: 0 auto;
+  padding: 24px 0;
+}
+
+.title {
+  margin-top: 0;
+  margin-bottom: 24px;
+
+  @media (--viewportMedium) {
+    margin-bottom: 32px;
+  }
+}
+
+.currentRate {
+  margin-bottom: 24px;
+  padding: 16px;
+  background-color: var(--colorGrey50, #f9f9f9);
+  border-radius: 4px;
+}
+
+.currentRateLabel {
+  font-weight: var(--fontWeightMedium);
+  margin-bottom: 4px;
+}
+
+.currentRateValue {
+  font-size: 24px;
+  font-weight: var(--fontWeightBold);
+  color: var(--marketplaceColor);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.label {
+  font-weight: var(--fontWeightMedium);
+  margin-bottom: 4px;
+}
+
+.inputWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.currencyPrefix {
+  font-size: 18px;
+  font-weight: var(--fontWeightMedium);
+}
+
+.input {
+  padding: 8px 12px;
+  border: 1px solid var(--colorGrey100, #e0e0e0);
+  border-radius: 4px;
+  font-size: 16px;
+  width: 120px;
+}
+
+.perMile {
+  font-size: 14px;
+  color: var(--colorGrey700, #4a4a4a);
+}
+
+.submitButton {
+  composes: buttonDefault from global;
+  max-width: 200px;
+  margin-top: 8px;
+}
+
+.successMessage {
+  color: var(--colorSuccess);
+  margin-top: 12px;
+}
+
+.errorMessage {
+  color: var(--colorFail);
+  margin-top: 12px;
+}
+
+.notAdmin {
+  text-align: center;
+  padding: 48px 24px;
+}

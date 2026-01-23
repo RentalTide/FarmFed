@@ -36,6 +36,7 @@ import * as log from './util/log';
 
 // Import relevant global duck files
 import { authInfo } from './ducks/auth.duck';
+import { initializeCart } from './ducks/cart.duck';
 import { fetchAppAssets } from './ducks/hostedAssets.duck';
 import { fetchCurrentUser } from './ducks/user.duck';
 
@@ -145,6 +146,7 @@ if (typeof window !== 'undefined') {
   const googleAnalyticsId = googleAnalyticsIdFromSSR || process.env.REACT_APP_GOOGLE_ANALYTICS_ID;
   const analyticsHandlers = setupAnalyticsHandlers(googleAnalyticsId);
   const store = configureStore({ initialState, sdk, analyticsHandlers });
+  store.dispatch(initializeCart());
 
   require('./util/polyfills');
   render(store, !!window.__PRELOADED_STATE__);

@@ -126,6 +126,7 @@ export const ListingPageComponent = props => {
     callSetInitialValues,
     onSendInquiry,
     onInitializeCardPaymentData,
+    dispatch,
     config,
     routeConfiguration,
     showOwnListingsOnly,
@@ -284,6 +285,7 @@ export const ListingPageComponent = props => {
     callSetInitialValues,
     getListing,
     onInitializeCardPaymentData,
+    dispatch,
   });
 
   const handleOrderSubmit = values => {
@@ -608,6 +610,7 @@ const mapStateToProps = state => {
 };
 
 const mapDispatchToProps = dispatch => ({
+  dispatch,
   onManageDisableScrolling: (componentId, disableScrolling) =>
     dispatch(manageDisableScrolling(componentId, disableScrolling)),
   callSetInitialValues: (setInitialValues, values, saveToSessionStorage) =>
