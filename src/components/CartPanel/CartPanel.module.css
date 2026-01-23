@@ -24,11 +24,11 @@
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.4);
   opacity: 0;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
 
-  .overlayOpen & {
-    opacity: 1;
-  }
+.overlayOpen .backdrop {
+  opacity: 1;
 }
 
 .panel {
@@ -43,15 +43,11 @@
   display: flex;
   flex-direction: column;
   transform: translateX(100%);
-  transition: transform 0.25s ease;
-
-  .overlayOpen & {
-    transform: translateX(0);
-  }
+  transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
-.panelOpen {
-  /* This class is used by overlayOpen nesting above */
+.overlayOpen .panel {
+  transform: translateX(0);
 }
 
 .header {
@@ -115,6 +111,7 @@
 .footer {
   flex-shrink: 0;
   padding: 16px 20px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--colorGrey100);
 }
 

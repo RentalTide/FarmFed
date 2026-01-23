@@ -69,8 +69,7 @@
 }
 
 /* Child component's size (and positioning) should be given here */
-.menu,
-.searchMenu {
+.menu {
   /* Font */
   composes: h5 from global;
   color: var(--colorGrey700);
@@ -105,25 +104,18 @@
     padding: 21px 24px;
   }
 }
-.searchMenu {
-  padding: 12px 24px;
-
-  @media (--viewportMedium) {
-    padding: 18px 24px;
-  }
-}
-
 .mobileCartIcon {
   height: var(--topbarHeight);
-  padding: 0 8px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
 
   @media (--viewportLarge) {
     display: none;
   }
 }
 
-.menuIcon,
-.searchMenuIcon {
+.menuIcon {
   margin: 9px 0;
 }
 
@@ -178,9 +170,6 @@
 /* Icon component styles */
 .rootMenuIcon {
   fill: var(--colorGrey700);
-}
-.rootSearchIcon {
-  stroke: var(--colorGrey700);
 }
 
 .searchContainer {

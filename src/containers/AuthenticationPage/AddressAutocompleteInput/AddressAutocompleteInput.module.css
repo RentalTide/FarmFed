@@ -1,0 +1,65 @@
+@import '../../../styles/customMediaQueries.css';
+
+.root {
+  position: relative;
+}
+
+.label {
+  composes: marketplaceInputLabelStyles from global;
+}
+
+.input {
+  composes: marketplaceInputStyles from global;
+}
+
+.predictions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--colorWhite, #fff);
+  border: 1px solid var(--colorGrey100, #e0e0e0);
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.prediction {
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--colorGrey700, #4a4a4a);
+  border-bottom: 1px solid var(--colorGrey50, #f9f9f9);
+}
+
+.prediction:last-child {
+  border-bottom: none;
+}
+
+.prediction:hover,
+.predictionHighlighted {
+  background-color: var(--colorGrey50, #f9f9f9);
+}
+
+.geofenceNotice {
+  margin-top: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: var(--colorAttention, #ff8000);
+  background-color: #fff8f0;
+  border: 1px solid var(--colorAttention, #ff8000);
+  border-radius: 4px;
+}
+
+.error {
+  composes: textXSmall from global;
+  color: var(--colorFail);
+  display: block;
+  margin-top: 4px;
+}

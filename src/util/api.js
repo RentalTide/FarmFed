@@ -168,3 +168,29 @@ export const updateDeliverySettings = body => {
     body: JSON.stringify(body),
   });
 };
+
+// Fetch the geofence polygon settings.
+export const fetchGeofenceSettings = () => {
+  return request('/api/geofence-settings', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
+// Update the geofence polygon settings (admin only).
+export const updateGeofenceSettings = body => {
+  return request('/api/geofence-settings', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+};
+
+// Validate an address against the geofence during signup.
+export const validateGeofence = body => {
+  return request('/api/validate-geofence', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+};

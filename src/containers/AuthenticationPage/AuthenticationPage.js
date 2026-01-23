@@ -206,8 +206,16 @@ export const AuthenticationForms = props => {
   ];
 
   const handleSubmitSignup = values => {
-    const { userType, email, password, fname, lname, displayName, ...rest } = values;
+    const { userType, email, password, fname, lname, displayName, street, city, state, zip, country, outsideDeliveryZone, ...rest } = values;
     const displayNameMaybe = displayName ? { displayName: displayName.trim() } : {};
+
+    const address = {
+      street: street?.trim(),
+      city: city?.trim(),
+      state: state?.trim(),
+      zip: zip?.trim(),
+      country: (country || 'US').trim(),
+    };
 
     const params = {
       email,
@@ -225,6 +233,8 @@ export const AuthenticationForms = props => {
       protectedData: {
         ...pickUserFieldsData(rest, 'protected', userType, userFields),
         ...getNonUserFieldParams(rest, userFields),
+        address,
+        outsideDeliveryZone: !!outsideDeliveryZone,
       },
     };
 
@@ -322,14 +332,27 @@ const ConfirmIdProviderInfoForm = props => {
       firstName: newFirstName,
       lastName: newLastName,
       displayName,
+      street,
+      city,
+      state,
+      zip,
+      country,
+      outsideDeliveryZone,
       ...rest
     } = values;
 
     const displayNameMaybe = displayName ? { displayName: displayName.trim() } : {};
 
+    const address = {
+      street: street?.trim(),
+      city: city?.trim(),
+      state: state?.trim(),
+      zip: zip?.trim(),
+      country: (country || 'US').trim(),
+    };
+
     // Pass email, fistName or lastName to Marketplace API only if user has edited them
     // and they can't be fetched directly from idp provider (e.g. Facebook)
-
     const authParams = {
       ...(newEmail !== email && { email: newEmail }),
       ...(newFirstName !== firstName && { firstName: newFirstName }),
@@ -348,11 +371,12 @@ const ConfirmIdProviderInfoForm = props => {
           },
           protectedData: {
             ...pickUserFieldsData(rest, 'protected', userType, userFields),
-            // If the confirm form has any additional values, pass them forward as user's protected data
             ...getNonUserFieldParams(rest, userFields),
+            address,
+            outsideDeliveryZone: !!outsideDeliveryZone,
           },
         }
-      : {};
+      : { protectedData: { address, outsideDeliveryZone: !!outsideDeliveryZone } };
 
     submitSingupWithIdp({
       idpToken,

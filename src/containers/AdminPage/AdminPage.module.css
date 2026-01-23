@@ -1,0 +1,59 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  padding: 24px;
+}
+
+.content {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 0;
+}
+
+.title {
+  margin-top: 0;
+  margin-bottom: 24px;
+
+  @media (--viewportMedium) {
+    margin-bottom: 32px;
+  }
+}
+
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--colorGrey100, #e0e0e0);
+  margin-bottom: 24px;
+
+  @media (--viewportMedium) {
+    margin-bottom: 32px;
+  }
+}
+
+.tab,
+.tabSelected {
+  padding: 12px 24px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: var(--fontWeightMedium);
+  color: var(--colorGrey700, #4a4a4a);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.tab:hover {
+  color: var(--marketplaceColor);
+}
+
+.tabSelected {
+  color: var(--marketplaceColor);
+  border-bottom-color: var(--marketplaceColor);
+}
+
+.notAdmin {
+  text-align: center;
+  padding: 48px 24px;
+}

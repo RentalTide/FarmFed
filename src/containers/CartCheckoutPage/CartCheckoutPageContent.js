@@ -14,11 +14,10 @@ const stripeElementsOptions = {
   fonts: [{ cssSrc: 'https://fonts.googleapis.com/css?family=Inter' }],
 };
 
-const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 const cardStyles = {
   base: {
     fontFamily: '-apple-system, BlinkMacSystemFont, "Inter", Helvetica, Arial, sans-serif',
-    fontSize: isMobile ? '14px' : '16px',
+    fontSize: '16px',
     fontSmoothing: 'antialiased',
     lineHeight: '24px',
     letterSpacing: '-0.1px',
@@ -243,63 +242,105 @@ const CartCheckoutPageContent = props => {
               <FormattedMessage id="CartCheckoutPage.shippingAddress" />
             </h3>
             <div className={css.formFields}>
-              <input
-                className={css.input}
-                name="name"
-                placeholder="Full name"
-                value={shippingAddress.name}
-                onChange={handleShippingChange}
-                required
-              />
-              <input
-                className={css.input}
-                name="addressLine1"
-                placeholder="Address line 1"
-                value={shippingAddress.addressLine1}
-                onChange={handleShippingChange}
-                required
-              />
-              <input
-                className={css.input}
-                name="addressLine2"
-                placeholder="Address line 2 (optional)"
-                value={shippingAddress.addressLine2}
-                onChange={handleShippingChange}
-              />
-              <div className={css.formRow}>
+              <div className={css.fieldGroup}>
+                <label className={css.fieldLabel} htmlFor="shipping-name">
+                  <FormattedMessage id="CartCheckoutPage.nameLabel" />
+                </label>
                 <input
+                  id="shipping-name"
                   className={css.input}
-                  name="city"
-                  placeholder="City"
-                  value={shippingAddress.city}
+                  name="name"
+                  autoComplete="name"
+                  value={shippingAddress.name}
                   onChange={handleShippingChange}
                   required
                 />
+              </div>
+              <div className={css.fieldGroup}>
+                <label className={css.fieldLabel} htmlFor="shipping-address1">
+                  <FormattedMessage id="CartCheckoutPage.addressLine1Label" />
+                </label>
                 <input
+                  id="shipping-address1"
                   className={css.input}
-                  name="state"
-                  placeholder="State"
-                  value={shippingAddress.state}
+                  name="addressLine1"
+                  autoComplete="address-line1"
+                  value={shippingAddress.addressLine1}
+                  onChange={handleShippingChange}
+                  required
+                />
+              </div>
+              <div className={css.fieldGroup}>
+                <label className={css.fieldLabel} htmlFor="shipping-address2">
+                  <FormattedMessage id="CartCheckoutPage.addressLine2Label" />
+                </label>
+                <input
+                  id="shipping-address2"
+                  className={css.input}
+                  name="addressLine2"
+                  autoComplete="address-line2"
+                  value={shippingAddress.addressLine2}
                   onChange={handleShippingChange}
                 />
               </div>
               <div className={css.formRow}>
-                <input
-                  className={css.input}
-                  name="postalCode"
-                  placeholder="Postal code"
-                  value={shippingAddress.postalCode}
-                  onChange={handleShippingChange}
-                  required
-                />
-                <input
-                  className={css.input}
-                  name="country"
-                  placeholder="Country"
-                  value={shippingAddress.country}
-                  onChange={handleShippingChange}
-                  required
-                />
+                <div className={css.fieldGroup}>
+                  <label className={css.fieldLabel} htmlFor="shipping-city">
+                    <FormattedMessage id="CartCheckoutPage.cityLabel" />
+                  </label>
+                  <input
+                    id="shipping-city"
+                    className={css.input}
+                    name="city"
+                    autoComplete="address-level2"
+                    value={shippingAddress.city}
+                    onChange={handleShippingChange}
+                    required
+                  />
+                </div>
+                <div className={css.fieldGroup}>
+                  <label className={css.fieldLabel} htmlFor="shipping-state">
+                    <FormattedMessage id="CartCheckoutPage.stateLabel" />
+                  </label>
+                  <input
+                    id="shipping-state"
+                    className={css.input}
+                    name="state"
+                    autoComplete="address-level1"
+                    value={shippingAddress.state}
+                    onChange={handleShippingChange}
+                  />
+                </div>
+              </div>
+              <div className={css.formRow}>
+                <div className={css.fieldGroup}>
+                  <label className={css.fieldLabel} htmlFor="shipping-postal">
+                    <FormattedMessage id="CartCheckoutPage.postalCodeLabel" />
+                  </label>
+                  <input
+                    id="shipping-postal"
+                    className={css.input}
+                    name="postalCode"
+                    autoComplete="postal-code"
+                    value={shippingAddress.postalCode}
+                    onChange={handleShippingChange}
+                    required
+                  />
+                </div>
+                <div className={css.fieldGroup}>
+                  <label className={css.fieldLabel} htmlFor="shipping-country">
+                    <FormattedMessage id="CartCheckoutPage.countryLabel" />
+                  </label>
+                  <input
+                    id="shipping-country"
+                    className={css.input}
+                    name="country"
+                    autoComplete="country"
+                    value={shippingAddress.country}
+                    onChange={handleShippingChange}
+                    required
+                  />
+                </div>
               </div>
             </div>
           </div>

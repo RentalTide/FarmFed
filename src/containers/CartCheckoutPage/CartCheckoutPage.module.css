@@ -3,7 +3,7 @@
 .root {
   max-width: 600px;
   margin: 0 auto;
-  padding: 24px 24px 48px;
+  padding: 24px 16px 48px;
 
   @media (--viewportMedium) {
     padding: 48px 24px 72px;
@@ -11,9 +11,9 @@
 }
 
 .pageTitle {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: var(--fontWeightBold);
-  margin: 0 0 24px;
+  margin: 0 0 20px;
   color: var(--colorGrey900);
 
   @media (--viewportMedium) {
@@ -38,16 +38,21 @@
 
 /* Order Summary */
 .orderSummary {
-  padding: 20px;
+  padding: 16px;
   border: 1px solid var(--colorGrey100);
   border-radius: 8px;
+
+  @media (--viewportMedium) {
+    padding: 20px;
+  }
 }
 
 .cartItemRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 0;
+  gap: 12px;
+  padding: 10px 0;
   border-bottom: 1px solid var(--colorGrey50);
 }
 
@@ -58,12 +63,17 @@
 .cartItemInfo {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  flex: 1;
 }
 
 .cartItemTitle {
   font-size: 14px;
   font-weight: var(--fontWeightMedium);
   color: var(--colorGrey900);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .cartItemDetails {
@@ -76,6 +86,7 @@
   font-size: 14px;
   font-weight: var(--fontWeightMedium);
   color: var(--colorGrey900);
+  flex-shrink: 0;
 }
 
 .totalRow {
@@ -101,35 +112,63 @@
 
 /* Shipping Section */
 .shippingSection {
-  padding: 20px;
+  padding: 16px;
   border: 1px solid var(--colorGrey100);
   border-radius: 8px;
+
+  @media (--viewportMedium) {
+    padding: 20px;
+  }
 }
 
 .formFields {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fieldLabel {
+  font-size: 13px;
+  font-weight: var(--fontWeightMedium);
+  color: var(--colorGrey700);
 }
 
 .formRow {
   display: flex;
+  flex-direction: column;
   gap: 10px;
+
+  @media (--viewportMedium) {
+    flex-direction: row;
+  }
 }
 
-.formRow .input {
+.formRow .fieldGroup {
   flex: 1;
+  min-width: 0;
 }
 
 .input {
   width: 100%;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border: 1px solid var(--colorGrey200);
-  border-radius: 4px;
-  font-size: 14px;
+  border-radius: 6px;
+  font-size: 16px;
   color: var(--colorGrey900);
   outline: none;
   transition: border-color 0.15s ease;
+
+  @media (--viewportMedium) {
+    font-size: 14px;
+    padding: 10px 12px;
+    border-radius: 4px;
+  }
 
   &:focus {
     border-color: var(--marketplaceColor);
@@ -142,15 +181,24 @@
 
 /* Payment Section */
 .paymentSection {
-  padding: 20px;
+  padding: 16px;
   border: 1px solid var(--colorGrey100);
   border-radius: 8px;
+
+  @media (--viewportMedium) {
+    padding: 20px;
+  }
 }
 
 .cardElement {
-  padding: 12px;
+  padding: 14px;
   border: 1px solid var(--colorGrey200);
-  border-radius: 4px;
+  border-radius: 6px;
+
+  @media (--viewportMedium) {
+    padding: 12px;
+    border-radius: 4px;
+  }
 }
 
 .cardError {

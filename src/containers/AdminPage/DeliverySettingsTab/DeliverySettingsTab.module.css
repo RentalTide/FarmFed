@@ -1,23 +1,4 @@
-@import '../../styles/customMediaQueries.css';
-
-.root {
-  padding: 24px;
-}
-
-.content {
-  max-width: 564px;
-  margin: 0 auto;
-  padding: 24px 0;
-}
-
-.title {
-  margin-top: 0;
-  margin-bottom: 24px;
-
-  @media (--viewportMedium) {
-    margin-bottom: 32px;
-  }
-}
+@import '../../../styles/customMediaQueries.css';
 
 .currentRate {
   margin-bottom: 24px;
@@ -86,9 +67,4 @@
 .errorMessage {
   color: var(--colorFail);
   margin-top: 12px;
-}
-
-.notAdmin {
-  text-align: center;
-  padding: 48px 24px;
 }

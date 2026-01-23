@@ -13,6 +13,7 @@ import { Form, PrimaryButton, FieldTextInput, CustomExtendedDataField } from '..
 import FieldSelectUserType from '../FieldSelectUserType';
 import UserFieldDisplayName from '../UserFieldDisplayName';
 import UserFieldPhoneNumber from '../UserFieldPhoneNumber';
+import FieldAddressAutocompleteInput from '../AddressAutocompleteInput/AddressAutocompleteInput';
 
 import css from './ConfirmSignupForm.module.css';
 
@@ -155,6 +156,68 @@ const ConfirmSignupFormComponent = props => (
                 userTypeConfig={userTypeConfig}
                 intl={intl}
               />
+
+              <div className={css.addressFields}>
+                <FieldAddressAutocompleteInput
+                  id={formId ? `${formId}.street` : 'street'}
+                  name="street"
+                  label={intl.formatMessage({ id: 'SignupForm.streetLabel' })}
+                  placeholder={intl.formatMessage({ id: 'SignupForm.streetPlaceholder' })}
+                  geofenceNoticeText={intl.formatMessage({ id: 'AuthenticationPage.geofenceNotice' })}
+                  validate={validators.required(
+                    intl.formatMessage({ id: 'SignupForm.streetRequired' })
+                  )}
+                />
+                <div className={css.cityStateRow}>
+                  <FieldTextInput
+                    className={css.cityField}
+                    type="text"
+                    id={formId ? `${formId}.city` : 'city'}
+                    name="city"
+                    autoComplete="address-level2"
+                    label={intl.formatMessage({ id: 'SignupForm.cityLabel' })}
+                    placeholder={intl.formatMessage({ id: 'SignupForm.cityPlaceholder' })}
+                    validate={validators.required(
+                      intl.formatMessage({ id: 'SignupForm.cityRequired' })
+                    )}
+                  />
+                  <FieldTextInput
+                    className={css.stateField}
+                    type="text"
+                    id={formId ? `${formId}.state` : 'state'}
+                    name="state"
+                    autoComplete="address-level1"
+                    label={intl.formatMessage({ id: 'SignupForm.stateLabel' })}
+                    placeholder={intl.formatMessage({ id: 'SignupForm.statePlaceholder' })}
+                    validate={validators.required(
+                      intl.formatMessage({ id: 'SignupForm.stateRequired' })
+                    )}
+                  />
+                </div>
+                <div className={css.zipCountryRow}>
+                  <FieldTextInput
+                    className={css.zipField}
+                    type="text"
+                    id={formId ? `${formId}.zip` : 'zip'}
+                    name="zip"
+                    autoComplete="postal-code"
+                    label={intl.formatMessage({ id: 'SignupForm.zipLabel' })}
+                    placeholder={intl.formatMessage({ id: 'SignupForm.zipPlaceholder' })}
+                    validate={validators.required(
+                      intl.formatMessage({ id: 'SignupForm.zipRequired' })
+                    )}
+                  />
+                  <FieldTextInput
+                    className={css.countryField}
+                    type="text"
+                    id={formId ? `${formId}.country` : 'country'}
+                    name="country"
+                    autoComplete="country"
+                    label={intl.formatMessage({ id: 'SignupForm.countryLabel' })}
+                    placeholder="US"
+                  />
+                </div>
+              </div>
             </div>
           ) : null}
 

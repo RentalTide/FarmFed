@@ -12,7 +12,7 @@ import { NamedRedirect } from '../components';
 
 const pageDataLoadingAPI = getPageDataLoadingAPI();
 
-const AdminDeliverySettingsPage = loadable(() => import(/* webpackChunkName: "AdminDeliverySettingsPage" */ '../containers/AdminDeliverySettingsPage/AdminDeliverySettingsPage'));
+const AdminPage = loadable(() => import(/* webpackChunkName: "AdminPage" */ '../containers/AdminPage/AdminPage'));
 const AuthenticationPage = loadable(() => import(/* webpackChunkName: "AuthenticationPage" */ '../containers/AuthenticationPage/AuthenticationPage'));
 const CartCheckoutPage = loadable(() => import(/* webpackChunkName: "CartCheckoutPage" */ '../containers/CartCheckoutPage/CartCheckoutPage'));
 const CheckoutPage = loadable(() => import(/* webpackChunkName: "CheckoutPage" */ '../containers/CheckoutPage/CheckoutPage'));
@@ -148,11 +148,11 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       component: CartCheckoutPage,
     },
     {
-      path: '/admin/delivery-settings',
-      name: 'AdminDeliverySettingsPage',
+      path: '/admin',
+      name: 'AdminPage',
       auth: true,
-      component: AdminDeliverySettingsPage,
-      loadData: pageDataLoadingAPI.AdminDeliverySettingsPage.loadData,
+      component: AdminPage,
+      loadData: pageDataLoadingAPI.AdminPage.loadData,
     },
     {
       path: '/l/:slug/:id/:variant',

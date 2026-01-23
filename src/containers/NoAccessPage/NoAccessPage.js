@@ -112,7 +112,17 @@ export const NoAccessPageComponent = props => {
     requirePermissionToReadOptions: { callToAction: permissionToViewCTA } = {},
   } = accessControlConfig?.users || {};
 
-  const pageData = isUserPendingApprovalPage
+  const isOutsideDeliveryZone =
+    currentUser?.attributes?.profile?.protectedData?.outsideDeliveryZone === true;
+
+  const pageData = isUserPendingApprovalPage && isOutsideDeliveryZone
+    ? {
+        schemaTitle: 'NoAccessPage.userPendingApproval.schemaTitle',
+        heading: 'NoAccessPage.outsideDeliveryZone.heading',
+        content: 'NoAccessPage.outsideDeliveryZone.content',
+        ctaData: null,
+      }
+    : isUserPendingApprovalPage
     ? {
         schemaTitle: 'NoAccessPage.userPendingApproval.schemaTitle',
         heading: 'NoAccessPage.userPendingApproval.heading',

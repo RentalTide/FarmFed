@@ -154,6 +154,12 @@ describe('ConfirmSignupForm', () => {
       authInfo.lastName
     );
 
+    // Type the address fields
+    userEvent.type(screen.getByRole('textbox', { name: 'SignupForm.streetLabel' }), '123 Main St');
+    userEvent.type(screen.getByRole('textbox', { name: 'SignupForm.cityLabel' }), 'Springfield');
+    userEvent.type(screen.getByRole('textbox', { name: 'SignupForm.stateLabel' }), 'IL');
+    userEvent.type(screen.getByRole('textbox', { name: 'SignupForm.zipLabel' }), '62701');
+
     // Type a value in the required text field
     userEvent.type(screen.getByLabelText('Text Field'), 'Text value');
 

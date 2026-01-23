@@ -141,6 +141,10 @@ describe('SignupForm', () => {
     userEvent.type(screen.getByRole('textbox', { name: 'SignupForm.firstNameLabel' }), 'Joe');
     userEvent.type(screen.getByRole('textbox', { name: 'SignupForm.lastNameLabel' }), 'Dunphy');
     userEvent.type(screen.getByLabelText('SignupForm.passwordLabel'), 'secret-password');
+    userEvent.type(screen.getByRole('textbox', { name: 'SignupForm.streetLabel' }), '123 Main St');
+    userEvent.type(screen.getByRole('textbox', { name: 'SignupForm.cityLabel' }), 'Springfield');
+    userEvent.type(screen.getByRole('textbox', { name: 'SignupForm.stateLabel' }), 'IL');
+    userEvent.type(screen.getByRole('textbox', { name: 'SignupForm.zipLabel' }), '62701');
     userEvent.type(screen.getByLabelText('Text Field'), 'Text value');
 
     // Test that sign up button is still disabled before clicking the checkbox

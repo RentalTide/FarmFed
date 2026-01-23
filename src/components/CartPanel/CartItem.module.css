@@ -8,11 +8,16 @@
 
 .imageWrapper {
   flex-shrink: 0;
-  width: 72px;
-  height: 72px;
-  border-radius: 4px;
+  width: 60px;
+  height: 60px;
+  border-radius: 6px;
   overflow: hidden;
   margin-right: 12px;
+
+  @media (--viewportSmall) {
+    width: 72px;
+    height: 72px;
+  }
 }
 
 .image {

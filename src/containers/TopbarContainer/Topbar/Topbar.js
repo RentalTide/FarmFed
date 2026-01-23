@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import pickBy from 'lodash/pickBy';
 import classNames from 'classnames';
 
@@ -23,10 +23,10 @@ import {
 import { getSearchPageResourceLocatorStringParams } from '../../SearchPage/SearchPage.shared';
 
 import MenuIcon from './MenuIcon';
-import SearchIcon from './SearchIcon';
 import TopbarSearchForm from './TopbarSearchForm/TopbarSearchForm';
 import TopbarMobileMenu from './TopbarMobileMenu/TopbarMobileMenu';
 import TopbarDesktop from './TopbarDesktop/TopbarDesktop';
+import MobileMenuDrawer from './MobileMenuDrawer/MobileMenuDrawer';
 
 import css from './Topbar.module.css';
 import { getCurrentUserTypeRoles, showCreateListingLinkForUser } from '../../../util/userHelpers';
@@ -37,7 +37,6 @@ const SEARCH_DISPLAY_ALWAYS = 'always';
 const SEARCH_DISPLAY_NOT_LANDING_PAGE = 'notLandingPage';
 const SEARCH_DISPLAY_ONLY_SEARCH_PAGE = 'onlySearchPage';
 const MOBILE_MENU_BUTTON_ID = 'mobileMenuButton';
-const MOBILE_SEARCH_BUTTON_ID = 'mobileSearchButton';
 
 const redirectToURLWithModalState = (history, location, modalStateParam) => {
   const { pathname, search, state } = location;
@@ -167,6 +166,160 @@ const TopbarComponent = props => {
     onUpdateCartItemQuantity,
   } = props;
 
+  // Swipe-to-open: edge detection + direct DOM manipulation for 60fps
+  const EDGE_ZONE = 25;
+  const OPEN_THRESHOLD = 0.3;
+  const OPEN_VELOCITY_THRESHOLD = 0.5;
+
+  const touchStartRef = useRef(null);
+  const swipeDirectionRef = useRef(null);
+  const touchTimeRef = useRef(null);
+  const panelOpenRef = useRef(false);
+  const menuOverlayRef = useRef(null);
+  const cartOverlayRef = useRef(null);
+
+  const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    panelOpenRef.current = isCartOpen || isMobileMenuOpen;
+  }, [isCartOpen, isMobileMenuOpen]);
+
+  const clearDragStyles = useCallback((overlayEl) => {
+    if (!overlayEl) return;
+    const panel = overlayEl.querySelector('[data-panel]');
+    const backdrop = overlayEl.querySelector('[data-backdrop]');
+    overlayEl.style.visibility = '';
+    overlayEl.style.pointerEvents = '';
+    if (panel) {
+      panel.style.transform = '';
+      panel.style.transition = '';
+    }
+    if (backdrop) {
+      backdrop.style.opacity = '';
+      backdrop.style.transition = '';
+    }
+  }, []);
+
+  useEffect(() => {
+    const isMobile = window.innerWidth < MAX_MOBILE_SCREEN_WIDTH;
+    if (!isMobile) return;
+
+    const handleTouchStart = e => {
+      if (panelOpenRef.current) return;
+      const touch = e.touches[0];
+      const x = touch.clientX;
+      const screenWidth = window.innerWidth;
+
+      if (x <= EDGE_ZONE) {
+        swipeDirectionRef.current = 'menu';
+      } else if (x >= screenWidth - EDGE_ZONE) {
+        swipeDirectionRef.current = 'cart';
+      } else {
+        swipeDirectionRef.current = null;
+        return;
+      }
+
+      touchStartRef.current = { x, y: touch.clientY };
+      touchTimeRef.current = Date.now();
+    };
+
+    const handleTouchMove = e => {
+      if (!touchStartRef.current || !swipeDirectionRef.current) return;
+      const touch = e.touches[0];
+      const dx = touch.clientX - touchStartRef.current.x;
+      const dy = touch.clientY - touchStartRef.current.y;
+
+      // Cancel if vertical movement dominates
+      if (Math.abs(dy) > Math.abs(dx) * 1.5 && Math.abs(dy) > 10) {
+        clearDragStyles(menuOverlayRef.current);
+        clearDragStyles(cartOverlayRef.current);
+        swipeDirectionRef.current = null;
+        return;
+      }
+
+      if (swipeDirectionRef.current === 'menu' && menuOverlayRef.current) {
+        const offset = Math.max(0, dx);
+        const overlay = menuOverlayRef.current;
+        const panel = overlay.querySelector('[data-panel]');
+        const backdrop = overlay.querySelector('[data-backdrop]');
+        const panelWidth = panel?.offsetWidth || window.innerWidth;
+        const clamped = Math.min(offset, panelWidth);
+
+        overlay.style.visibility = 'visible';
+        overlay.style.pointerEvents = 'auto';
+        panel.style.transform = `translateX(calc(-100% + ${clamped}px))`;
+        panel.style.transition = 'none';
+        backdrop.style.opacity = clamped / panelWidth;
+        backdrop.style.transition = 'none';
+      } else if (swipeDirectionRef.current === 'cart' && cartOverlayRef.current) {
+        const offset = Math.max(0, -dx);
+        const overlay = cartOverlayRef.current;
+        const panel = overlay.querySelector('[data-panel]');
+        const backdrop = overlay.querySelector('[data-backdrop]');
+        const panelWidth = panel?.offsetWidth || 400;
+        const clamped = Math.min(offset, panelWidth);
+
+        overlay.style.visibility = 'visible';
+        overlay.style.pointerEvents = 'auto';
+        panel.style.transform = `translateX(calc(100% - ${clamped}px))`;
+        panel.style.transition = 'none';
+        backdrop.style.opacity = clamped / panelWidth;
+        backdrop.style.transition = 'none';
+      }
+    };
+
+    const handleTouchEnd = e => {
+      if (!touchStartRef.current || !swipeDirectionRef.current) {
+        touchStartRef.current = null;
+        swipeDirectionRef.current = null;
+        return;
+      }
+
+      const touch = e.changedTouches[0];
+      const dx = touch.clientX - touchStartRef.current.x;
+      const elapsed = Date.now() - (touchTimeRef.current || Date.now());
+      const velocity = Math.abs(dx) / elapsed;
+
+      const panelWidth = swipeDirectionRef.current === 'menu' ? window.innerWidth : 400;
+      const progress = Math.abs(dx) / panelWidth;
+      const shouldOpen = progress > OPEN_THRESHOLD || velocity > OPEN_VELOCITY_THRESHOLD;
+
+      if (swipeDirectionRef.current === 'menu') {
+        clearDragStyles(menuOverlayRef.current);
+        if (dx > 0 && shouldOpen) {
+          setMobileMenuOpen(true);
+        }
+      } else if (swipeDirectionRef.current === 'cart') {
+        clearDragStyles(cartOverlayRef.current);
+        if (dx < 0 && shouldOpen) {
+          onOpenCart();
+        }
+      }
+
+      touchStartRef.current = null;
+      swipeDirectionRef.current = null;
+    };
+
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [onOpenCart, clearDragStyles]);
+
+  const handleCloseMenu = useCallback(() => {
+    setMobileMenuOpen(false);
+  }, []);
+
+  // Close menu on navigation
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
   const handleSubmit = values => {
     const { currentSearchParams, history, location, config, routeConfiguration } = props;
 
@@ -237,7 +390,7 @@ const TopbarComponent = props => {
     ? 'sales'
     : 'orders';
 
-  const { mobilemenu, mobilesearch, keywords, address, origin, bounds } = parse(location.search, {
+  const { mobilesearch, keywords, address, origin, bounds } = parse(location.search, {
     latlng: ['origin'],
     latlngBounds: ['bounds'],
   });
@@ -253,7 +406,6 @@ const TopbarComponent = props => {
   const isMobileLayout = hasMatchMedia
     ? window.matchMedia(`(max-width: ${MAX_MOBILE_SCREEN_WIDTH}px)`)?.matches
     : true;
-  const isMobileMenuOpen = isMobileLayout && mobilemenu === 'open';
   const isMobileSearchOpen = isMobileLayout && mobilesearch === 'open';
 
   const mobileMenu = (
@@ -305,21 +457,6 @@ const TopbarComponent = props => {
   const showSearchForm =
     showSearchOnAllPages || showSearchOnSearchPage || showSearchNotOnLandingPage;
 
-  const mobileSearchButtonMaybe = showSearchForm ? (
-    <Button
-      id={MOBILE_SEARCH_BUTTON_ID}
-      rootClassName={css.searchMenu}
-      onClick={() => redirectToURLWithModalState(history, location, 'mobilesearch')}
-      title={intl.formatMessage({ id: 'Topbar.searchIcon' })}
-    >
-      <SearchIcon
-        className={css.searchMenuIcon}
-        ariaLabel={intl.formatMessage({ id: 'Topbar.searchIcon' })}
-      />
-    </Button>
-  ) : (
-    <div className={css.searchMenu} />
-  );
 
   const handleSkipToMainContent = e => {
     e.preventDefault();
@@ -358,7 +495,7 @@ const TopbarComponent = props => {
         <Button
           id={MOBILE_MENU_BUTTON_ID}
           rootClassName={css.menu}
-          onClick={() => redirectToURLWithModalState(history, location, 'mobilemenu')}
+          onClick={() => setMobileMenuOpen(true)}
           title={intl.formatMessage({ id: 'Topbar.menuIcon' })}
         >
           <MenuIcon
@@ -378,7 +515,6 @@ const TopbarComponent = props => {
           onClick={onOpenCart}
           className={css.mobileCartIcon}
         />
-        {mobileSearchButtonMaybe}
       </nav>
       <div className={css.desktop}>
         <TopbarDesktop
@@ -401,17 +537,13 @@ const TopbarComponent = props => {
           onOpenCart={onOpenCart}
         />
       </div>
-      <Modal
-        id="TopbarMobileMenu"
-        containerClassName={css.modalContainer}
+      <MobileMenuDrawer
         isOpen={isMobileMenuOpen}
-        onClose={() => redirectToURLWithoutModalState(history, location, 'mobilemenu')}
-        usePortal
-        onManageDisableScrolling={onManageDisableScrolling}
-        focusElementId={MOBILE_MENU_BUTTON_ID}
+        onClose={handleCloseMenu}
+        overlayRef={menuOverlayRef}
       >
         {authInProgress ? null : mobileMenu}
-      </Modal>
+      </MobileMenuDrawer>
       <Modal
         id="TopbarMobileSearch"
         containerClassName={css.modalContainerSearchForm}
@@ -419,7 +551,6 @@ const TopbarComponent = props => {
         onClose={() => redirectToURLWithoutModalState(history, location, 'mobilesearch')}
         usePortal
         onManageDisableScrolling={onManageDisableScrolling}
-        focusElementId={MOBILE_SEARCH_BUTTON_ID}
       >
         <div className={css.searchContainer}>
           <TopbarSearchForm
@@ -454,6 +585,7 @@ const TopbarComponent = props => {
         onUpdateQuantity={onUpdateCartItemQuantity}
         onManageDisableScrolling={onManageDisableScrolling}
         history={history}
+        overlayRef={cartOverlayRef}
       />
 
       <GenericError show={showGenericError} />

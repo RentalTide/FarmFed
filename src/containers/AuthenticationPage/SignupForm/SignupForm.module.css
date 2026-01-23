@@ -44,6 +44,44 @@
   composes: marketplaceModalPasswordMargins from global;
 }
 
+.addressFields {
+  margin-top: 24px;
+
+  @media (--viewportMedium) {
+    margin-top: 32px;
+  }
+}
+
+.addressFields > * + * {
+  margin-top: 16px;
+}
+
+.cityStateRow {
+  display: flex;
+  justify-content: space-between;
+}
+
+.cityField {
+  width: calc(60% - 9px);
+}
+
+.stateField {
+  width: calc(40% - 9px);
+}
+
+.zipCountryRow {
+  display: flex;
+  justify-content: space-between;
+}
+
+.zipField {
+  width: calc(50% - 9px);
+}
+
+.countryField {
+  width: calc(50% - 9px);
+}
+
 .bottomWrapper {
   composes: marketplaceModalBottomWrapper from global;
 }
