@@ -224,6 +224,7 @@ const TopbarDesktop = props => {
         showCreateListingsLink={showCreateListingsLink}
       />
 
+      {inboxLinkMaybe}
       {authenticatedOnClientSide ? (
         <CartIcon
           count={cartItemCount}
@@ -231,8 +232,6 @@ const TopbarDesktop = props => {
           className={css.cartIcon}
         />
       ) : null}
-
-      {inboxLinkMaybe}
       {profileMenuMaybe}
       {signupLinkMaybe}
       {loginLinkMaybe}
