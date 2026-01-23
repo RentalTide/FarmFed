@@ -63,6 +63,26 @@ const placeBounds = prediction => {
   return null;
 };
 
+const extractAddressComponents = prediction => {
+  const context = prediction.context || [];
+  const getContextValue = prefix => {
+    const item = context.find(c => c.id && c.id.startsWith(prefix));
+    return item?.text || '';
+  };
+
+  const streetNumber = prediction.address || '';
+  const streetName = prediction.text || '';
+  const street = streetNumber ? `${streetNumber} ${streetName}` : streetName;
+
+  return {
+    street,
+    city: getContextValue('place.'),
+    state: getContextValue('region.'),
+    zip: getContextValue('postcode.'),
+    country: getContextValue('country.'),
+  };
+};
+
 export const GeocoderAttribution = () => null;
 
 /**
@@ -160,6 +180,7 @@ class GeocoderMapbox {
       address: this.getPredictionAddress(prediction),
       origin: placeOrigin(prediction),
       bounds: placeBounds(prediction),
+      addressComponents: extractAddressComponents(prediction),
     });
   }
 }

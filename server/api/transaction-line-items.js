@@ -34,7 +34,9 @@ module.exports = (req, res) => {
           const author = included.find(r => r.type === 'user');
           const authorAddress = author?.attributes?.profile?.protectedData?.address;
 
-          if (authorAddress && authorAddress.street) {
+          if (authorAddress && authorAddress.lat && authorAddress.lng) {
+            listing.attributes.geolocation = { lat: authorAddress.lat, lng: authorAddress.lng };
+          } else if (authorAddress && authorAddress.street) {
             const coords = await geocodeAddress({
               line1: authorAddress.street,
               city: authorAddress.city,

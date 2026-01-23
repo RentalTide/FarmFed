@@ -88,7 +88,12 @@ export const ProfileSettingsPageComponent = props => {
   const publicUserFields = userFields.filter(uf => uf.scope === 'public');
 
   const handleSubmit = (values, userType) => {
-    const { firstName, lastName, displayName, bio: rawBio, ...rest } = values;
+    const {
+      firstName, lastName, displayName, bio: rawBio,
+      addressStreet, addressCity, addressState, addressZip, addressCountry,
+      addressLat, addressLng,
+      ...rest
+    } = values;
 
     const displayNameMaybe = displayName
       ? { displayName: displayName.trim() }
@@ -97,6 +102,18 @@ export const ProfileSettingsPageComponent = props => {
     // Ensure that the optional bio is a string
     const bio = rawBio || '';
 
+    // Build address object for protectedData
+    const address = {
+      street: addressStreet?.trim() || '',
+      city: addressCity?.trim() || '',
+      state: addressState?.trim() || '',
+      zip: addressZip?.trim() || '',
+      country: addressCountry?.trim() || '',
+      lat: addressLat || null,
+      lng: addressLng || null,
+    };
+    const hasAddress = address.street || address.city || address.zip || address.country;
+
     const profile = {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
@@ -104,6 +121,9 @@ export const ProfileSettingsPageComponent = props => {
       bio,
       publicData: {
         ...pickUserFieldsData(rest, 'public', userType, userFields),
+      },
+      protectedData: {
+        address: hasAddress ? address : null,
       },
     };
     const uploadedImage = props.image;
@@ -118,7 +138,8 @@ export const ProfileSettingsPageComponent = props => {
   };
 
   const user = ensureCurrentUser(currentUser);
-  const { firstName, lastName, displayName, bio, publicData } = user?.attributes.profile;
+  const { firstName, lastName, displayName, bio, publicData, protectedData } = user?.attributes.profile;
+  const savedAddress = protectedData?.address || {};
   // I.e. the status is active, not pending-approval or banned
   const isUnauthorizedUser = currentUser && !isUserAuthorized(currentUser);
 
@@ -139,6 +160,13 @@ export const ProfileSettingsPageComponent = props => {
         lastName,
         ...displayNameMaybe,
         bio,
+        addressStreet: savedAddress.street || '',
+        addressCity: savedAddress.city || '',
+        addressState: savedAddress.state || '',
+        addressZip: savedAddress.zip || '',
+        addressCountry: savedAddress.country || '',
+        addressLat: savedAddress.lat || null,
+        addressLng: savedAddress.lng || null,
         profileImage: user.profileImage,
         ...initialValuesForUserFields(publicData, 'public', userType, userFields),
       }}

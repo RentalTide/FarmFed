@@ -197,6 +197,9 @@ module.exports = async (req, res) => {
       }
       // 2. Try author's protectedData.address (available via Integration SDK)
       const authorAddress = author?.attributes?.profile?.protectedData?.address;
+      if (authorAddress && authorAddress.lat && authorAddress.lng) {
+        return { lat: authorAddress.lat, lng: authorAddress.lng };
+      }
       if (authorAddress && authorAddress.street) {
         try {
           return await geocodeAddress({

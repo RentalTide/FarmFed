@@ -277,6 +277,69 @@
   }
 }
 
+.locationAddress {
+  margin-top: 12px;
+  position: relative;
+
+  @media (--viewportMedium) {
+    margin-top: 0;
+  }
+}
+
+.addressSearchLabel {
+  composes: marketplaceDefaultFontStyles from global;
+  font-weight: var(--fontWeightSemiBold);
+  padding: 0;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.hideIcon {
+  display: none;
+}
+
+.locationAutocompleteInput {
+  flex-grow: 1;
+}
+
+.predictionsRoot {
+  position: absolute;
+  width: 100%;
+  top: 100%;
+  left: 0;
+  background-color: var(--colorWhite);
+  border-bottom-left-radius: var(--borderRadius);
+  border-bottom-right-radius: var(--borderRadius);
+  box-shadow: var(--boxShadowPopup);
+  z-index: calc(var(--zIndexPopup) + 1);
+}
+
+.addressRow {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+
+  @media (--viewportMedium) {
+    margin-top: 24px;
+  }
+}
+
+.addressCity {
+  width: calc(60% - 9px);
+}
+
+.addressState {
+  width: calc(40% - 9px);
+}
+
+.addressZip {
+  width: calc(40% - 9px);
+}
+
+.addressCountry {
+  width: calc(60% - 9px);
+}
+
 .submitButton {
   margin-top: 24px;
   margin-bottom: 56px;

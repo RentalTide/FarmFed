@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import { compose } from 'redux';
 import { Field, Form as FinalForm } from 'react-final-form';
 import isEqual from 'lodash/isEqual';
@@ -19,6 +19,7 @@ import {
   ImageFromFile,
   IconSpinner,
   FieldTextInput,
+  LocationAutocompleteInput,
   H4,
   CustomExtendedDataField,
 } from '../../../components';
@@ -70,6 +71,66 @@ const DisplayNameMaybe = props => {
       <p className={css.extraInfo}>
         <FormattedMessage id="ProfileSettingsForm.displayNameInfo" />
       </p>
+    </div>
+  );
+};
+
+const AddressStreetAutocomplete = ({ form, intl, initialStreet }) => {
+  const [searchValue, setSearchValue] = useState({
+    search: initialStreet || '',
+    predictions: [],
+    selectedPlace: null,
+  });
+
+  const handleChange = value => {
+    setSearchValue(value);
+    // Update the street field with the current search text
+    form.change('addressStreet', value?.search || '');
+
+    if (value?.selectedPlace) {
+      const { addressComponents, origin } = value.selectedPlace;
+      if (addressComponents) {
+        form.change('addressStreet', addressComponents.street || '');
+        form.change('addressCity', addressComponents.city || '');
+        form.change('addressState', addressComponents.state || '');
+        form.change('addressZip', addressComponents.zip || '');
+        form.change('addressCountry', addressComponents.country || '');
+      }
+      if (origin) {
+        form.change('addressLat', origin.lat);
+        form.change('addressLng', origin.lng);
+      }
+      // Reset the search to show the street value
+      setSearchValue(prev => ({
+        ...prev,
+        search: addressComponents?.street || value.selectedPlace.address || '',
+        selectedPlace: null,
+      }));
+    }
+  };
+
+  return (
+    <div className={css.locationAddress}>
+      <label className={css.addressSearchLabel} htmlFor="addressStreetInput">
+        {intl.formatMessage({ id: 'ProfileSettingsForm.streetLabel' })}
+      </label>
+      <LocationAutocompleteInput
+        iconClassName={css.hideIcon}
+        inputClassName={css.locationAutocompleteInput}
+        predictionsClassName={css.predictionsRoot}
+        useDarkText
+        id="addressStreetInput"
+        placeholder={intl.formatMessage({ id: 'ProfileSettingsForm.streetPlaceholder' })}
+        useDefaultPredictions={false}
+        input={{
+          name: 'addressStreet',
+          value: searchValue,
+          onChange: handleChange,
+          onFocus: () => {},
+          onBlur: () => {},
+        }}
+        meta={{ touched: false, error: null }}
+      />
     </div>
   );
 };
@@ -390,6 +451,53 @@ class ProfileSettingsFormComponent extends Component {
                   <FormattedMessage id="ProfileSettingsForm.bioInfo" values={{ marketplaceName }} />
                 </p>
               </div>
+              <div className={css.sectionContainer}>
+                <H4 as="h2" className={css.sectionTitle}>
+                  <FormattedMessage id="ProfileSettingsForm.addressHeading" />
+                </H4>
+                <AddressStreetAutocomplete
+                  form={form}
+                  intl={intl}
+                  initialStreet={values.addressStreet}
+                />
+                <div className={css.addressRow}>
+                  <FieldTextInput
+                    className={css.addressCity}
+                    type="text"
+                    id="addressCity"
+                    name="addressCity"
+                    label={intl.formatMessage({ id: 'ProfileSettingsForm.cityLabel' })}
+                    placeholder={intl.formatMessage({ id: 'ProfileSettingsForm.cityPlaceholder' })}
+                  />
+                  <FieldTextInput
+                    className={css.addressState}
+                    type="text"
+                    id="addressState"
+                    name="addressState"
+                    label={intl.formatMessage({ id: 'ProfileSettingsForm.stateLabel' })}
+                    placeholder={intl.formatMessage({ id: 'ProfileSettingsForm.statePlaceholder' })}
+                  />
+                </div>
+                <div className={css.addressRow}>
+                  <FieldTextInput
+                    className={css.addressZip}
+                    type="text"
+                    id="addressZip"
+                    name="addressZip"
+                    label={intl.formatMessage({ id: 'ProfileSettingsForm.zipLabel' })}
+                    placeholder={intl.formatMessage({ id: 'ProfileSettingsForm.zipPlaceholder' })}
+                  />
+                  <FieldTextInput
+                    className={css.addressCountry}
+                    type="text"
+                    id="addressCountry"
+                    name="addressCountry"
+                    label={intl.formatMessage({ id: 'ProfileSettingsForm.countryLabel' })}
+                    placeholder={intl.formatMessage({ id: 'ProfileSettingsForm.countryPlaceholder' })}
+                  />
+                </div>
+              </div>
+
               <div className={classNames(css.sectionContainer, css.lastSection)}>
                 {userFieldProps.map(({ key, ...fieldProps }) => (
                   <CustomExtendedDataField key={key} {...fieldProps} formId={formId} />
