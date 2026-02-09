@@ -95,6 +95,14 @@ router.post('/admin/reject-user', adminRejectUser);
 
 // OnFleet delivery integration endpoints
 router.post('/create-onfleet-task', createOnfleetTask);
+router.get('/onfleet-webhook', (req, res) => {
+  // OnFleet webhook validation: echo back the check value
+  const check = req.query.check;
+  if (check) {
+    return res.status(200).send(check);
+  }
+  return res.status(200).send('ok');
+});
 router.post('/onfleet-webhook', onfleetWebhook);
 
 // Create user with identity provider (e.g. Facebook or Google)

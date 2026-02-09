@@ -17,27 +17,30 @@ module.exports = (req, res) => {
 
       return integrationSdk.users
         .query({
-          states: ['pending-approval'],
           include: [],
         })
         .then(usersResponse => {
-          const users = usersResponse.data.data || [];
+          const allUsers = usersResponse.data.data || [];
 
-          const pendingUsers = users.map(user => {
-            const { profile, createdAt, email } = user.attributes;
-            const protectedData = profile?.protectedData || {};
-            const publicData = profile?.publicData || {};
+          // Filter to only pending-approval users (states param not reliably supported)
+          const pendingUsers = allUsers
+            .filter(user => user.attributes.state === 'pendingApproval')
+            .map(user => {
+              const { profile, createdAt, email } = user.attributes;
+              const protectedData = profile?.protectedData || {};
+              const publicData = profile?.publicData || {};
 
-            return {
-              id: user.id.uuid,
-              firstName: profile?.firstName || '',
-              lastName: profile?.lastName || '',
-              email: email || '',
-              createdAt,
-              address: protectedData.address || null,
-              outsideDeliveryZone: publicData.outsideDeliveryZone || false,
-            };
-          });
+              return {
+                id: user.id.uuid,
+                firstName: profile?.firstName || '',
+                lastName: profile?.lastName || '',
+                email: email || '',
+                createdAt,
+                userType: publicData.userType || '',
+                address: protectedData.address || null,
+                outsideDeliveryZone: protectedData.outsideDeliveryZone || false,
+              };
+            });
 
           res.status(200).json({ users: pendingUsers });
         });

@@ -7,7 +7,8 @@ const integrationSdkModule = require('sharetribe-flex-integration-sdk');
 
 const CLIENT_ID = process.env.REACT_APP_SHARETRIBE_SDK_CLIENT_ID;
 const CLIENT_SECRET = process.env.SHARETRIBE_SDK_CLIENT_SECRET;
-const INTEGRATION_API_SECRET = process.env.SHARETRIBE_INTEGRATION_API || CLIENT_SECRET;
+const INTEGRATION_CLIENT_ID = process.env.SHARETRIBE_INTEGRATION_API_CLIENT_ID || CLIENT_ID;
+const INTEGRATION_CLIENT_SECRET = process.env.SHARETRIBE_INTEGRATION_API_CLIENT_SECRET || CLIENT_SECRET;
 const USING_SSL = process.env.REACT_APP_SHARETRIBE_USING_SSL === 'true';
 const TRANSIT_VERBOSE = process.env.REACT_APP_SHARETRIBE_SDK_TRANSIT_VERBOSE === 'true';
 const MAX_SOCKETS = process.env.MAX_SOCKETS;
@@ -239,8 +240,8 @@ exports.fetchAccessControlAsset = sdk => {
 // Integration SDK for server-to-server calls (can access protectedData of any user).
 exports.getIntegrationSdk = () => {
   return integrationSdkModule.createInstance({
-    clientId: CLIENT_ID,
-    clientSecret: INTEGRATION_API_SECRET,
+    clientId: INTEGRATION_CLIENT_ID,
+    clientSecret: INTEGRATION_CLIENT_SECRET,
     httpAgent,
     httpsAgent,
     typeHandlers,
