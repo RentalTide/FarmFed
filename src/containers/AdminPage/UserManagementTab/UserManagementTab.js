@@ -21,7 +21,10 @@ const UserRow = ({ user, actionInProgress, onApprove, onReject, intl }) => {
   return (
     <div className={css.userRow}>
       <div className={css.userInfo}>
-        <span className={css.userName}>{user.firstName} {user.lastName}</span>
+        <span className={css.userName}>
+          {user.firstName} {user.lastName}
+          {user.userType ? <span className={css.userType}>{user.userType}</span> : null}
+        </span>
         <span className={css.userEmail}>{user.email}</span>
         {user.address ? (
           <span className={css.userAddress}>{formatAddress(user.address)}</span>
