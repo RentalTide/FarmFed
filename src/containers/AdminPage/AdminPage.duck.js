@@ -4,6 +4,9 @@ import {
   updateDeliverySettings as updateDeliveryAPI,
   fetchGeofenceSettings as fetchGeofenceAPI,
   updateGeofenceSettings as updateGeofenceAPI,
+  fetchPendingUsers as fetchPendingUsersAPI,
+  approveUser as approveUserAPI,
+  rejectUser as rejectUserAPI,
 } from '../../util/api';
 import { storableError } from '../../util/errors';
 
@@ -53,6 +56,39 @@ export const updateGeofenceSettingsThunk = createAsyncThunk(
   }
 );
 
+export const fetchPendingUsersThunk = createAsyncThunk(
+  'AdminPage/fetchPendingUsers',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await fetchPendingUsersAPI();
+    } catch (e) {
+      return rejectWithValue(storableError(e));
+    }
+  }
+);
+
+export const approveUserThunk = createAsyncThunk(
+  'AdminPage/approveUser',
+  async ({ userId }, { rejectWithValue }) => {
+    try {
+      return await approveUserAPI({ userId });
+    } catch (e) {
+      return rejectWithValue(storableError(e));
+    }
+  }
+);
+
+export const rejectUserThunk = createAsyncThunk(
+  'AdminPage/rejectUser',
+  async ({ userId }, { rejectWithValue }) => {
+    try {
+      return await rejectUserAPI({ userId });
+    } catch (e) {
+      return rejectWithValue(storableError(e));
+    }
+  }
+);
+
 // ================ Slice ================ //
 
 const initialState = {
@@ -68,6 +104,12 @@ const initialState = {
   geofenceUpdateInProgress: false,
   geofenceUpdateSuccess: false,
   geofenceError: null,
+  // User Management
+  pendingUsers: [],
+  pendingUsersFetchInProgress: false,
+  pendingUsersFetchError: null,
+  userActionInProgress: null,
+  userActionError: null,
 };
 
 const adminPageSlice = createSlice({
@@ -136,6 +178,47 @@ const adminPageSlice = createSlice({
       .addCase(updateGeofenceSettingsThunk.rejected, (state, action) => {
         state.geofenceUpdateInProgress = false;
         state.geofenceError = action.payload;
+      })
+      // Pending Users
+      .addCase(fetchPendingUsersThunk.pending, state => {
+        state.pendingUsersFetchInProgress = true;
+        state.pendingUsersFetchError = null;
+      })
+      .addCase(fetchPendingUsersThunk.fulfilled, (state, action) => {
+        state.pendingUsersFetchInProgress = false;
+        state.pendingUsers = action.payload.users || [];
+      })
+      .addCase(fetchPendingUsersThunk.rejected, (state, action) => {
+        state.pendingUsersFetchInProgress = false;
+        state.pendingUsersFetchError = action.payload;
+      })
+      // Approve User
+      .addCase(approveUserThunk.pending, (state, action) => {
+        state.userActionInProgress = action.meta.arg.userId;
+        state.userActionError = null;
+      })
+      .addCase(approveUserThunk.fulfilled, (state, action) => {
+        state.userActionInProgress = null;
+        const userId = action.payload.userId;
+        state.pendingUsers = state.pendingUsers.filter(u => u.id !== userId);
+      })
+      .addCase(approveUserThunk.rejected, (state, action) => {
+        state.userActionInProgress = null;
+        state.userActionError = action.payload;
+      })
+      // Reject User
+      .addCase(rejectUserThunk.pending, (state, action) => {
+        state.userActionInProgress = action.meta.arg.userId;
+        state.userActionError = null;
+      })
+      .addCase(rejectUserThunk.fulfilled, (state, action) => {
+        state.userActionInProgress = null;
+        const userId = action.payload.userId;
+        state.pendingUsers = state.pendingUsers.filter(u => u.id !== userId);
+      })
+      .addCase(rejectUserThunk.rejected, (state, action) => {
+        state.userActionInProgress = null;
+        state.userActionError = action.payload;
       });
   },
 });
@@ -160,12 +243,25 @@ export const updateGeofenceSettings = params => dispatch => {
   return dispatch(updateGeofenceSettingsThunk(params)).unwrap();
 };
 
+export const fetchPendingUsers = () => dispatch => {
+  return dispatch(fetchPendingUsersThunk()).unwrap();
+};
+
+export const approveUser = params => dispatch => {
+  return dispatch(approveUserThunk(params)).unwrap();
+};
+
+export const rejectUser = params => dispatch => {
+  return dispatch(rejectUserThunk(params)).unwrap();
+};
+
 // ================ loadData ================ //
 
 export const loadData = () => dispatch => {
   return Promise.all([
     dispatch(fetchDeliverySettings()),
     dispatch(fetchGeofenceSettings()),
+    dispatch(fetchPendingUsers()),
   ]);
 };
 

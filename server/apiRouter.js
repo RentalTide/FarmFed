@@ -22,6 +22,13 @@ const { getHandler: getGeofenceSettings, putHandler: putGeofenceSettings } = req
 const validateGeofence = require('./api/validate-geofence');
 const estimateCartDelivery = require('./api/estimate-cart-delivery');
 
+const adminPendingUsers = require('./api/admin/pending-users');
+const adminApproveUser = require('./api/admin/approve-user');
+const adminRejectUser = require('./api/admin/reject-user');
+
+const createOnfleetTask = require('./api/create-onfleet-task');
+const onfleetWebhook = require('./api/onfleet-webhook');
+
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
 
 const { authenticateFacebook, authenticateFacebookCallback } = require('./api/auth/facebook');
@@ -58,6 +65,9 @@ router.use('/delivery-settings', bodyParser.json());
 router.use('/geofence-settings', bodyParser.json());
 router.use('/validate-geofence', bodyParser.json());
 router.use('/estimate-cart-delivery', bodyParser.json());
+router.use('/admin', bodyParser.json());
+router.use('/create-onfleet-task', bodyParser.json());
+router.use('/onfleet-webhook', bodyParser.json());
 
 // ================ API router endpoints: ================ //
 
@@ -77,6 +87,15 @@ router.get('/geofence-settings', getGeofenceSettings);
 router.put('/geofence-settings', putGeofenceSettings);
 router.post('/validate-geofence', validateGeofence);
 router.post('/estimate-cart-delivery', estimateCartDelivery);
+
+// Admin user management endpoints
+router.get('/admin/pending-users', adminPendingUsers);
+router.post('/admin/approve-user', adminApproveUser);
+router.post('/admin/reject-user', adminRejectUser);
+
+// OnFleet delivery integration endpoints
+router.post('/create-onfleet-task', createOnfleetTask);
+router.post('/onfleet-webhook', onfleetWebhook);
 
 // Create user with identity provider (e.g. Facebook or Google)
 // This endpoint is called to create a new user after user has confirmed

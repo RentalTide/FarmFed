@@ -195,6 +195,41 @@ export const updateGeofenceSettings = body => {
   });
 };
 
+// Fetch users in pending-approval state (admin only).
+export const fetchPendingUsers = () => {
+  return request('/api/admin/pending-users', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
+// Approve a pending user (admin only).
+export const approveUser = ({ userId }) => {
+  return request('/api/admin/approve-user', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId }),
+  });
+};
+
+// Reject (ban) a pending user (admin only).
+export const rejectUser = ({ userId }) => {
+  return request('/api/admin/reject-user', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId }),
+  });
+};
+
+// Create an OnFleet delivery task for a shipping transaction.
+export const createOnfleetTask = ({ transactionId }) => {
+  return request('/api/create-onfleet-task', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ transactionId }),
+  });
+};
+
 // Validate an address against the geofence during signup.
 export const validateGeofence = body => {
   return request('/api/validate-geofence', {

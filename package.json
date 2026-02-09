@@ -4,6 +4,12 @@
   "private": true,
   "license": "Apache-2.0",
   "dependencies": {
+    "@capacitor/android": "^8.0.2",
+    "@capacitor/cli": "^8.0.2",
+    "@capacitor/core": "^8.0.2",
+    "@capacitor/ios": "^8.0.2",
+    "@capacitor/splash-screen": "^8.0.0",
+    "@capacitor/status-bar": "^8.0.0",
     "@loadable/component": "^5.16.4",
     "@loadable/server": "^5.16.5",
     "@mapbox/polyline": "^1.2.1",
@@ -73,7 +79,8 @@
     "cross-env": "^7.0.3",
     "inquirer": "^8.2.6",
     "nodemon": "^3.1.9",
-    "prettier": "^1.18.2"
+    "prettier": "^1.18.2",
+    "typescript": "^5.9.3"
   },
   "resolutions": {
     "sharetribe-scripts/webpack-dev-server/express/path-to-regexp": "0.1.12",
@@ -111,7 +118,10 @@
     "test-server": "jest ./server/**/*.test.js",
     "heroku-postbuild": "yarn run build",
     "postinstall": "patch-package",
-    "translate": "node scripts/translations.js"
+    "translate": "node scripts/translations.js",
+    "cap:sync": "cap sync",
+    "cap:open:ios": "cap open ios",
+    "cap:open:android": "cap open android"
   },
   "browserslist": {
     "production": [

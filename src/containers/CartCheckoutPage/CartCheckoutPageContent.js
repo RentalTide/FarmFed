@@ -57,6 +57,7 @@ const CartCheckoutPageContent = props => {
 
   const [shippingAddress, setShippingAddress] = useState({
     name: profile ? `${profile.firstName || ''} ${profile.lastName || ''}`.trim() : '',
+    phone: '',
     addressLine1: savedAddress?.street || '',
     addressLine2: '',
     city: savedAddress?.city || '',
@@ -87,22 +88,22 @@ const CartCheckoutPageContent = props => {
   const defaultPaymentMethod = stripeCustomer?.defaultPaymentMethod || null;
   const savedCard = defaultPaymentMethod?.attributes?.card || null;
   const [paymentChoice, setPaymentChoice] = useState(savedCard ? 'saved' : 'new');
+  const [cardReady, setCardReady] = useState(false);
+  const [cardError, setCardError] = useState(null);
 
   // Update payment choice when saved card becomes available
   useEffect(() => {
     if (savedCard && paymentChoice === 'new' && !cardReady) {
       setPaymentChoice('saved');
     }
-  }, [savedCard]);
-
-  const [cardReady, setCardReady] = useState(false);
-  const [cardError, setCardError] = useState(null);
+  }, [savedCard, paymentChoice, cardReady]);
   const [estimatedDelivery, setEstimatedDelivery] = useState(null);
   const [estimatedFee, setEstimatedFee] = useState(null);
   const [estimatingBreakdown, setEstimatingBreakdown] = useState(false);
   const [selectedDeliveryMethod, setSelectedDeliveryMethod] = useState(null);
   const [deliveryRateCents, setDeliveryRateCents] = useState(null);
   const [deliveryDistanceMiles, setDeliveryDistanceMiles] = useState(null);
+  const [deliveryEstimateError, setDeliveryEstimateError] = useState(null);
 
   const stripeRef = useRef(null);
   const cardRef = useRef(null);
@@ -110,6 +111,13 @@ const CartCheckoutPageContent = props => {
   const deliveryTimerRef = useRef(null);
 
   const { checkoutInProgress, currentItemIndex, completedResults, checkoutError } = checkoutState;
+
+  // Scroll to top when checkout completes so user sees the results
+  useEffect(() => {
+    if (completedResults) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [completedResults]);
 
   // Check if any cart items support shipping (from listing publicData)
   const shippingAvailable = cartItems.some(
@@ -226,6 +234,7 @@ const CartCheckoutPageContent = props => {
     }
 
     setEstimatingBreakdown(true);
+    setDeliveryEstimateError(null);
 
     deliveryTimerRef.current = setTimeout(() => {
       const listingIds = cartItems.map(item => item.listingId);
@@ -244,11 +253,13 @@ const CartCheckoutPageContent = props => {
           setDeliveryDistanceMiles(totalDistanceMiles > 0 ? totalDistanceMiles : null);
           if (rateCentsPerMile > 0) setDeliveryRateCents(rateCentsPerMile);
           setEstimatingBreakdown(false);
+          setDeliveryEstimateError(null);
         })
         .catch(() => {
           setEstimatedDelivery(null);
           setDeliveryDistanceMiles(null);
           setEstimatingBreakdown(false);
+          setDeliveryEstimateError(true);
         });
     }, 500);
 
@@ -309,6 +320,7 @@ const CartCheckoutPageContent = props => {
         card: paymentChoice === 'new' ? cardRef.current : null,
         billingDetails,
         shippingDetails: shippingDetailsMaybe,
+        processAlias: cartItems[0]?.listing?.attributes?.publicData?.transactionProcessAlias || 'default-purchase/release-1',
         savedPaymentMethodId,
         stripeCustomer,
       });
@@ -482,6 +494,21 @@ const CartCheckoutPageContent = props => {
                   name="name"
                   autoComplete="name"
                   value={shippingAddress.name}
+                  onChange={handleShippingChange}
+                  required
+                />
+              </div>
+              <div className={css.fieldGroup}>
+                <label className={css.fieldLabel} htmlFor="shipping-phone">
+                  <FormattedMessage id="CartCheckoutPage.phoneLabel" />
+                </label>
+                <input
+                  id="shipping-phone"
+                  className={css.input}
+                  name="phone"
+                  type="tel"
+                  autoComplete="tel"
+                  value={shippingAddress.phone}
                   onChange={handleShippingChange}
                   required
                 />
@@ -681,6 +708,11 @@ const CartCheckoutPageContent = props => {
                       )}
                     </span>
                   </div>
+                ) : null}
+                {deliveryEstimateError ? (
+                  <p className={css.deliveryEstimateError}>
+                    <FormattedMessage id="CartCheckoutPage.deliveryEstimateFailed" />
+                  </p>
                 ) : null}
                 {estimatedFee != null ? (
                   <div className={css.deliveryRow}>

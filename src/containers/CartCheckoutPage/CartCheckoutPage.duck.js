@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { initiatePrivileged, estimateCartDelivery } from '../../util/api';
+import { initiatePrivileged, estimateCartDelivery, createOnfleetTask } from '../../util/api';
 import { storableError } from '../../util/errors';
 import * as log from '../../util/log';
 import { clearCart, removeItems } from '../../ducks/cart.duck';
@@ -192,11 +192,29 @@ const processCartCheckoutPayloadCreator = async (
 
       dispatch(setCurrentUserHasOrders());
 
+      // Create OnFleet delivery task for shipping items (non-blocking)
+      let trackingURL = null;
+      if (item.deliveryMethod === 'shipping') {
+        try {
+          const onfleetResult = await createOnfleetTask({ transactionId: orderId.uuid });
+          if (onfleetResult.trackingURL) {
+            trackingURL = onfleetResult.trackingURL;
+          }
+        } catch (onfleetError) {
+          log.error(onfleetError, 'cart-checkout-onfleet-task-failed', {
+            listingId: item.listingId,
+            orderId: orderId.uuid,
+          });
+          // Do not fail checkout if OnFleet is unavailable
+        }
+      }
+
       results.push({
         listingId: item.listingId,
         orderId: orderId.uuid,
         title: item.listing?.attributes?.title,
         success: true,
+        ...(trackingURL ? { trackingURL } : {}),
       });
     } catch (e) {
       log.error(e, 'cart-checkout-item-failed', { listingId: item.listingId });

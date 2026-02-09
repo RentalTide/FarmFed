@@ -160,6 +160,12 @@
   color: var(--colorGrey400);
 }
 
+.deliveryEstimateError {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--colorFail);
+}
+
 .totalRow {
   display: flex;
   justify-content: space-between;

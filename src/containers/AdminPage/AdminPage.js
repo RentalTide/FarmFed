@@ -16,15 +16,19 @@ import {
   clearDeliveryUpdateSuccess,
   updateGeofenceSettings,
   clearGeofenceUpdateSuccess,
+  approveUser,
+  rejectUser,
 } from './AdminPage.duck';
 
 import DeliverySettingsTab from './DeliverySettingsTab/DeliverySettingsTab';
 import GeofenceTab from './GeofenceTab/GeofenceTab';
+import UserManagementTab from './UserManagementTab/UserManagementTab';
 
 import css from './AdminPage.module.css';
 
 const DELIVERY_TAB = 'delivery';
 const GEOFENCE_TAB = 'geofence';
+const USERS_TAB = 'users';
 
 const AdminPageComponent = props => {
   const {
@@ -38,11 +42,18 @@ const AdminPageComponent = props => {
     geofenceUpdateInProgress,
     geofenceUpdateSuccess,
     geofenceError,
+    pendingUsers,
+    pendingUsersFetchInProgress,
+    pendingUsersFetchError,
+    userActionInProgress,
+    userActionError,
     scrollingDisabled,
     onUpdateDeliverySettings,
     onClearDeliverySuccess,
     onUpdateGeofenceSettings,
     onClearGeofenceSuccess,
+    onApproveUser,
+    onRejectUser,
   } = props;
 
   const intl = useIntl();
@@ -92,6 +103,12 @@ const AdminPageComponent = props => {
               >
                 {intl.formatMessage({ id: 'AdminPage.geofenceTab' })}
               </button>
+              <button
+                className={activeTab === USERS_TAB ? css.tabSelected : css.tab}
+                onClick={() => switchTab(USERS_TAB)}
+              >
+                {intl.formatMessage({ id: 'AdminPage.usersTab' })}
+              </button>
             </nav>
 
             {activeTab === DELIVERY_TAB && (
@@ -115,6 +132,18 @@ const AdminPageComponent = props => {
                 onClearSuccess={onClearGeofenceSuccess}
               />
             )}
+
+            {activeTab === USERS_TAB && (
+              <UserManagementTab
+                pendingUsers={pendingUsers}
+                fetchInProgress={pendingUsersFetchInProgress}
+                fetchError={pendingUsersFetchError}
+                actionInProgress={userActionInProgress}
+                actionError={userActionError}
+                onApproveUser={onApproveUser}
+                onRejectUser={onRejectUser}
+              />
+            )}
           </div>
         </div>
       </LayoutSingleColumn>
@@ -134,6 +163,11 @@ const mapStateToProps = state => {
     geofenceUpdateInProgress,
     geofenceUpdateSuccess,
     geofenceError,
+    pendingUsers,
+    pendingUsersFetchInProgress,
+    pendingUsersFetchError,
+    userActionInProgress,
+    userActionError,
   } = state.AdminPage;
 
   return {
@@ -147,6 +181,11 @@ const mapStateToProps = state => {
     geofenceUpdateInProgress,
     geofenceUpdateSuccess,
     geofenceError,
+    pendingUsers,
+    pendingUsersFetchInProgress,
+    pendingUsersFetchError,
+    userActionInProgress,
+    userActionError,
     scrollingDisabled: isScrollingDisabled(state),
   };
 };
@@ -156,6 +195,8 @@ const mapDispatchToProps = dispatch => ({
   onClearDeliverySuccess: () => dispatch(clearDeliveryUpdateSuccess()),
   onUpdateGeofenceSettings: params => dispatch(updateGeofenceSettings(params)),
   onClearGeofenceSuccess: () => dispatch(clearGeofenceUpdateSuccess()),
+  onApproveUser: userId => dispatch(approveUser({ userId })),
+  onRejectUser: userId => dispatch(rejectUser({ userId })),
 });
 
 const AdminPage = compose(

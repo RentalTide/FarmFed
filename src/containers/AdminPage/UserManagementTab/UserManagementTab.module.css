@@ -1,0 +1,135 @@
+@import '../../../styles/customMediaQueries.css';
+
+.root {
+  padding-top: 4px;
+}
+
+.loading,
+.error {
+  font-size: 14px;
+  padding: 16px 0;
+}
+
+.error {
+  color: var(--colorFail);
+}
+
+.section {
+  margin-bottom: 32px;
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: var(--fontWeightBold);
+  color: var(--colorGrey900);
+  margin: 0 0 12px;
+}
+
+.count {
+  font-weight: var(--fontWeightRegular);
+  color: var(--colorGrey500);
+  margin-left: 8px;
+  font-size: 16px;
+}
+
+.emptyState {
+  font-size: 14px;
+  color: var(--colorGrey500);
+  padding: 12px 0;
+}
+
+.userList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.userRow {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--colorGrey100);
+
+  @media (--viewportMedium) {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+.userRow:last-child {
+  border-bottom: none;
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.userName {
+  font-size: 15px;
+  font-weight: var(--fontWeightMedium);
+  color: var(--colorGrey900);
+}
+
+.userEmail {
+  font-size: 13px;
+  color: var(--colorGrey700);
+}
+
+.userAddress {
+  font-size: 13px;
+  color: var(--colorGrey500);
+}
+
+.userDate {
+  font-size: 12px;
+  color: var(--colorGrey400);
+}
+
+.userActions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.approveButton,
+.rejectButton {
+  padding: 6px 16px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: var(--fontWeightMedium);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.approveButton {
+  background-color: var(--colorSuccess);
+  color: var(--colorWhite);
+  border-color: var(--colorSuccess);
+}
+
+.approveButton:hover {
+  opacity: 0.9;
+}
+
+.approveButton:disabled,
+.rejectButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rejectButton {
+  background-color: var(--colorWhite);
+  color: var(--colorFail);
+  border-color: var(--colorFail);
+}
+
+.rejectButton:hover {
+  background-color: #fff5f5;
+}

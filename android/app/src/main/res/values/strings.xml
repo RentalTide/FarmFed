@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">FarmFed</string>
+    <string name="title_activity_main">FarmFed</string>
+    <string name="package_name">com.farmfed.app</string>
+    <string name="custom_url_scheme">com.farmfed.app</string>
+</resources>
