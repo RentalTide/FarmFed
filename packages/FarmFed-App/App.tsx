@@ -14,7 +14,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { WebView, WebViewNavigation } from 'react-native-webview';
 import { useEffect } from 'react';
 
-const SITE_URL = 'https://farmfed.us';
+const SITE_URL = 'https://farmfed-e9c8faa5736a.herokuapp.com';
 
 SplashScreen.preventAutoHideAsync();
 
