@@ -83,6 +83,27 @@
   grid-area: logo;
 }
 
+.appBadges {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.appBadgeLink {
+  display: inline-block;
+  transition: opacity 0.15s ease;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+.appBadgeImage {
+  height: 30px;
+  width: auto;
+}
+
 .copyright {
   display: inline-block;
   font-size: 12px;
