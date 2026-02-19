@@ -19,6 +19,9 @@ const config: CapacitorConfig = {
       backgroundColor: '#ffffff',
       showSpinner: false,
     },
+    Camera: {
+      presentationStyle: 'fullscreen',
+    },
   },
   ios: {
     contentInset: 'automatic',

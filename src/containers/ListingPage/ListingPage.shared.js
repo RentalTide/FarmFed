@@ -14,6 +14,7 @@ import { REQUEST } from '../../transactions/transaction';
 
 import { Page, LayoutSingleColumn } from '../../components';
 import { addItem, openCartPanel } from '../../ducks/cart.duck';
+import { mediumImpact } from '../../util/haptics';
 import FooterContainer from '../../containers/FooterContainer/FooterContainer';
 
 import css from './ListingPage.module.css';
@@ -290,6 +291,7 @@ export const handleSubmit = parameters => values => {
         : null,
     };
 
+    mediumImpact();
     dispatch(
       addItem({
         listingId: listing.id.uuid,

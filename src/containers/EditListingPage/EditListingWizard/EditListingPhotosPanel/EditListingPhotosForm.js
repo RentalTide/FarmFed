@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ARRAY_ERROR } from 'final-form';
 import { Form as FinalForm, Field } from 'react-final-form';
 import arrayMutators from 'final-form-arrays';
@@ -11,6 +11,7 @@ import { FormattedMessage, useIntl } from '../../../../util/reactIntl';
 import { propTypes } from '../../../../util/types';
 import { nonEmptyArray, composeValidators } from '../../../../util/validators';
 import { isUploadImageOverLimitError } from '../../../../util/errors';
+import { isNativeApp } from '../../../../util/capacitor';
 
 // Import shared components
 import { Button, Form, AspectRatioWrapper } from '../../../../components';
@@ -20,6 +21,76 @@ import ListingImage from './ListingImage';
 import css from './EditListingPhotosForm.module.css';
 
 const ACCEPT_IMAGES = 'image/*';
+
+// Convert a base64 data URL to a File object for the existing upload pipeline
+const dataUrlToFile = (dataUrl, fileName) => {
+  const [header, data] = dataUrl.split(',');
+  const mime = header.match(/:(.*?);/)[1];
+  const binary = atob(data);
+  const array = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    array[i] = binary.charCodeAt(i);
+  }
+  return new File([array], fileName, { type: mime });
+};
+
+// Take a photo or pick from gallery using Capacitor Camera plugin
+const captureNativeImage = async source => {
+  const { Camera, CameraResultType, CameraSource } = await import('@capacitor/camera');
+  const result = await Camera.getPhoto({
+    quality: 90,
+    resultType: CameraResultType.DataUrl,
+    source: source === 'camera' ? CameraSource.Camera : CameraSource.Photos,
+    width: 2048,
+    height: 2048,
+    correctOrientation: true,
+  });
+  const ext = result.format || 'jpeg';
+  const fileName = `photo_${Date.now()}.${ext}`;
+  return dataUrlToFile(result.dataUrl, fileName);
+};
+
+// Buttons shown in native app for camera/gallery
+const NativeImageButtons = ({ onCaptureImage, disabled }) => {
+  const handleCapture = async source => {
+    try {
+      const file = await captureNativeImage(source);
+      onCaptureImage(file);
+    } catch (e) {
+      // User cancelled or error - ignore
+    }
+  };
+
+  return (
+    <div className={css.nativeImageButtons}>
+      <button
+        type="button"
+        className={css.nativeCameraButton}
+        onClick={() => handleCapture('camera')}
+        disabled={disabled}
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+          <circle cx="12" cy="13" r="4" />
+        </svg>
+        <FormattedMessage id="EditListingPhotosForm.takePhoto" />
+      </button>
+      <button
+        type="button"
+        className={css.nativeCameraButton}
+        onClick={() => handleCapture('gallery')}
+        disabled={disabled}
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+          <circle cx="8.5" cy="8.5" r="1.5" />
+          <polyline points="21 15 16 10 5 21" />
+        </svg>
+        <FormattedMessage id="EditListingPhotosForm.chooseFromGallery" />
+      </button>
+    </div>
+  );
+};
 
 const ImageUploadError = props => {
   return props.uploadOverLimit ? (
@@ -138,6 +209,11 @@ const FieldListingImage = props => {
 export const EditListingPhotosForm = props => {
   const [state, setState] = useState({ imageUploadRequested: false });
   const [submittedImages, setSubmittedImages] = useState([]);
+  const [showNativeButtons, setShowNativeButtons] = useState(false);
+
+  useEffect(() => {
+    setShowNativeButtons(isNativeApp());
+  }, []);
 
   const onImageUploadHandler = file => {
     const { listingImageConfig, onImageUpload } = props;
@@ -265,6 +341,17 @@ export const EditListingPhotosForm = props => {
                 aspectWidth={aspectWidth}
                 aspectHeight={aspectHeight}
               />
+
+              {showNativeButtons ? (
+                <NativeImageButtons
+                  onCaptureImage={file => {
+                    form.change('addImage', file);
+                    form.blur('addImage');
+                    onImageUploadHandler(file);
+                  }}
+                  disabled={state.imageUploadRequested}
+                />
+              ) : null}
             </div>
 
             {imagesError ? <div className={css.arrayError}>{imagesError}</div> : null}

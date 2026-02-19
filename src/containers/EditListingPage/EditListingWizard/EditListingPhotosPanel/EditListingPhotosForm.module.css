@@ -122,6 +122,38 @@
   }
 }
 
+.nativeImageButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nativeCameraButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 2px solid var(--colorGrey100);
+  border-radius: var(--borderRadiusMedium);
+  background-color: var(--colorWhite);
+  color: var(--colorGrey700);
+  font-weight: var(--fontWeightMedium);
+  font-size: 15px;
+  cursor: pointer;
+  transition: var(--transitionStyleButton);
+
+  &:hover {
+    border-color: var(--marketplaceColor);
+    color: var(--marketplaceColor);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
 .tip {
   composes: h5 from global;
 

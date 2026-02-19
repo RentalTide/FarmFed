@@ -47,5 +47,11 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>FarmFed needs access to your camera to take photos of your listings.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>FarmFed needs access to your photo library to upload listing photos.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>FarmFed needs permission to save photos to your library.</string>
 </dict>
 </plist>

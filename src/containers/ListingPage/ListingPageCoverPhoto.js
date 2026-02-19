@@ -400,6 +400,11 @@ export const ListingPageComponent = props => {
             handleViewPhotosClick={handleViewPhotosClick}
             onManageDisableScrolling={onManageDisableScrolling}
             actionBar={actionBar}
+            shareData={{
+              title,
+              text: description,
+              url: productURL,
+            }}
           />
         ) : (
           isOwnListing && <div className={css.actionBarContainerForNoListingImage}>{actionBar}</div>

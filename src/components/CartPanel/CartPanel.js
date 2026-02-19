@@ -8,6 +8,7 @@ import { useRouteConfiguration } from '../../context/routeConfigurationContext';
 import { createResourceLocatorString } from '../../util/routes';
 
 import { IconClose, NamedLink } from '../../components';
+import { mediumImpact } from '../../util/haptics';
 import CartItem from './CartItem';
 
 import css from './CartPanel.module.css';
@@ -107,6 +108,7 @@ const CartPanel = props => {
   const formattedSubtotal = subtotal > 0 ? formatMoney(intl, new Money(subtotal, currency)) : null;
 
   const handleCheckout = () => {
+    mediumImpact();
     onClose();
     const path = createResourceLocatorString('CartCheckoutPage', routeConfiguration, {}, {});
     history.push(path);
