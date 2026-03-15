@@ -53,9 +53,9 @@ export const fetchGeofenceSettingsThunk = createAsyncThunk(
 
 export const updateGeofenceSettingsThunk = createAsyncThunk(
   'AdminPage/updateGeofenceSettings',
-  async ({ polygon }, { rejectWithValue }) => {
+  async (params, { rejectWithValue }) => {
     try {
-      return await updateGeofenceAPI({ polygon });
+      return await updateGeofenceAPI(params);
     } catch (e) {
       return rejectWithValue(storableError(e));
     }
