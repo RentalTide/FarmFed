@@ -1,4 +1,4 @@
-const { getGeofence } = require('../api-util/geofence');
+const { getGeofence, getVendorPolygon, getConsumerPolygon } = require('../api-util/geofence');
 const { isPointInPolygon } = require('../api-util/pointInPolygon');
 
 const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
@@ -24,14 +24,23 @@ const geocodeAddress = async (street, city, state, zip, country) => {
 
 const handler = async (req, res) => {
   try {
-    const polygon = getGeofence();
+    const { street, city, state, zip, country = 'US', userType } = req.body || {};
 
-    // If no geofence is set, all addresses are valid
+    // Select polygon based on userType (dual service radius feature)
+    let polygon;
+    if (userType === 'vendor' || userType === 'provider') {
+      polygon = getVendorPolygon();
+    } else if (userType === 'consumer' || userType === 'customer') {
+      polygon = getConsumerPolygon();
+    } else {
+      // Default: use the consumer/general polygon
+      polygon = getGeofence();
+    }
+
+    // If no geofence is set for this user type, all addresses are valid
     if (!polygon) {
       return res.status(200).json({ valid: true });
     }
-
-    const { street, city, state, zip, country = 'US' } = req.body || {};
 
     if (!street || !city || !state || !zip) {
       return res.status(400).json({ error: 'Missing required address fields' });

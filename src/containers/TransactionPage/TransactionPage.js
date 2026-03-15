@@ -18,6 +18,7 @@ import {
 import { timestampToDate } from '../../util/dates';
 import { createSlug } from '../../util/urlHelpers';
 import { requireListingImage } from '../../util/configHelpers';
+import { reportDeliveryProblem } from '../../util/api';
 
 import {
   INQUIRY_PROCESS_NAME,
@@ -44,6 +45,7 @@ import {
   OrderBreakdown,
   OrderPanel,
   LayoutSingleColumn,
+  DeliveryProblemModal,
 } from '../../components';
 
 import TopbarContainer from '../../containers/TopbarContainer/TopbarContainer';
@@ -266,6 +268,8 @@ export const TransactionPageComponent = props => {
   const [changeRequestSubmitted, setChangeRequestSubmitted] = useState(false);
   const [isMakeCounterOfferModalOpen, setMakeCounterOfferModalOpen] = useState(false);
   const [counterOfferSubmitted, setCounterOfferSubmitted] = useState(false);
+  const [isDeliveryProblemModalOpen, setDeliveryProblemModalOpen] = useState(false);
+  const [deliveryProblemInProgress, setDeliveryProblemInProgress] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -472,6 +476,28 @@ export const TransactionPageComponent = props => {
     setDisputeModalOpen(true);
   };
 
+  // Open delivery problem modal
+  const onOpenDeliveryProblemModal = () => {
+    setDeliveryProblemModalOpen(true);
+  };
+
+  // Submit delivery problem report
+  const handleDeliveryProblemSubmit = ({ category, description }) => {
+    setDeliveryProblemInProgress(true);
+    reportDeliveryProblem({
+      transactionId: transaction?.id?.uuid,
+      category,
+      description,
+    })
+      .then(() => {
+        setDeliveryProblemInProgress(false);
+      })
+      .catch(e => {
+        setDeliveryProblemInProgress(false);
+        // Error is handled silently; the modal stays open for retry
+      });
+  };
+
   const deletedListingTitle = intl.formatMessage({
     id: 'TransactionPage.deletedListing',
   });
@@ -671,6 +697,7 @@ export const TransactionPageComponent = props => {
       sendMessageError={sendMessageError}
       onSendMessage={onSendMessage}
       onOpenDisputeModal={onOpenDisputeModal}
+      onOpenDeliveryProblemModal={onOpenDeliveryProblemModal}
       stateData={stateData}
       transactionRole={transactionRole}
       showBookingLocation={showBookingLocation}
@@ -881,6 +908,14 @@ export const TransactionPageComponent = props => {
             counterOfferInProgress={counterOffers.includes(transitionInProgress)}
             counterOfferError={transitionError}
             currencyConfig={currencyConfig}
+          />
+        ) : null}
+        {appSettings.featureFlags.deliveryProblemReport ? (
+          <DeliveryProblemModal
+            isOpen={isDeliveryProblemModalOpen}
+            onClose={() => setDeliveryProblemModalOpen(false)}
+            onSubmit={handleDeliveryProblemSubmit}
+            inProgress={deliveryProblemInProgress}
           />
         ) : null}
       </LayoutSingleColumn>

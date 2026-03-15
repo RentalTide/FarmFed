@@ -147,6 +147,18 @@
   }
 }
 
+.orderCapInfo {
+  composes: marketplaceSmallFontStyles from global;
+  color: var(--colorAttention, #f59a4a);
+  font-weight: var(--fontWeightMedium);
+  padding: 8px 24px;
+  margin: 0;
+
+  @media (--viewportLarge) {
+    padding: 8px 0;
+  }
+}
+
 .bookingForm {
   flex-grow: 1;
   display: flex;

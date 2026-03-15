@@ -3,7 +3,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FormattedMessage } from '../../util/reactIntl';
 import { formatMoney } from '../../util/currency';
 import { types as sdkTypes } from '../../util/sdkLoader';
-import { transactionLineItems, estimateCartDelivery } from '../../util/api';
+import { transactionLineItems, estimateCartDelivery, fetchPickupSettings, fetchActiveOrderGroup } from '../../util/api';
+import appSettings from '../../config/settings';
 
 import { NamedLink, PrimaryButton } from '../../components';
 
@@ -104,6 +105,37 @@ const CartCheckoutPageContent = props => {
   const [deliveryRateCents, setDeliveryRateCents] = useState(null);
   const [deliveryDistanceMiles, setDeliveryDistanceMiles] = useState(null);
   const [deliveryEstimateError, setDeliveryEstimateError] = useState(null);
+
+  // Feature 1: Next pickup date
+  const [nextPickupDate, setNextPickupDate] = useState(null);
+  const [pickupCutoffPassed, setPickupCutoffPassed] = useState(false);
+  useEffect(() => {
+    if (!appSettings.featureFlags.pickupSchedule) return;
+    fetchPickupSettings()
+      .then(data => {
+        if (data.nextPickupDate) {
+          setNextPickupDate(data.nextPickupDate);
+        }
+        if (data.cutoffPassed) {
+          setPickupCutoffPassed(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Feature 6: Add to existing order group
+  const [activeOrderGroup, setActiveOrderGroup] = useState(null);
+  const [addToExistingOrder, setAddToExistingOrder] = useState(false);
+  useEffect(() => {
+    if (!appSettings.featureFlags.addToExistingOrder) return;
+    fetchActiveOrderGroup()
+      .then(data => {
+        if (data.canAddToOrder && data.orderGroupId) {
+          setActiveOrderGroup(data.orderGroupId);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const stripeRef = useRef(null);
   const cardRef = useRef(null);
@@ -314,6 +346,11 @@ const CartCheckoutPageContent = props => {
         ? defaultPaymentMethod.attributes.stripePaymentMethodId
         : null;
 
+      // Feature 6: If adding to existing order, include orderGroupId and zero out delivery
+      const orderGroupMaybe = addToExistingOrder && activeOrderGroup
+        ? { orderGroupId: activeOrderGroup, customShippingFeeCents: 0 }
+        : {};
+
       onProcessCheckout({
         cartItems: itemsWithDelivery,
         stripe: stripeRef.current,
@@ -323,6 +360,7 @@ const CartCheckoutPageContent = props => {
         processAlias: cartItems[0]?.listing?.attributes?.publicData?.transactionProcessAlias || 'default-purchase/release-1',
         savedPaymentMethodId,
         stripeCustomer,
+        ...orderGroupMaybe,
       });
     },
     [cartItems, shippingAddress, hasShippingItems, selectedDeliveryMethod, onProcessCheckout, paymentChoice, defaultPaymentMethod, stripeCustomer]
@@ -438,6 +476,27 @@ const CartCheckoutPageContent = props => {
 
       <form onSubmit={handleSubmit} className={css.checkoutLayout}>
         <div className={css.formColumn}>
+        {appSettings.featureFlags.addToExistingOrder && activeOrderGroup ? (
+          <div className={css.addToOrderSection}>
+            <label className={css.addToOrderLabel}>
+              <input
+                type="checkbox"
+                checked={addToExistingOrder}
+                onChange={e => setAddToExistingOrder(e.target.checked)}
+                className={css.addToOrderCheckbox}
+              />
+              <span>
+                <FormattedMessage id="CartCheckoutPage.addToExistingOrder" />
+              </span>
+            </label>
+            {addToExistingOrder ? (
+              <p className={css.addToOrderNote}>
+                <FormattedMessage id="CartCheckoutPage.addToExistingOrderNote" />
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
         {shippingAvailable && pickupAvailable ? (
           <div className={css.deliveryMethodSection}>
             <h3 className={css.sectionTitle}>
@@ -475,6 +534,20 @@ const CartCheckoutPageContent = props => {
                 </span>
               </label>
             </div>
+          </div>
+        ) : null}
+
+        {appSettings.featureFlags.pickupSchedule && nextPickupDate && selectedDeliveryMethod === 'pickup' ? (
+          <div className={css.pickupDateInfo}>
+            <FormattedMessage
+              id="CartCheckoutPage.nextPickupDate"
+              values={{ date: new Date(nextPickupDate).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }) }}
+            />
+            {pickupCutoffPassed ? (
+              <p className={css.cutoffWarning}>
+                <FormattedMessage id="CartCheckoutPage.cutoffPassed" />
+              </p>
+            ) : null}
           </div>
         ) : null}
 

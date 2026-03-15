@@ -1,0 +1,103 @@
+@import '../../../styles/customMediaQueries.css';
+
+.description {
+  color: var(--colorGrey700, #4a4a4a);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.nextPickup {
+  margin-bottom: 24px;
+  padding: 16px;
+  background-color: var(--colorGrey50, #f9f9f9);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nextPickupLabel {
+  font-weight: var(--fontWeightMedium);
+}
+
+.nextPickupDate {
+  font-size: 18px;
+  font-weight: var(--fontWeightBold);
+  color: var(--marketplaceColor);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.label {
+  font-weight: var(--fontWeightMedium);
+  margin-bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.checkboxGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: var(--fontWeightRegular);
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--marketplaceColor);
+}
+
+.selectInput {
+  padding: 8px 12px;
+  border: 1px solid var(--colorGrey100, #e0e0e0);
+  border-radius: 4px;
+  font-size: 16px;
+  width: 200px;
+  background-color: white;
+}
+
+.timeInput {
+  padding: 8px 12px;
+  border: 1px solid var(--colorGrey100, #e0e0e0);
+  border-radius: 4px;
+  font-size: 16px;
+  width: 160px;
+}
+
+.submitButton {
+  composes: buttonDefault from global;
+  max-width: 200px;
+  margin-top: 8px;
+}
+
+.successMessage {
+  color: var(--colorSuccess);
+  margin-top: 12px;
+}
+
+.errorMessage {
+  color: var(--colorFail);
+  margin-top: 12px;
+}

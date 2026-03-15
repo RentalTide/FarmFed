@@ -77,6 +77,11 @@ module.exports = (req, res) => {
     .then(trustedSdk => {
       const { params } = bodyParams;
 
+      // Persist orderGroupId in protectedData if provided
+      const orderGroupProtectedData = orderData?.orderGroupId
+        ? { protectedData: { ...(params.protectedData || {}), orderGroupId: orderData.orderGroupId } }
+        : {};
+
       // Add lineItems to the body params
       const body = {
         ...bodyParams,
@@ -84,6 +89,7 @@ module.exports = (req, res) => {
           ...params,
           lineItems,
           ...metadataMaybe,
+          ...orderGroupProtectedData,
         },
       };
 

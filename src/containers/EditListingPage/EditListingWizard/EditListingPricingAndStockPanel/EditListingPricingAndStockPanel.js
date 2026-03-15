@@ -46,7 +46,10 @@ const getInitialValues = props => {
       : 1;
   const stockTypeInfinity = [];
 
-  return { price, stock, stockTypeInfinity };
+  const soldOutBehavior = publicData?.soldOutBehavior || 'hide';
+  const maxOrdersPerDay = publicData?.maxOrdersPerDay || '';
+
+  return { price, stock, stockTypeInfinity, soldOutBehavior, maxOrdersPerDay };
 };
 
 /**
@@ -145,7 +148,7 @@ const EditListingPricingAndStockPanel = props => {
           className={css.form}
           initialValues={initialValues}
           onSubmit={values => {
-            const { price, stock, stockTypeInfinity } = values;
+            const { price, stock, stockTypeInfinity, soldOutBehavior, maxOrdersPerDay } = values;
 
             // Update stock only if the value has changed, or stock is infinity in stockType,
             // but not current stock is a small number (might happen with old listings)
@@ -174,10 +177,20 @@ const EditListingPricingAndStockPanel = props => {
                   }
                 : {};
 
+            // PublicData fields for new features
+            const publicDataMaybe = {};
+            if (soldOutBehavior) {
+              publicDataMaybe.soldOutBehavior = soldOutBehavior;
+            }
+            if (maxOrdersPerDay !== '' && maxOrdersPerDay !== undefined) {
+              publicDataMaybe.maxOrdersPerDay = parseInt(maxOrdersPerDay, 10) || 0;
+            }
+
             // New values for listing attributes
             const updateValues = {
               price,
               ...stockUpdateMaybe,
+              ...(Object.keys(publicDataMaybe).length > 0 ? { publicData: publicDataMaybe } : {}),
             };
             // Save the initialValues to state
             // Otherwise, re-rendering would overwrite the values during XHR call.
@@ -186,6 +199,8 @@ const EditListingPricingAndStockPanel = props => {
                 price,
                 stock: stockUpdateMaybe?.stockUpdate?.newTotal || stock,
                 stockTypeInfinity,
+                soldOutBehavior,
+                maxOrdersPerDay,
               },
             });
             onSubmit(updateValues);

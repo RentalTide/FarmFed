@@ -50,3 +50,31 @@
   color: var(--colorFail);
   margin-top: 12px;
 }
+
+.layerSwitcher {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.layerButton,
+.layerButtonActive {
+  padding: 8px 16px;
+  border: 2px solid var(--colorGrey200, #ccc);
+  background: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: var(--fontWeightMedium);
+  transition: all 0.2s;
+}
+
+.layerButtonActive {
+  border-color: var(--marketplaceColor);
+  background-color: var(--marketplaceColor);
+  color: #fff;
+}
+
+.layerButton:hover {
+  border-color: var(--marketplaceColor);
+}

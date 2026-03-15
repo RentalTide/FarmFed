@@ -1,0 +1,128 @@
+@import '../../../styles/customMediaQueries.css';
+
+.currentSetting {
+  margin-bottom: 24px;
+  padding: 16px;
+  background-color: var(--colorGrey50, #f9f9f9);
+  border-radius: 4px;
+}
+
+.currentSettingLabel {
+  font-weight: var(--fontWeightMedium);
+  margin-bottom: 4px;
+}
+
+.currentSettingValue {
+  font-size: 24px;
+  font-weight: var(--fontWeightBold);
+  color: var(--marketplaceColor);
+}
+
+.currentSettingStatus {
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--colorGrey700, #4a4a4a);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.label {
+  font-weight: var(--fontWeightMedium);
+  margin-bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inputWrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.input {
+  padding: 8px 12px;
+  border: 1px solid var(--colorGrey100, #e0e0e0);
+  border-radius: 4px;
+  font-size: 16px;
+  width: 120px;
+}
+
+.inputSuffix {
+  font-size: 18px;
+  font-weight: var(--fontWeightMedium);
+}
+
+.textInput {
+  padding: 8px 12px;
+  border: 1px solid var(--colorGrey100, #e0e0e0);
+  border-radius: 4px;
+  font-size: 16px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.toggleWrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toggle {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  border-radius: 13px;
+  border: none;
+  background-color: var(--colorGrey100, #e0e0e0);
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 0.2s ease;
+}
+
+.toggleActive {
+  composes: toggle;
+  background-color: var(--colorSuccess, #2ecc71);
+}
+
+.toggleKnob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: white;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.toggleActive .toggleKnob {
+  transform: translateX(22px);
+}
+
+.toggleText {
+  font-size: 14px;
+  color: var(--colorGrey700, #4a4a4a);
+  font-weight: var(--fontWeightRegular);
+}
+
+.submitButton {
+  composes: buttonDefault from global;
+  max-width: 200px;
+  margin-top: 8px;
+}
+
+.successMessage {
+  color: var(--colorSuccess);
+  margin-top: 12px;
+}
+
+.errorMessage {
+  color: var(--colorFail);
+  margin-top: 12px;
+}

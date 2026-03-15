@@ -12,6 +12,7 @@ import { propTypes } from '../../../../util/types';
 import { nonEmptyArray, composeValidators } from '../../../../util/validators';
 import { isUploadImageOverLimitError } from '../../../../util/errors';
 import { isNativeApp } from '../../../../util/capacitor';
+import { sendToNative } from '../../../../util/nativeBridge';
 
 // Import shared components
 import { Button, Form, AspectRatioWrapper } from '../../../../components';
@@ -34,17 +35,9 @@ const dataUrlToFile = (dataUrl, fileName) => {
   return new File([array], fileName, { type: mime });
 };
 
-// Take a photo or pick from gallery using Capacitor Camera plugin
+// Take a photo or pick from gallery via native bridge
 const captureNativeImage = async source => {
-  const { Camera, CameraResultType, CameraSource } = await import('@capacitor/camera');
-  const result = await Camera.getPhoto({
-    quality: 90,
-    resultType: CameraResultType.DataUrl,
-    source: source === 'camera' ? CameraSource.Camera : CameraSource.Photos,
-    width: 2048,
-    height: 2048,
-    correctOrientation: true,
-  });
+  const result = await sendToNative('camera', { source });
   const ext = result.format || 'jpeg';
   const fileName = `photo_${Date.now()}.${ext}`;
   return dataUrlToFile(result.dataUrl, fileName);

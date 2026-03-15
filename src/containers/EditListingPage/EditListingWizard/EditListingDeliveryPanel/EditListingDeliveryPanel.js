@@ -3,6 +3,7 @@ import classNames from 'classnames';
 
 // Import configs and util modules
 import { FormattedMessage } from '../../../../util/reactIntl';
+import appSettings from '../../../../config/settings';
 import {
   LISTING_STATE_DRAFT,
   STOCK_INFINITE_MULTIPLE_ITEMS,
@@ -61,6 +62,9 @@ const getInitialValues = props => {
       ? new Money(shippingPriceInSubunitsAdditionalItems, currency)
       : null;
 
+  // Vendor pickup schedule (Feature 3)
+  const pickupSchedule = publicData?.pickupSchedule || [];
+
   // Initial values for the form
   return {
     building,
@@ -73,6 +77,7 @@ const getInitialValues = props => {
     deliveryOptions,
     shippingPriceInSubunitsOneItem: shippingOneItemAsMoney,
     shippingPriceInSubunitsAdditionalItems: shippingAdditionalItemsAsMoney,
+    pickupSchedule,
   };
 };
 
@@ -160,6 +165,7 @@ const EditListingDeliveryPanel = props => {
               shippingPriceInSubunitsOneItem,
               shippingPriceInSubunitsAdditionalItems,
               deliveryOptions,
+              pickupSchedule: pickupScheduleRaw,
             } = values;
 
             const shippingEnabled = deliveryOptions.includes('shipping');
@@ -181,6 +187,12 @@ const EditListingDeliveryPanel = props => {
                   }
                 : {};
 
+            // Vendor pickup schedule data (Feature 3)
+            const pickupScheduleMaybe =
+              appSettings.featureFlags.vendorPickupSchedules && Array.isArray(pickupScheduleRaw)
+                ? { pickupSchedule: pickupScheduleRaw.filter(s => s.day && s.startTime && s.endTime) }
+                : {};
+
             // New values for listing attributes
             const updateValues = {
               geolocation: origin,
@@ -189,6 +201,7 @@ const EditListingDeliveryPanel = props => {
                 ...pickupDataMaybe,
                 shippingEnabled,
                 ...shippingDataMaybe,
+                ...pickupScheduleMaybe,
               },
             };
 
@@ -202,6 +215,7 @@ const EditListingDeliveryPanel = props => {
                 shippingPriceInSubunitsOneItem,
                 shippingPriceInSubunitsAdditionalItems,
                 deliveryOptions,
+                pickupSchedule: pickupScheduleRaw,
               },
             });
             onSubmit(updateValues);

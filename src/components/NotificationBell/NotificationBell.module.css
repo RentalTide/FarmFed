@@ -1,0 +1,93 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: 100%;
+  cursor: pointer;
+  padding: 0 12px;
+}
+
+.bellIcon {
+  width: 22px;
+  height: 22px;
+  stroke: var(--colorGrey700);
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.badge {
+  position: absolute;
+  top: -2px;
+  right: 4px;
+  background-color: var(--colorFail);
+  color: var(--colorWhite);
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+  font-weight: var(--fontWeightBold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 300px;
+  max-height: 360px;
+  overflow-y: auto;
+  background: var(--colorWhite);
+  border: 1px solid var(--colorGrey100);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+}
+
+.emptyState {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--colorGrey500);
+  font-size: 14px;
+}
+
+.notificationItem {
+  display: block;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--colorGrey100);
+  text-decoration: none;
+  color: var(--colorGrey700);
+  font-size: 14px;
+  line-height: 1.4;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background-color: var(--colorGrey50);
+  }
+}
+
+.unread {
+  background-color: #f0f7ff;
+}
+
+.vendorName {
+  font-weight: var(--fontWeightMedium);
+  color: var(--marketplaceColor);
+}
+
+.timestamp {
+  display: block;
+  font-size: 12px;
+  color: var(--colorGrey400);
+  margin-top: 4px;
+}

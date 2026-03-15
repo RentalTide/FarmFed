@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { ResponsiveImage, Modal } from '../../components';
 import { isNativeApp } from '../../util/capacitor';
+import { sendToNative } from '../../util/nativeBridge';
 
 import ImageCarousel from './ImageCarousel/ImageCarousel';
 
@@ -18,14 +19,13 @@ const ShareIcon = () => (
   </svg>
 );
 
-const handleShare = async (shareData, intl) => {
+const handleShare = async shareData => {
   const { title, text, url } = shareData;
 
-  // 1. Native Capacitor share
+  // 1. Native bridge share (Expo WebView)
   if (isNativeApp()) {
     try {
-      const { Share } = await import('@capacitor/share');
-      await Share.share({ title, text, url, dialogTitle: title });
+      await sendToNative('share', { title, text, url });
       return;
     } catch (e) {
       // fall through to web share
@@ -94,7 +94,7 @@ const SectionHero = props => {
       className={css.shareButton}
       onClick={e => {
         e.stopPropagation();
-        handleShare(shareData, intl);
+        handleShare(shareData);
       }}
       type="button"
       aria-label={intl.formatMessage({ id: 'ListingPage.shareListing' })}

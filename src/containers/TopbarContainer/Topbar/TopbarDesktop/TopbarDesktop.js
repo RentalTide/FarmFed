@@ -13,6 +13,7 @@ import {
   MenuContent,
   MenuItem,
   NamedLink,
+  NotificationBell,
 } from '../../../../components';
 
 import TopbarSearchForm from '../TopbarSearchForm/TopbarSearchForm';
@@ -225,6 +226,7 @@ const TopbarDesktop = props => {
       />
 
       {inboxLinkMaybe}
+      {authenticatedOnClientSide ? <NotificationBell /> : null}
       {authenticatedOnClientSide ? (
         <CartIcon
           count={cartItemCount}

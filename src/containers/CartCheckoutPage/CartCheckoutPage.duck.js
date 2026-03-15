@@ -12,7 +12,7 @@ import { setCurrentUserHasOrders } from '../../ducks/user.duck';
  * For new cards, sets up a reusable PaymentMethod via SetupIntent before processing.
  */
 const processCartCheckoutPayloadCreator = async (
-  { cartItems, stripe, card, billingDetails, shippingDetails, processAlias, savedPaymentMethodId, stripeCustomer },
+  { cartItems, stripe, card, billingDetails, shippingDetails, processAlias, savedPaymentMethodId, stripeCustomer, orderGroupId, customShippingFeeCents },
   { dispatch, extra: sdk, rejectWithValue }
 ) => {
   const results = [];
@@ -120,8 +120,10 @@ const processCartCheckoutPayloadCreator = async (
           : {};
 
       // Assign route-based shipping: full fee on first shipping item, $0 on rest
-      const customShippingMaybe =
-        deliveryMethod === 'shipping' && routeShippingFeeCents != null
+      // If orderGroupId is set (adding to existing order), zero out shipping
+      const customShippingMaybe = orderGroupId
+        ? { customShippingFeeCents: 0 }
+        : deliveryMethod === 'shipping' && routeShippingFeeCents != null
           ? { customShippingFeeCents: shippingFeeAssigned ? 0 : routeShippingFeeCents }
           : {};
 
@@ -129,10 +131,13 @@ const processCartCheckoutPayloadCreator = async (
         shippingFeeAssigned = true;
       }
 
+      const orderGroupMaybe = orderGroupId ? { orderGroupId } : {};
+
       const orderData = {
         ...(deliveryMethod ? { deliveryMethod } : {}),
         ...shippingAddressMaybe,
         ...customShippingMaybe,
+        ...orderGroupMaybe,
       };
 
       const listingProcessAlias =

@@ -7,6 +7,12 @@ import {
   fetchPendingUsers as fetchPendingUsersAPI,
   approveUser as approveUserAPI,
   rejectUser as rejectUserAPI,
+  fetchPickupSettings as fetchPickupAPI,
+  updatePickupSettings as updatePickupAPI,
+  fetchTaxSettings as fetchTaxAPI,
+  updateTaxSettings as updateTaxAPI,
+  fetchAllBulletins as fetchBulletinsAPI,
+  updateBulletins as updateBulletinsAPI,
 } from '../../util/api';
 import { storableError } from '../../util/errors';
 
@@ -89,6 +95,75 @@ export const rejectUserThunk = createAsyncThunk(
   }
 );
 
+// Pickup schedule thunks
+export const fetchPickupSettingsThunk = createAsyncThunk(
+  'AdminPage/fetchPickupSettings',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await fetchPickupAPI();
+    } catch (e) {
+      return rejectWithValue(storableError(e));
+    }
+  }
+);
+
+export const updatePickupSettingsThunk = createAsyncThunk(
+  'AdminPage/updatePickupSettings',
+  async (params, { rejectWithValue }) => {
+    try {
+      return await updatePickupAPI(params);
+    } catch (e) {
+      return rejectWithValue(storableError(e));
+    }
+  }
+);
+
+// Tax settings thunks
+export const fetchTaxSettingsThunk = createAsyncThunk(
+  'AdminPage/fetchTaxSettings',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await fetchTaxAPI();
+    } catch (e) {
+      return rejectWithValue(storableError(e));
+    }
+  }
+);
+
+export const updateTaxSettingsThunk = createAsyncThunk(
+  'AdminPage/updateTaxSettings',
+  async (params, { rejectWithValue }) => {
+    try {
+      return await updateTaxAPI(params);
+    } catch (e) {
+      return rejectWithValue(storableError(e));
+    }
+  }
+);
+
+// Bulletin thunks
+export const fetchBulletinsThunk = createAsyncThunk(
+  'AdminPage/fetchBulletins',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await fetchBulletinsAPI();
+    } catch (e) {
+      return rejectWithValue(storableError(e));
+    }
+  }
+);
+
+export const updateBulletinsThunk = createAsyncThunk(
+  'AdminPage/updateBulletins',
+  async ({ bulletins }, { rejectWithValue }) => {
+    try {
+      return await updateBulletinsAPI({ bulletins });
+    } catch (e) {
+      return rejectWithValue(storableError(e));
+    }
+  }
+);
+
 // ================ Slice ================ //
 
 const initialState = {
@@ -98,8 +173,10 @@ const initialState = {
   deliveryUpdateInProgress: false,
   deliveryUpdateSuccess: false,
   deliveryError: null,
-  // Geofence
+  // Geofence (dual service radius)
   geofencePolygon: null,
+  geofenceVendorPolygon: null,
+  geofenceConsumerPolygon: null,
   geofenceFetchInProgress: false,
   geofenceUpdateInProgress: false,
   geofenceUpdateSuccess: false,
@@ -110,6 +187,24 @@ const initialState = {
   pendingUsersFetchError: null,
   userActionInProgress: null,
   userActionError: null,
+  // Pickup Schedule
+  pickupSettings: null,
+  pickupFetchInProgress: false,
+  pickupUpdateInProgress: false,
+  pickupUpdateSuccess: false,
+  pickupError: null,
+  // Tax Settings
+  taxSettings: null,
+  taxFetchInProgress: false,
+  taxUpdateInProgress: false,
+  taxUpdateSuccess: false,
+  taxError: null,
+  // Bulletins
+  bulletins: [],
+  bulletinsFetchInProgress: false,
+  bulletinsUpdateInProgress: false,
+  bulletinsUpdateSuccess: false,
+  bulletinsError: null,
 };
 
 const adminPageSlice = createSlice({
@@ -121,6 +216,15 @@ const adminPageSlice = createSlice({
     },
     clearGeofenceUpdateSuccess(state) {
       state.geofenceUpdateSuccess = false;
+    },
+    clearPickupUpdateSuccess(state) {
+      state.pickupUpdateSuccess = false;
+    },
+    clearTaxUpdateSuccess(state) {
+      state.taxUpdateSuccess = false;
+    },
+    clearBulletinsUpdateSuccess(state) {
+      state.bulletinsUpdateSuccess = false;
     },
   },
   extraReducers: builder => {
@@ -160,6 +264,8 @@ const adminPageSlice = createSlice({
       .addCase(fetchGeofenceSettingsThunk.fulfilled, (state, action) => {
         state.geofenceFetchInProgress = false;
         state.geofencePolygon = action.payload.polygon || null;
+        state.geofenceVendorPolygon = action.payload.vendorPolygon || null;
+        state.geofenceConsumerPolygon = action.payload.consumerPolygon || null;
       })
       .addCase(fetchGeofenceSettingsThunk.rejected, (state, action) => {
         state.geofenceFetchInProgress = false;
@@ -174,6 +280,8 @@ const adminPageSlice = createSlice({
         state.geofenceUpdateInProgress = false;
         state.geofenceUpdateSuccess = true;
         state.geofencePolygon = action.payload.polygon || null;
+        state.geofenceVendorPolygon = action.payload.vendorPolygon || null;
+        state.geofenceConsumerPolygon = action.payload.consumerPolygon || null;
       })
       .addCase(updateGeofenceSettingsThunk.rejected, (state, action) => {
         state.geofenceUpdateInProgress = false;
@@ -219,11 +327,98 @@ const adminPageSlice = createSlice({
       .addCase(rejectUserThunk.rejected, (state, action) => {
         state.userActionInProgress = null;
         state.userActionError = action.payload;
+      })
+      // Pickup Settings
+      .addCase(fetchPickupSettingsThunk.pending, state => {
+        state.pickupFetchInProgress = true;
+        state.pickupError = null;
+      })
+      .addCase(fetchPickupSettingsThunk.fulfilled, (state, action) => {
+        state.pickupFetchInProgress = false;
+        state.pickupSettings = action.payload;
+      })
+      .addCase(fetchPickupSettingsThunk.rejected, (state, action) => {
+        state.pickupFetchInProgress = false;
+        state.pickupError = action.payload;
+      })
+      .addCase(updatePickupSettingsThunk.pending, state => {
+        state.pickupUpdateInProgress = true;
+        state.pickupUpdateSuccess = false;
+        state.pickupError = null;
+      })
+      .addCase(updatePickupSettingsThunk.fulfilled, (state, action) => {
+        state.pickupUpdateInProgress = false;
+        state.pickupUpdateSuccess = true;
+        state.pickupSettings = action.payload;
+      })
+      .addCase(updatePickupSettingsThunk.rejected, (state, action) => {
+        state.pickupUpdateInProgress = false;
+        state.pickupError = action.payload;
+      })
+      // Tax Settings
+      .addCase(fetchTaxSettingsThunk.pending, state => {
+        state.taxFetchInProgress = true;
+        state.taxError = null;
+      })
+      .addCase(fetchTaxSettingsThunk.fulfilled, (state, action) => {
+        state.taxFetchInProgress = false;
+        state.taxSettings = action.payload;
+      })
+      .addCase(fetchTaxSettingsThunk.rejected, (state, action) => {
+        state.taxFetchInProgress = false;
+        state.taxError = action.payload;
+      })
+      .addCase(updateTaxSettingsThunk.pending, state => {
+        state.taxUpdateInProgress = true;
+        state.taxUpdateSuccess = false;
+        state.taxError = null;
+      })
+      .addCase(updateTaxSettingsThunk.fulfilled, (state, action) => {
+        state.taxUpdateInProgress = false;
+        state.taxUpdateSuccess = true;
+        state.taxSettings = action.payload;
+      })
+      .addCase(updateTaxSettingsThunk.rejected, (state, action) => {
+        state.taxUpdateInProgress = false;
+        state.taxError = action.payload;
+      })
+      // Bulletins
+      .addCase(fetchBulletinsThunk.pending, state => {
+        state.bulletinsFetchInProgress = true;
+        state.bulletinsError = null;
+      })
+      .addCase(fetchBulletinsThunk.fulfilled, (state, action) => {
+        state.bulletinsFetchInProgress = false;
+        state.bulletins = action.payload.bulletins || [];
+      })
+      .addCase(fetchBulletinsThunk.rejected, (state, action) => {
+        state.bulletinsFetchInProgress = false;
+        state.bulletinsError = action.payload;
+      })
+      .addCase(updateBulletinsThunk.pending, state => {
+        state.bulletinsUpdateInProgress = true;
+        state.bulletinsUpdateSuccess = false;
+        state.bulletinsError = null;
+      })
+      .addCase(updateBulletinsThunk.fulfilled, (state, action) => {
+        state.bulletinsUpdateInProgress = false;
+        state.bulletinsUpdateSuccess = true;
+        state.bulletins = action.payload.bulletins || [];
+      })
+      .addCase(updateBulletinsThunk.rejected, (state, action) => {
+        state.bulletinsUpdateInProgress = false;
+        state.bulletinsError = action.payload;
       });
   },
 });
 
-export const { clearDeliveryUpdateSuccess, clearGeofenceUpdateSuccess } = adminPageSlice.actions;
+export const {
+  clearDeliveryUpdateSuccess,
+  clearGeofenceUpdateSuccess,
+  clearPickupUpdateSuccess,
+  clearTaxUpdateSuccess,
+  clearBulletinsUpdateSuccess,
+} = adminPageSlice.actions;
 
 // ================ Backward-compatible wrappers ================ //
 
@@ -255,6 +450,30 @@ export const rejectUser = params => dispatch => {
   return dispatch(rejectUserThunk(params)).unwrap();
 };
 
+export const fetchPickupSettings = () => dispatch => {
+  return dispatch(fetchPickupSettingsThunk()).unwrap();
+};
+
+export const updatePickupSettings = params => dispatch => {
+  return dispatch(updatePickupSettingsThunk(params)).unwrap();
+};
+
+export const fetchTaxSettings = () => dispatch => {
+  return dispatch(fetchTaxSettingsThunk()).unwrap();
+};
+
+export const updateTaxSettings = params => dispatch => {
+  return dispatch(updateTaxSettingsThunk(params)).unwrap();
+};
+
+export const fetchBulletins = () => dispatch => {
+  return dispatch(fetchBulletinsThunk()).unwrap();
+};
+
+export const updateBulletins = params => dispatch => {
+  return dispatch(updateBulletinsThunk(params)).unwrap();
+};
+
 // ================ loadData ================ //
 
 export const loadData = () => dispatch => {
@@ -262,6 +481,9 @@ export const loadData = () => dispatch => {
     dispatch(fetchDeliverySettings()),
     dispatch(fetchGeofenceSettings()),
     dispatch(fetchPendingUsers()),
+    dispatch(fetchPickupSettings()),
+    dispatch(fetchTaxSettings()),
+    dispatch(fetchBulletins()),
   ]);
 };
 

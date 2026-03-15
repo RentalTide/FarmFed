@@ -524,3 +524,22 @@
     margin-top: 16px;
   }
 }
+
+.reportProblemButton {
+  display: block;
+  margin-top: 12px;
+  padding: 10px 20px;
+  background: none;
+  border: 1px solid var(--colorAttention, #f59a4a);
+  color: var(--colorAttention, #f59a4a);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: var(--fontWeightMedium);
+  transition: all 0.2s;
+}
+
+.reportProblemButton:hover {
+  background-color: var(--colorAttention, #f59a4a);
+  color: #fff;
+}

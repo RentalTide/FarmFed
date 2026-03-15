@@ -23,6 +23,7 @@ import {
   ListingCardThumbnail,
 } from '../../components';
 
+import appSettings from '../../config/settings';
 import css from './ListingCard.module.css';
 
 const MIN_LENGTH_FOR_LONG_WORDS = 10;
@@ -80,6 +81,24 @@ const PriceMaybe = props => {
       ) : (
         <FormattedMessage id="ListingCard.price" values={{ priceValue, pricePerUnit }} />
       )}
+    </div>
+  );
+};
+
+const SoldOutBadgeMaybe = props => {
+  const { listing, intl } = props;
+  if (!appSettings.featureFlags.soldOutVisibility) return null;
+
+  const currentStock = listing?.currentStock?.attributes?.quantity;
+  const publicData = listing?.attributes?.publicData || {};
+  const soldOutBehavior = publicData.soldOutBehavior;
+
+  // Show badge only when stock is 0 and vendor chose "backNextWeek"
+  if (currentStock !== 0 || soldOutBehavior !== 'backNextWeek') return null;
+
+  return (
+    <div className={css.soldOutOverlay}>
+      <FormattedMessage id="ListingCard.backNextWeek" />
     </div>
   );
 };
@@ -207,18 +226,21 @@ export const ListingCard = props => {
 
   return (
     <NamedLink className={classes} name="ListingPage" params={{ id, slug }}>
-      <ListingCardImage
-        renderSizes={renderSizes}
-        title={title}
-        currentListing={currentListing}
-        config={config}
-        setActivePropsMaybe={setActivePropsMaybe}
-        aspectWidth={aspectWidth}
-        aspectHeight={aspectHeight}
-        variantPrefix={variantPrefix}
-        style={cardStyle}
-        showListingImage={showListingImage}
-      />
+      <div className={css.imageOverlay}>
+        <SoldOutBadgeMaybe listing={listing} intl={intl} />
+        <ListingCardImage
+          renderSizes={renderSizes}
+          title={title}
+          currentListing={currentListing}
+          config={config}
+          setActivePropsMaybe={setActivePropsMaybe}
+          aspectWidth={aspectWidth}
+          aspectHeight={aspectHeight}
+          variantPrefix={variantPrefix}
+          style={cardStyle}
+          showListingImage={showListingImage}
+        />
+      </div>
       <div className={css.info}>
         <PriceMaybe
           price={price}

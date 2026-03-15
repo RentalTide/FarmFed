@@ -10,6 +10,7 @@ const { Money } = types;
 const { getDeliveryRate } = require('./deliveryRate');
 const { haversineDistanceMiles } = require('./distance');
 const { geocodeAddress } = require('./geocode');
+const { getTaxSettings } = require('./taxSettings');
 
 /**
  * Get quantity and add extra line-items that are related to delivery method.
@@ -91,6 +92,38 @@ const getItemQuantityAndLineItems = async (orderData, publicData, currency, geol
 
 const getOfferQuantityAndLineItems = orderData => {
   return { quantity: 1, extraLineItems: [] };
+};
+
+/**
+ * Get tax line item if tax is enabled in settings.
+ * Tax is calculated on the subtotal (order + extra line items, excluding commissions).
+ */
+const getTaxLineItemMaybe = (order, extraLineItems, currency) => {
+  const taxSettings = getTaxSettings();
+  if (!taxSettings.enabled || taxSettings.taxRate <= 0) {
+    return [];
+  }
+
+  // Calculate subtotal from order and extra line items (shipping, etc.)
+  const orderTotal = order.unitPrice.amount * (order.quantity || (order.units * order.seats) || 1);
+  const extrasTotal = extraLineItems.reduce((sum, item) => {
+    return sum + item.unitPrice.amount * (item.quantity || 1);
+  }, 0);
+  const subtotal = orderTotal + extrasTotal;
+  const taxAmount = Math.round(subtotal * taxSettings.taxRate);
+
+  if (taxAmount <= 0) {
+    return [];
+  }
+
+  return [
+    {
+      code: 'line-item/sales-tax',
+      unitPrice: new Money(taxAmount, currency),
+      quantity: 1,
+      includeFor: ['customer', 'provider'],
+    },
+  ];
 };
 
 /**
@@ -269,9 +302,11 @@ exports.transactionLineItems = async (listing, orderData, providerCommission, cu
 
   // Let's keep the base price (order) as first line item and provider and customer commissions as last.
   // Note: the order matters only if OrderBreakdown component doesn't recognize line-item.
+  const taxLineItems = getTaxLineItemMaybe(order, extraLineItems, currency);
   const lineItems = [
     order,
     ...extraLineItems,
+    ...taxLineItems,
     ...getProviderCommissionMaybe(providerCommission, order, currency),
     ...getCustomerCommissionMaybe(customerCommission, order, currency),
   ];

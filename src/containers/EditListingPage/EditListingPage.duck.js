@@ -18,6 +18,7 @@ import { parse } from '../../util/urlHelpers';
 import { isUserAuthorized } from '../../util/userHelpers';
 import { isBookingProcessAlias } from '../../transactions/transaction';
 
+import { notifyFollowers } from '../../util/api';
 import { addMarketplaceEntities } from '../../ducks/marketplaceData.duck';
 import {
   createStripeAccount,
@@ -261,12 +262,28 @@ export const requestUpdateListing = (tab, data, config) => (dispatch, getState, 
 // Publish Listing //
 /////////////////////
 
-const publishListingPayloadCreator = ({ listingId }, { dispatch, rejectWithValue, extra: sdk }) => {
+const publishListingPayloadCreator = ({ listingId }, { dispatch, getState, rejectWithValue, extra: sdk }) => {
   return sdk.ownListings
     .publishDraft({ id: listingId }, { expand: true })
     .then(response => {
       // Add the created listing to the marketplace data
       dispatch(addMarketplaceEntities(response));
+
+      // Notify followers about the new listing (non-blocking)
+      const listing = response.data.data;
+      const currentUser = getState().user.currentUser;
+      const vendorId = currentUser?.id?.uuid;
+      const title = listing?.attributes?.title;
+      if (vendorId && listing?.id?.uuid) {
+        notifyFollowers({
+          vendorId,
+          listingId: listing.id.uuid,
+          listingTitle: title,
+        }).catch(() => {
+          // Non-blocking — don't fail publish if notification fails
+        });
+      }
+
       return response;
     })
     .catch(e => {

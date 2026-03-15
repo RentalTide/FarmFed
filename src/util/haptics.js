@@ -1,36 +1,22 @@
 /**
- * Haptic feedback utilities for Capacitor native apps.
+ * Haptic feedback utilities for native app.
  * All functions are no-ops when not running in a native app.
- * Uses dynamic import() to keep the plugin out of the main bundle.
+ * Uses fire-and-forget bridge messages to the native shell.
  */
 import { isNativeApp } from './capacitor';
+import { fireToNative } from './nativeBridge';
 
-export const lightImpact = async () => {
+export const lightImpact = () => {
   if (!isNativeApp()) return;
-  try {
-    const { Haptics, ImpactStyle } = await import('@capacitor/haptics');
-    await Haptics.impact({ style: ImpactStyle.Light });
-  } catch (e) {
-    // silently ignore
-  }
+  fireToNative('haptic', { style: 'light' });
 };
 
-export const mediumImpact = async () => {
+export const mediumImpact = () => {
   if (!isNativeApp()) return;
-  try {
-    const { Haptics, ImpactStyle } = await import('@capacitor/haptics');
-    await Haptics.impact({ style: ImpactStyle.Medium });
-  } catch (e) {
-    // silently ignore
-  }
+  fireToNative('haptic', { style: 'medium' });
 };
 
-export const successNotification = async () => {
+export const successNotification = () => {
   if (!isNativeApp()) return;
-  try {
-    const { Haptics, NotificationType } = await import('@capacitor/haptics');
-    await Haptics.notification({ type: NotificationType.Success });
-  } catch (e) {
-    // silently ignore
-  }
+  fireToNative('haptic', { style: 'success' });
 };

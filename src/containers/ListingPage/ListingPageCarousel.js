@@ -69,6 +69,7 @@ import {
   setInitialValues,
   fetchTimeSlots,
   fetchTransactionLineItems,
+  toggleFollowVendor,
 } from './ListingPage.duck';
 
 import {
@@ -424,6 +425,10 @@ export const ListingPageComponent = props => {
               onSubmitInquiry={onSubmitInquiry}
               currentUser={currentUser}
               onManageDisableScrolling={onManageDisableScrolling}
+              isFollowing={props.isFollowing}
+              onToggleFollowVendor={props.onToggleFollowVendor}
+              followInProgress={props.followInProgress}
+              isOwnListing={isOwnListing}
             />
           </div>
           <div className={css.orderColumnForProductLayout}>
@@ -574,6 +579,9 @@ const mapStateToProps = state => {
     fetchLineItemsInProgress,
     fetchLineItemsError,
     inquiryModalOpenForListingId,
+    isFollowing,
+    followInProgress,
+    dailyOrderCount,
   } = state.ListingPage;
   const { currentUser } = state.user;
 
@@ -606,6 +614,9 @@ const mapStateToProps = state => {
     fetchLineItemsError, // for OrderPanel
     sendInquiryInProgress,
     sendInquiryError,
+    isFollowing,
+    followInProgress,
+    dailyOrderCount,
   };
 };
 
@@ -620,6 +631,8 @@ const mapDispatchToProps = dispatch => ({
   onInitializeCardPaymentData: () => dispatch(initializeCardPaymentData()),
   onFetchTimeSlots: (listingId, start, end, timeZone, options) =>
     dispatch(fetchTimeSlots(listingId, start, end, timeZone, options)), // for OrderPanel
+  onToggleFollowVendor: (vendorId, isCurrentlyFollowing) =>
+    dispatch(toggleFollowVendor(vendorId, isCurrentlyFollowing)),
 });
 
 // Note: it is important that the withRouter HOC is **outside** the

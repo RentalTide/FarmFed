@@ -3,6 +3,7 @@ import { storableError } from '../../util/errors';
 import { parse, getValidInboxSort } from '../../util/urlHelpers';
 import { getSupportedProcessesInfo } from '../../transactions/transaction';
 import { addMarketplaceEntities } from '../../ducks/marketplaceData.duck';
+import appSettings from '../../config/settings';
 
 const INBOX_PAGE_SIZE = 10;
 
@@ -13,6 +14,29 @@ const entityRefs = entities =>
     id: entity.id,
     type: entity.type,
   }));
+
+// Maps redesigned tab names to last-transition filters
+// New Orders: active/pending states
+// Completed: final states
+// Messages: all (inquiry + message access)
+const REDESIGNED_LAST_TRANSITIONS_NEW = [
+  'transition/confirm-payment',
+  'transition/accept',
+  'transition/request-payment',
+  'transition/request-payment-after-inquiry',
+  'transition/make-offer',
+];
+
+const REDESIGNED_LAST_TRANSITIONS_COMPLETED = [
+  'transition/complete',
+  'transition/review-1-by-customer',
+  'transition/review-1-by-provider',
+  'transition/review-2-by-customer',
+  'transition/review-2-by-provider',
+  'transition/expire-review-period',
+  'transition/cancel',
+  'transition/decline',
+];
 
 // ================ Slice ================ //
 
@@ -52,10 +76,23 @@ export default inboxPageSlice.reducer;
 const loadDataPayloadCreator = ({ params, search }, { dispatch, rejectWithValue, extra: sdk }) => {
   const { tab } = params;
 
-  const onlyFilterValues = {
+  const useRedesign = appSettings.featureFlags.inboxRedesign;
+
+  // Redesigned tabs: new-orders, completed, messages (plus legacy orders/sales)
+  const redesignedOnlyValues = {
+    'new-orders': 'order',
+    'completed': 'order',
+    'messages': 'order',
+  };
+
+  const legacyOnlyValues = {
     orders: 'order',
     sales: 'sale',
   };
+
+  const onlyFilterValues = useRedesign
+    ? { ...legacyOnlyValues, ...redesignedOnlyValues }
+    : legacyOnlyValues;
 
   const onlyFilter = onlyFilterValues[tab];
   if (!onlyFilter) {
@@ -92,6 +129,14 @@ const loadDataPayloadCreator = ({ params, search }, { dispatch, rejectWithValue,
     perPage: INBOX_PAGE_SIZE,
     ...getValidInboxSort(sort),
   };
+
+  // Add last-transition filters for redesigned tabs
+  if (useRedesign && tab === 'new-orders') {
+    apiQueryParams.lastTransitions = REDESIGNED_LAST_TRANSITIONS_NEW;
+  } else if (useRedesign && tab === 'completed') {
+    apiQueryParams.lastTransitions = REDESIGNED_LAST_TRANSITIONS_COMPLETED;
+  }
+  // 'messages' tab: no lastTransitions filter, shows all
 
   return sdk.transactions
     .query(apiQueryParams)

@@ -1,0 +1,68 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 100px;
+  min-height: 36px;
+  padding: 6px 16px;
+
+  font-family: var(--fontFamily);
+  font-weight: var(--fontWeightMedium);
+  font-size: 14px;
+  line-height: 24px;
+
+  border: 1px solid var(--marketplaceColor);
+  border-radius: var(--borderRadiusMedium);
+  background-color: var(--colorWhite);
+  color: var(--marketplaceColor);
+
+  cursor: pointer;
+  transition: all var(--transitionStyleButton);
+
+  &:hover {
+    background-color: var(--marketplaceColor);
+    color: var(--colorWhite);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  @media (--viewportMedium) {
+    min-width: 120px;
+    font-size: 16px;
+  }
+}
+
+.followed {
+  background-color: var(--colorSuccess);
+  border-color: var(--colorSuccess);
+  color: var(--colorWhite);
+
+  &:hover {
+    background-color: var(--colorSuccess);
+    border-color: var(--colorSuccess);
+  }
+}
+
+.unfollowHover {
+  background-color: var(--colorFail);
+  border-color: var(--colorFail);
+  color: var(--colorWhite);
+
+  &:hover {
+    background-color: var(--colorFailDark);
+    border-color: var(--colorFailDark);
+  }
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  stroke: var(--marketplaceColor);
+  stroke-width: 3px;
+}

@@ -235,6 +235,46 @@ export const EditListingPricingAndStockForm = props => (
           )}
           {setStockError ? <p className={css.error}>{stockErrorMessage}</p> : null}
 
+          {appSettings.featureFlags.soldOutVisibility && hasStockManagement ? (
+            <div className={css.input}>
+              <label className={css.fieldLabel}>
+                <FormattedMessage id="EditListingPricingAndStockForm.soldOutBehaviorLabel" />
+              </label>
+              <div className={css.radioGroup}>
+                <label className={css.radioLabel}>
+                  <Field name="soldOutBehavior" component="input" type="radio" value="backNextWeek" />
+                  {' '}
+                  <FormattedMessage id="EditListingPricingAndStockForm.soldOutBackNextWeek" />
+                </label>
+                <label className={css.radioLabel}>
+                  <Field name="soldOutBehavior" component="input" type="radio" value="hide" />
+                  {' '}
+                  <FormattedMessage id="EditListingPricingAndStockForm.soldOutHide" />
+                </label>
+              </div>
+            </div>
+          ) : null}
+
+          {appSettings.featureFlags.orderMaxPerDay ? (
+            <FieldTextInput
+              className={css.input}
+              id={`${formId}.maxOrdersPerDay`}
+              name="maxOrdersPerDay"
+              label={intl.formatMessage({ id: 'EditListingPricingAndStockForm.maxOrdersPerDayLabel' })}
+              placeholder={intl.formatMessage({
+                id: 'EditListingPricingAndStockForm.maxOrdersPerDayPlaceholder',
+              })}
+              type="number"
+              min={0}
+              onWheel={e => {
+                if (e.target === document.activeElement) {
+                  e.target.blur();
+                  setTimeout(() => { e.target.focus(); }, 0);
+                }
+              }}
+            />
+          ) : null}
+
           <Button
             className={css.submitButton}
             type="submit"

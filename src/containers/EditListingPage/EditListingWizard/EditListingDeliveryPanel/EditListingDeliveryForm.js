@@ -29,6 +29,86 @@ import css from './EditListingDeliveryForm.module.css';
 
 const identity = v => v;
 
+const DAYS_OF_WEEK = [
+  { key: 'monday', label: 'Monday' },
+  { key: 'tuesday', label: 'Tuesday' },
+  { key: 'wednesday', label: 'Wednesday' },
+  { key: 'thursday', label: 'Thursday' },
+  { key: 'friday', label: 'Friday' },
+  { key: 'saturday', label: 'Saturday' },
+  { key: 'sunday', label: 'Sunday' },
+];
+
+const VendorPickupScheduleFields = ({ formId, values, form, intl }) => {
+  const schedule = values.pickupSchedule || [];
+
+  const addSlot = () => {
+    const newSchedule = [...schedule, { day: 'monday', startTime: '08:00', endTime: '12:00' }];
+    form.change('pickupSchedule', newSchedule);
+  };
+
+  const removeSlot = index => {
+    const newSchedule = schedule.filter((_, i) => i !== index);
+    form.change('pickupSchedule', newSchedule);
+  };
+
+  const updateSlot = (index, field, value) => {
+    const newSchedule = schedule.map((slot, i) =>
+      i === index ? { ...slot, [field]: value } : slot
+    );
+    form.change('pickupSchedule', newSchedule);
+  };
+
+  return (
+    <div className={css.pickupScheduleSection}>
+      <h4 className={css.pickupScheduleTitle}>
+        <FormattedMessage id="EditListingDeliveryForm.pickupScheduleTitle" />
+      </h4>
+      <p className={css.pickupScheduleDescription}>
+        <FormattedMessage id="EditListingDeliveryForm.pickupScheduleDescription" />
+      </p>
+
+      {schedule.map((slot, index) => (
+        <div key={index} className={css.pickupSlot}>
+          <select
+            className={css.pickupDaySelect}
+            value={slot.day}
+            onChange={e => updateSlot(index, 'day', e.target.value)}
+          >
+            {DAYS_OF_WEEK.map(d => (
+              <option key={d.key} value={d.key}>{d.label}</option>
+            ))}
+          </select>
+          <input
+            type="time"
+            className={css.pickupTimeInput}
+            value={slot.startTime}
+            onChange={e => updateSlot(index, 'startTime', e.target.value)}
+          />
+          <span className={css.pickupTimeSeparator}>-</span>
+          <input
+            type="time"
+            className={css.pickupTimeInput}
+            value={slot.endTime}
+            onChange={e => updateSlot(index, 'endTime', e.target.value)}
+          />
+          <button
+            type="button"
+            className={css.pickupRemoveSlot}
+            onClick={() => removeSlot(index)}
+          >
+            &times;
+          </button>
+        </div>
+      ))}
+
+      <button type="button" className={css.pickupAddSlot} onClick={addSlot}>
+        <FormattedMessage id="EditListingDeliveryForm.addPickupSlot" />
+      </button>
+    </div>
+  );
+};
+
 /**
  * The EditListingDeliveryForm component.
  *
@@ -284,6 +364,15 @@ export const EditListingDeliveryForm = props => (
               />
             ) : null}
           </div>
+
+          {appSettings.featureFlags.vendorPickupSchedules && pickupEnabled ? (
+            <VendorPickupScheduleFields
+              formId={formId}
+              values={values}
+              form={form}
+              intl={intl}
+            />
+          ) : null}
 
           <Button
             className={css.submitButton}

@@ -3,7 +3,7 @@ import React from 'react';
 import { FormattedMessage } from '../../util/reactIntl';
 import { isFieldForListingType } from '../../util/fieldHelpers';
 
-import { Heading } from '../../components';
+import { Heading, VendorPickupSchedule } from '../../components';
 
 import css from './ListingPage.module.css';
 
@@ -46,19 +46,24 @@ const SectionDetailsMaybe = props => {
 
   const existingListingFields = listingFieldConfigs.reduce(pickListingFields, []);
 
-  return existingListingFields.length > 0 ? (
+  const pickupSchedule = publicData?.pickupSchedule;
+
+  return existingListingFields.length > 0 || (pickupSchedule && pickupSchedule.length > 0) ? (
     <section className={css.sectionDetails}>
       <Heading as="h2" rootClassName={css.sectionHeading}>
         <FormattedMessage id="ListingPage.detailsTitle" />
       </Heading>
-      <ul className={css.details}>
-        {existingListingFields.map(detail => (
-          <li key={detail.key} className={css.detailsRow}>
-            <span className={css.detailLabel}>{detail.label}</span>
-            <span>{detail.value}</span>
-          </li>
-        ))}
-      </ul>
+      {existingListingFields.length > 0 ? (
+        <ul className={css.details}>
+          {existingListingFields.map(detail => (
+            <li key={detail.key} className={css.detailsRow}>
+              <span className={css.detailLabel}>{detail.label}</span>
+              <span>{detail.value}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <VendorPickupSchedule pickupSchedule={pickupSchedule} />
     </section>
   ) : null;
 };

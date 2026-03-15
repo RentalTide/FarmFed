@@ -238,3 +238,139 @@ export const validateGeofence = body => {
     body: JSON.stringify(body),
   });
 };
+
+// ====== Pickup Schedule Settings ====== //
+
+export const fetchPickupSettings = () => {
+  return request('/api/pickup-settings', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
+export const updatePickupSettings = body => {
+  return request('/api/pickup-settings', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+};
+
+// ====== Tax Settings ====== //
+
+export const fetchTaxSettings = () => {
+  return request('/api/tax-settings', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
+export const updateTaxSettings = body => {
+  return request('/api/tax-settings', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+};
+
+// ====== Bulletin Board ====== //
+
+export const fetchBulletins = () => {
+  return request('/api/bulletin-settings', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
+export const fetchAllBulletins = () => {
+  return request('/api/bulletin-settings/all', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
+export const updateBulletins = body => {
+  return request('/api/bulletin-settings', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+};
+
+// ====== Follow Vendor ====== //
+
+export const followVendor = ({ vendorId }) => {
+  return request('/api/follow-vendor', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ vendorId }),
+  });
+};
+
+export const unfollowVendor = ({ vendorId }) => {
+  return request('/api/follow-vendor', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ vendorId }),
+  });
+};
+
+export const fetchFollowedVendors = () => {
+  return request('/api/follow-vendor', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
+// ====== Order Group (Add to Existing Order) ====== //
+
+export const fetchActiveOrderGroup = () => {
+  return request('/api/active-order-group', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
+// ====== Delivery Problem Report ====== //
+
+export const reportDeliveryProblem = ({ transactionId, category, description }) => {
+  return request('/api/report-delivery-problem', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ transactionId, category, description }),
+  });
+};
+
+// ====== Notifications ====== //
+
+export const fetchNotifications = () => {
+  return request('/api/notifications', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
+export const notifyFollowers = ({ vendorId, listingId, listingTitle }) => {
+  return request('/api/notify-followers', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ vendorId, listingId, listingTitle }),
+  });
+};
+
+export const markNotificationsRead = () => {
+  return request('/api/notifications/read', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({}),
+  });
+};
+
+// ====== Daily Order Count ====== //
+
+export const fetchDailyOrderCount = ({ listingId }) => {
+  return request(`/api/daily-order-count?listingId=${listingId}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};

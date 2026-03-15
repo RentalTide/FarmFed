@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useIntl } from '../../../util/reactIntl';
 import { useConfiguration } from '../../../context/configurationContext';
+import appSettings from '../../../config/settings';
 
 import css from './GeofenceTab.module.css';
 
@@ -32,6 +33,8 @@ const loadCSS = href => {
 const GeofenceTab = props => {
   const {
     polygon,
+    vendorPolygon,
+    consumerPolygon,
     updateInProgress,
     updateSuccess,
     error,
@@ -45,6 +48,8 @@ const GeofenceTab = props => {
   const mapRef = useRef(null);
   const drawRef = useRef(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [activeLayer, setActiveLayer] = useState('consumer'); // 'consumer' or 'vendor'
+  const isDualMode = appSettings.featureFlags.dualServiceRadius;
 
   useEffect(() => {
     if (updateSuccess) {
@@ -129,7 +134,16 @@ const GeofenceTab = props => {
     const polygonFeature = data.features.find(f => f.geometry.type === 'Polygon');
 
     if (polygonFeature) {
-      onSaveGeofence({ polygon: polygonFeature.geometry });
+      if (isDualMode) {
+        // Save to the active layer
+        if (activeLayer === 'vendor') {
+          onSaveGeofence({ vendorPolygon: polygonFeature.geometry });
+        } else {
+          onSaveGeofence({ consumerPolygon: polygonFeature.geometry });
+        }
+      } else {
+        onSaveGeofence({ polygon: polygonFeature.geometry });
+      }
     }
   };
 
@@ -137,7 +151,47 @@ const GeofenceTab = props => {
     if (drawRef.current) {
       drawRef.current.deleteAll();
     }
-    onSaveGeofence({ polygon: null });
+    if (isDualMode) {
+      if (activeLayer === 'vendor') {
+        onSaveGeofence({ vendorPolygon: null });
+      } else {
+        onSaveGeofence({ consumerPolygon: null });
+      }
+    } else {
+      onSaveGeofence({ polygon: null });
+    }
+  };
+
+  // Load a specific polygon into the draw tool when switching layers
+  const loadPolygonIntoDraw = polygonData => {
+    if (!drawRef.current) return;
+    drawRef.current.deleteAll();
+    if (polygonData) {
+      drawRef.current.add({
+        type: 'Feature',
+        geometry: polygonData,
+        properties: {},
+      });
+      if (mapRef.current) {
+        const coords = polygonData.coordinates[0];
+        const mapboxgl = window.mapboxgl;
+        if (mapboxgl && coords.length > 0) {
+          const bounds = coords.reduce(
+            (b, coord) => b.extend(coord),
+            new mapboxgl.LngLatBounds(coords[0], coords[0])
+          );
+          mapRef.current.fitBounds(bounds, { padding: 50 });
+        }
+      }
+    }
+  };
+
+  const switchLayer = layer => {
+    setActiveLayer(layer);
+    if (mapLoaded) {
+      const poly = layer === 'vendor' ? vendorPolygon : (consumerPolygon || polygon);
+      loadPolygonIntoDraw(poly);
+    }
   };
 
   return (
@@ -145,6 +199,23 @@ const GeofenceTab = props => {
       <p className={css.description}>
         {intl.formatMessage({ id: 'AdminPage.geofenceDescription' })}
       </p>
+
+      {isDualMode ? (
+        <div className={css.layerSwitcher}>
+          <button
+            className={activeLayer === 'consumer' ? css.layerButtonActive : css.layerButton}
+            onClick={() => switchLayer('consumer')}
+          >
+            Consumer Area
+          </button>
+          <button
+            className={activeLayer === 'vendor' ? css.layerButtonActive : css.layerButton}
+            onClick={() => switchLayer('vendor')}
+          >
+            Vendor Area
+          </button>
+        </div>
+      ) : null}
 
       <div className={css.mapContainer} ref={mapContainerRef} />
 

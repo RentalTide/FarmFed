@@ -10,6 +10,7 @@ import { NEGOTIATION_PROCESS_NAME } from '../../../transactions/transaction';
 import { displayPrice } from '../../../util/configHelpers';
 
 import { AvatarLarge, NamedLink, UserDisplayName } from '../../../components';
+import appSettings from '../../../config/settings';
 
 import { stateDataShape } from '../TransactionPage.stateData';
 import SendMessageForm from '../SendMessageForm/SendMessageForm';
@@ -434,6 +435,21 @@ export class TransactionPanelComponent extends Component {
                 showDispute={stateData.showDispute}
                 onOpenDisputeModal={onOpenDisputeModal}
               />
+              {appSettings.featureFlags.deliveryProblemReport &&
+                isCustomer &&
+                deliveryMethod === 'shipping' &&
+                stateData.processState === 'delivered' ? (
+                <button
+                  className={css.reportProblemButton}
+                  onClick={() => {
+                    if (this.props.onOpenDeliveryProblemModal) {
+                      this.props.onOpenDeliveryProblemModal();
+                    }
+                  }}
+                >
+                  <FormattedMessage id="TransactionPanel.reportProblem" />
+                </button>
+              ) : null}
             </div>
           </div>
         </div>

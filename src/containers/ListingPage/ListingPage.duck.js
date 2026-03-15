@@ -3,7 +3,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { types as sdkTypes, createImageVariantConfig } from '../../util/sdkLoader';
 import { storableError } from '../../util/errors';
 import { addMarketplaceEntities } from '../../ducks/marketplaceData.duck';
-import { transactionLineItems } from '../../util/api';
+import { transactionLineItems, followVendor, unfollowVendor, fetchFollowedVendors, fetchDailyOrderCount } from '../../util/api';
 import * as log from '../../util/log';
 import { denormalisedResponseEntities } from '../../util/data';
 import {
@@ -347,6 +347,62 @@ export const fetchTransactionLineItems = ({ orderData, listingId, isOwnListing }
   return dispatch(fetchTransactionLineItemsThunk({ orderData, listingId, isOwnListing })).unwrap();
 };
 
+//////////////////////
+// Follow Vendor    //
+//////////////////////
+export const fetchFollowStatusThunk = createAsyncThunk(
+  'ListingPage/fetchFollowStatus',
+  ({ authorId }, { rejectWithValue }) => {
+    return fetchFollowedVendors()
+      .then(response => {
+        const followedVendorIds = response.data || [];
+        const isFollowing = followedVendorIds.includes(authorId);
+        return { isFollowing };
+      })
+      .catch(e => {
+        // Don't block page load for follow status errors
+        return rejectWithValue(storableError(e));
+      });
+  }
+);
+export const fetchFollowStatus = authorId => dispatch => {
+  return dispatch(fetchFollowStatusThunk({ authorId })).unwrap();
+};
+
+export const toggleFollowVendorThunk = createAsyncThunk(
+  'ListingPage/toggleFollowVendor',
+  ({ vendorId, isCurrentlyFollowing }, { rejectWithValue }) => {
+    const apiCall = isCurrentlyFollowing ? unfollowVendor : followVendor;
+    return apiCall({ vendorId })
+      .then(() => {
+        return { isFollowing: !isCurrentlyFollowing };
+      })
+      .catch(e => {
+        return rejectWithValue(storableError(e));
+      });
+  }
+);
+export const toggleFollowVendor = (vendorId, isCurrentlyFollowing) => dispatch => {
+  return dispatch(toggleFollowVendorThunk({ vendorId, isCurrentlyFollowing })).unwrap();
+};
+
+//////////////////////
+// Daily Order Count //
+//////////////////////
+export const fetchDailyOrderCountThunk = createAsyncThunk(
+  'ListingPage/fetchDailyOrderCount',
+  ({ listingId }, { rejectWithValue }) => {
+    return fetchDailyOrderCount({ listingId: listingId.uuid || listingId })
+      .then(response => {
+        return response.count || 0;
+      })
+      .catch(e => {
+        // Don't block page load for daily order count errors
+        return rejectWithValue(storableError(e));
+      });
+  }
+);
+
 // ================ Slice ================ //
 
 const initialState = {
@@ -377,6 +433,9 @@ const initialState = {
   sendInquiryInProgress: false,
   sendInquiryError: null,
   inquiryModalOpenForListingId: null,
+  isFollowing: false,
+  followInProgress: false,
+  dailyOrderCount: null,
 };
 
 const listingPageSlice = createSlice({
@@ -495,6 +554,28 @@ const listingPageSlice = createSlice({
       .addCase(fetchTransactionLineItemsThunk.rejected, (state, action) => {
         state.fetchLineItemsInProgress = false;
         state.fetchLineItemsError = action.payload;
+      })
+      .addCase(fetchFollowStatusThunk.fulfilled, (state, action) => {
+        state.isFollowing = action.payload.isFollowing;
+      })
+      .addCase(fetchFollowStatusThunk.rejected, (state, action) => {
+        state.isFollowing = false;
+      })
+      .addCase(toggleFollowVendorThunk.pending, state => {
+        state.followInProgress = true;
+      })
+      .addCase(toggleFollowVendorThunk.fulfilled, (state, action) => {
+        state.followInProgress = false;
+        state.isFollowing = action.payload.isFollowing;
+      })
+      .addCase(toggleFollowVendorThunk.rejected, (state, action) => {
+        state.followInProgress = false;
+      })
+      .addCase(fetchDailyOrderCountThunk.fulfilled, (state, action) => {
+        state.dailyOrderCount = action.payload;
+      })
+      .addCase(fetchDailyOrderCountThunk.rejected, (state, action) => {
+        state.dailyOrderCount = null;
       });
   },
 });
@@ -547,6 +628,19 @@ export const loadData = (params, search, config) => (dispatch, getState, sdk) =>
       // We are not interested to return them from loadData call.
       fetchMonthlyTimeSlots(dispatch, listing);
     }
+
+    // Fetch follow status if user is authenticated
+    const authorId = listing?.relationships?.author?.data?.id?.uuid;
+    if (isAuthorized && authorId) {
+      dispatch(fetchFollowStatus(authorId));
+    }
+
+    // Fetch daily order count for vendor order cap display
+    const maxOrdersPerDay = listing?.attributes?.publicData?.maxOrdersPerDay;
+    if (maxOrdersPerDay && typeof window !== 'undefined') {
+      dispatch(fetchDailyOrderCountThunk({ listingId }));
+    }
+
     return response;
   });
 };

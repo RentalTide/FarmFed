@@ -4,6 +4,7 @@ import { compose } from 'redux';
 import { useIntl } from '../../util/reactIntl';
 import { useHistory, useLocation } from 'react-router-dom';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
+import appSettings from '../../config/settings';
 import {
   Page,
   LayoutSingleColumn,
@@ -18,17 +19,29 @@ import {
   clearGeofenceUpdateSuccess,
   approveUser,
   rejectUser,
+  updatePickupSettings,
+  clearPickupUpdateSuccess,
+  updateTaxSettings,
+  clearTaxUpdateSuccess,
+  updateBulletins,
+  clearBulletinsUpdateSuccess,
 } from './AdminPage.duck';
 
 import DeliverySettingsTab from './DeliverySettingsTab/DeliverySettingsTab';
 import GeofenceTab from './GeofenceTab/GeofenceTab';
 import UserManagementTab from './UserManagementTab/UserManagementTab';
+import PickupScheduleTab from './PickupScheduleTab/PickupScheduleTab';
+import TaxSettingsTab from './TaxSettingsTab/TaxSettingsTab';
+import BulletinBoardTab from './BulletinBoardTab/BulletinBoardTab';
 
 import css from './AdminPage.module.css';
 
 const DELIVERY_TAB = 'delivery';
 const GEOFENCE_TAB = 'geofence';
 const USERS_TAB = 'users';
+const PICKUP_TAB = 'pickup';
+const TAX_TAB = 'tax';
+const BULLETIN_TAB = 'bulletin';
 
 const AdminPageComponent = props => {
   const {
@@ -39,6 +52,8 @@ const AdminPageComponent = props => {
     deliveryUpdateSuccess,
     deliveryError,
     geofencePolygon,
+    geofenceVendorPolygon,
+    geofenceConsumerPolygon,
     geofenceUpdateInProgress,
     geofenceUpdateSuccess,
     geofenceError,
@@ -47,6 +62,18 @@ const AdminPageComponent = props => {
     pendingUsersFetchError,
     userActionInProgress,
     userActionError,
+    pickupSettings,
+    pickupUpdateInProgress,
+    pickupUpdateSuccess,
+    pickupError,
+    taxSettings,
+    taxUpdateInProgress,
+    taxUpdateSuccess,
+    taxError,
+    bulletins,
+    bulletinsUpdateInProgress,
+    bulletinsUpdateSuccess,
+    bulletinsError,
     scrollingDisabled,
     onUpdateDeliverySettings,
     onClearDeliverySuccess,
@@ -54,6 +81,12 @@ const AdminPageComponent = props => {
     onClearGeofenceSuccess,
     onApproveUser,
     onRejectUser,
+    onUpdatePickupSettings,
+    onClearPickupSuccess,
+    onUpdateTaxSettings,
+    onClearTaxSuccess,
+    onUpdateBulletins,
+    onClearBulletinsSuccess,
   } = props;
 
   const intl = useIntl();
@@ -81,6 +114,17 @@ const AdminPageComponent = props => {
     history.push({ pathname: '/admin', search: `?tab=${tab}` });
   };
 
+  const flags = appSettings.featureFlags;
+
+  const tabs = [
+    { id: DELIVERY_TAB, label: 'AdminPage.deliveryTab', show: true },
+    { id: GEOFENCE_TAB, label: 'AdminPage.geofenceTab', show: true },
+    { id: USERS_TAB, label: 'AdminPage.usersTab', show: true },
+    { id: PICKUP_TAB, label: 'AdminPage.pickupTab', show: flags.pickupSchedule },
+    { id: TAX_TAB, label: 'AdminPage.taxTab', show: flags.taxBreakdown },
+    { id: BULLETIN_TAB, label: 'AdminPage.bulletinTab', show: flags.vendorBulletin },
+  ].filter(t => t.show);
+
   return (
     <Page title={intl.formatMessage({ id: 'AdminPage.title' })} scrollingDisabled={scrollingDisabled}>
       <LayoutSingleColumn topbar={<TopbarContainer />} footer={<FooterContainer />}>
@@ -91,24 +135,15 @@ const AdminPageComponent = props => {
             </h1>
 
             <nav className={css.tabs}>
-              <button
-                className={activeTab === DELIVERY_TAB ? css.tabSelected : css.tab}
-                onClick={() => switchTab(DELIVERY_TAB)}
-              >
-                {intl.formatMessage({ id: 'AdminPage.deliveryTab' })}
-              </button>
-              <button
-                className={activeTab === GEOFENCE_TAB ? css.tabSelected : css.tab}
-                onClick={() => switchTab(GEOFENCE_TAB)}
-              >
-                {intl.formatMessage({ id: 'AdminPage.geofenceTab' })}
-              </button>
-              <button
-                className={activeTab === USERS_TAB ? css.tabSelected : css.tab}
-                onClick={() => switchTab(USERS_TAB)}
-              >
-                {intl.formatMessage({ id: 'AdminPage.usersTab' })}
-              </button>
+              {tabs.map(tab => (
+                <button
+                  key={tab.id}
+                  className={activeTab === tab.id ? css.tabSelected : css.tab}
+                  onClick={() => switchTab(tab.id)}
+                >
+                  {intl.formatMessage({ id: tab.label })}
+                </button>
+              ))}
             </nav>
 
             {activeTab === DELIVERY_TAB && (
@@ -125,6 +160,8 @@ const AdminPageComponent = props => {
             {activeTab === GEOFENCE_TAB && (
               <GeofenceTab
                 polygon={geofencePolygon}
+                vendorPolygon={geofenceVendorPolygon}
+                consumerPolygon={geofenceConsumerPolygon}
                 updateInProgress={geofenceUpdateInProgress}
                 updateSuccess={geofenceUpdateSuccess}
                 error={geofenceError}
@@ -144,6 +181,39 @@ const AdminPageComponent = props => {
                 onRejectUser={onRejectUser}
               />
             )}
+
+            {activeTab === PICKUP_TAB && flags.pickupSchedule && (
+              <PickupScheduleTab
+                pickupSettings={pickupSettings}
+                updateInProgress={pickupUpdateInProgress}
+                updateSuccess={pickupUpdateSuccess}
+                error={pickupError}
+                onUpdateSettings={onUpdatePickupSettings}
+                onClearSuccess={onClearPickupSuccess}
+              />
+            )}
+
+            {activeTab === TAX_TAB && flags.taxBreakdown && (
+              <TaxSettingsTab
+                taxSettings={taxSettings}
+                updateInProgress={taxUpdateInProgress}
+                updateSuccess={taxUpdateSuccess}
+                error={taxError}
+                onUpdateSettings={onUpdateTaxSettings}
+                onClearSuccess={onClearTaxSuccess}
+              />
+            )}
+
+            {activeTab === BULLETIN_TAB && flags.vendorBulletin && (
+              <BulletinBoardTab
+                bulletins={bulletins}
+                updateInProgress={bulletinsUpdateInProgress}
+                updateSuccess={bulletinsUpdateSuccess}
+                error={bulletinsError}
+                onUpdateBulletins={onUpdateBulletins}
+                onClearSuccess={onClearBulletinsSuccess}
+              />
+            )}
           </div>
         </div>
       </LayoutSingleColumn>
@@ -160,6 +230,8 @@ const mapStateToProps = state => {
     deliveryUpdateSuccess,
     deliveryError,
     geofencePolygon,
+    geofenceVendorPolygon,
+    geofenceConsumerPolygon,
     geofenceUpdateInProgress,
     geofenceUpdateSuccess,
     geofenceError,
@@ -168,6 +240,18 @@ const mapStateToProps = state => {
     pendingUsersFetchError,
     userActionInProgress,
     userActionError,
+    pickupSettings,
+    pickupUpdateInProgress,
+    pickupUpdateSuccess,
+    pickupError,
+    taxSettings,
+    taxUpdateInProgress,
+    taxUpdateSuccess,
+    taxError,
+    bulletins,
+    bulletinsUpdateInProgress,
+    bulletinsUpdateSuccess,
+    bulletinsError,
   } = state.AdminPage;
 
   return {
@@ -178,6 +262,8 @@ const mapStateToProps = state => {
     deliveryUpdateSuccess,
     deliveryError,
     geofencePolygon,
+    geofenceVendorPolygon,
+    geofenceConsumerPolygon,
     geofenceUpdateInProgress,
     geofenceUpdateSuccess,
     geofenceError,
@@ -186,6 +272,18 @@ const mapStateToProps = state => {
     pendingUsersFetchError,
     userActionInProgress,
     userActionError,
+    pickupSettings,
+    pickupUpdateInProgress,
+    pickupUpdateSuccess,
+    pickupError,
+    taxSettings,
+    taxUpdateInProgress,
+    taxUpdateSuccess,
+    taxError,
+    bulletins,
+    bulletinsUpdateInProgress,
+    bulletinsUpdateSuccess,
+    bulletinsError,
     scrollingDisabled: isScrollingDisabled(state),
   };
 };
@@ -197,6 +295,12 @@ const mapDispatchToProps = dispatch => ({
   onClearGeofenceSuccess: () => dispatch(clearGeofenceUpdateSuccess()),
   onApproveUser: userId => dispatch(approveUser({ userId })),
   onRejectUser: userId => dispatch(rejectUser({ userId })),
+  onUpdatePickupSettings: params => dispatch(updatePickupSettings(params)),
+  onClearPickupSuccess: () => dispatch(clearPickupUpdateSuccess()),
+  onUpdateTaxSettings: params => dispatch(updateTaxSettings(params)),
+  onClearTaxSuccess: () => dispatch(clearTaxUpdateSuccess()),
+  onUpdateBulletins: params => dispatch(updateBulletins(params)),
+  onClearBulletinsSuccess: () => dispatch(clearBulletinsUpdateSuccess()),
 });
 
 const AdminPage = compose(

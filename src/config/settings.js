@@ -13,6 +13,21 @@ const appSettings = {
   dev: process.env.REACT_APP_ENV === 'development',
   verbose: false,
 
+  // Feature flags — toggle marketplace features on/off
+  featureFlags: {
+    pickupSchedule: true,        // #1 - Saturday-only pickup + admin day config
+    dualServiceRadius: true,     // #2 - Separate vendor/consumer geofences
+    vendorPickupSchedules: true, // #3 - Vendor pickup day/time windows
+    soldOutVisibility: false,     // #4 - "Back Next Week" vs hide
+    orderMaxPerDay: false,        // #5 - Vendor daily order cap
+    addToExistingOrder: true,    // #6 - Amend orders before cutoff
+    vendorFollow: true,          // #7 - Follow vendors + notifications
+    taxBreakdown: true,          // #8 - Sales tax line items
+    inboxRedesign: true,         // #9 - New/Completed/Messages tabs
+    deliveryProblemReport: true, // #10 - Problem reporting for deliveries
+    vendorBulletin: false,        // #11 - Promotional vendor bulletin board
+  },
+
   sdk: {
     clientId: process.env.REACT_APP_SHARETRIBE_SDK_CLIENT_ID,
     baseUrl: process.env.REACT_APP_SHARETRIBE_SDK_BASE_URL,

@@ -78,6 +78,78 @@
   }
 }
 
+.pickupScheduleSection {
+  margin-top: 24px;
+  margin-bottom: 24px;
+  padding: 16px;
+  border: 1px solid var(--colorGrey100, #e0e0e0);
+  border-radius: 8px;
+}
+
+.pickupScheduleTitle {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: var(--fontWeightBold);
+}
+
+.pickupScheduleDescription {
+  font-size: 13px;
+  color: var(--colorGrey500);
+  margin: 0 0 16px;
+}
+
+.pickupSlot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.pickupDaySelect {
+  padding: 6px 8px;
+  border: 1px solid var(--colorGrey100, #e0e0e0);
+  border-radius: 4px;
+  font-size: 14px;
+  min-width: 120px;
+}
+
+.pickupTimeInput {
+  padding: 6px 8px;
+  border: 1px solid var(--colorGrey100, #e0e0e0);
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.pickupTimeSeparator {
+  font-size: 14px;
+  color: var(--colorGrey500);
+}
+
+.pickupRemoveSlot {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--colorFail);
+  padding: 0 4px;
+}
+
+.pickupAddSlot {
+  background: none;
+  border: 1px dashed var(--marketplaceColor);
+  color: var(--marketplaceColor);
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: var(--fontWeightMedium);
+}
+
+.pickupAddSlot:hover {
+  background-color: var(--marketplaceColor);
+  color: #fff;
+}
+
 .submitButton {
   margin-top: auto;
   margin-bottom: 24px;

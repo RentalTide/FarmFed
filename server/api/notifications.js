@@ -1,0 +1,91 @@
+const { getSdk, getIntegrationSdk, handleError } = require('../api-util/sdk');
+const { addNotification, getNotificationsForUser, markReadForUser } = require('../api-util/notifications');
+
+/**
+ * GET /api/notifications — fetch unread notifications for the current user
+ */
+const getNotificationsHandler = async (req, res) => {
+  const sdk = getSdk(req, res);
+
+  try {
+    const response = await sdk.currentUser.show({ include: [] });
+    const userId = response.data.data.id.uuid;
+    const notifications = getNotificationsForUser(userId);
+
+    res.status(200).json({ notifications });
+  } catch (e) {
+    handleError(res, e);
+  }
+};
+
+/**
+ * POST /api/notify-followers — vendor triggers notification to followers
+ * Body: { vendorId, listingId, listingTitle }
+ */
+const notifyFollowersHandler = async (req, res) => {
+  const sdk = getSdk(req, res);
+
+  try {
+    const { vendorId, listingId, listingTitle } = req.body || {};
+    if (!vendorId || !listingId) {
+      return res.status(400).json({ error: 'vendorId and listingId are required' });
+    }
+
+    // Verify the caller is the vendor
+    const currentUserResponse = await sdk.currentUser.show({ include: [] });
+    const currentUserId = currentUserResponse.data.data.id.uuid;
+    if (currentUserId !== vendorId) {
+      return res.status(403).json({ error: 'Can only notify for your own listings' });
+    }
+
+    const vendorName = currentUserResponse.data.data.attributes.profile.displayName || 'A vendor';
+
+    // Use integration SDK to find users who follow this vendor
+    const integrationSdk = getIntegrationSdk();
+    // Query all users — in production, you'd want pagination; for now we fetch up to 100
+    const usersResponse = await integrationSdk.users.query({ perPage: 100 });
+    const users = usersResponse.data.data || [];
+
+    let notifiedCount = 0;
+    for (const user of users) {
+      const privateData = user.attributes.profile.privateData || {};
+      const followedVendors = Array.isArray(privateData.followedVendors)
+        ? privateData.followedVendors
+        : [];
+
+      if (followedVendors.includes(vendorId)) {
+        addNotification({
+          userId: user.id.uuid,
+          vendorId,
+          vendorName,
+          listingId,
+          listingTitle: listingTitle || 'a new listing',
+        });
+        notifiedCount++;
+      }
+    }
+
+    res.status(200).json({ notifiedCount });
+  } catch (e) {
+    handleError(res, e);
+  }
+};
+
+/**
+ * PUT /api/notifications/read — mark all notifications as read for current user
+ */
+const markReadHandler = async (req, res) => {
+  const sdk = getSdk(req, res);
+
+  try {
+    const response = await sdk.currentUser.show({ include: [] });
+    const userId = response.data.data.id.uuid;
+    markReadForUser(userId);
+
+    res.status(200).json({ success: true });
+  } catch (e) {
+    handleError(res, e);
+  }
+};
+
+module.exports = { getNotificationsHandler, notifyFollowersHandler, markReadHandler };

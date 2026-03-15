@@ -37,6 +37,7 @@ import {
 } from '../../transactions/transaction';
 
 import { ModalInMobile, PrimaryButton, AvatarSmall, H1, H2 } from '../../components';
+import appSettings from '../../config/settings';
 import PriceVariantPicker from './PriceVariantPicker/PriceVariantPicker';
 import SubmitFinePrint from './SubmitFinePrint/SubmitFinePrint';
 
@@ -305,6 +306,7 @@ const OrderPanel = props => {
     fetchLineItemsError,
     payoutDetailsWarning,
     showListingImage,
+    dailyOrderCount,
   } = props;
 
   const publicData = listing?.attributes?.publicData || {};
@@ -344,6 +346,15 @@ const OrderPanel = props => {
   const shouldHavePurchase = isPurchase && lineItemUnitType === LINE_ITEM_ITEM;
   const currentStock = listing.currentStock?.attributes?.quantity;
   const isOutOfStock = shouldHavePurchase && !isClosed && currentStock === 0;
+
+  // Feature 5: Daily order cap
+  const maxOrdersPerDay = publicData?.maxOrdersPerDay;
+  const hasOrderCap =
+    appSettings.featureFlags.orderMaxPerDay && shouldHavePurchase && maxOrdersPerDay > 0;
+  const isSoldOutForToday = hasOrderCap && typeof dailyOrderCount === 'number' && dailyOrderCount >= maxOrdersPerDay;
+  const ordersRemaining = hasOrderCap && typeof dailyOrderCount === 'number'
+    ? Math.max(0, maxOrdersPerDay - dailyOrderCount)
+    : null;
 
   // Show form only when stock is fully loaded. This avoids "Out of stock" UI by
   // default before all data has been downloaded.
@@ -469,6 +480,19 @@ const OrderPanel = props => {
           </span>
         </div>
 
+        {hasOrderCap && ordersRemaining !== null ? (
+          <div className={css.orderCapInfo}>
+            {isSoldOutForToday ? (
+              <FormattedMessage id="OrderPanel.soldOutForToday" />
+            ) : (
+              <FormattedMessage
+                id="OrderPanel.ordersRemainingToday"
+                values={{ count: ordersRemaining }}
+              />
+            )}
+          </div>
+        ) : null}
+
         {showPriceMissing ? (
           <PriceMissing />
         ) : showInvalidCurrency ? (
@@ -585,7 +609,7 @@ const OrderPanel = props => {
               history,
               location
             )}
-            disabled={isOutOfStock}
+            disabled={isOutOfStock || isSoldOutForToday}
           >
             {isBooking ? (
               <FormattedMessage id="OrderPanel.ctaButtonMessageBooking" />

@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useState, useEffect } from 'react';
 import { connect } from 'react-redux';
 import { compose } from 'redux';
 import { useHistory, useLocation } from 'react-router-dom';
@@ -35,7 +35,8 @@ import {
 import { getListingsById } from '../../ducks/marketplaceData.duck';
 import { manageDisableScrolling, isScrollingDisabled } from '../../ducks/ui.duck';
 
-import { H3, H5, NamedRedirect, Page } from '../../components';
+import { H3, H5, NamedRedirect, Page, VendorBulletin } from '../../components';
+import { fetchBulletins } from '../../util/api';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
 
@@ -236,6 +237,7 @@ export class SearchPageComponent extends Component {
       config,
       params: currentPathParams = {},
       currentUser,
+      bulletins,
     } = this.props;
 
     // If the search page variant is of type /s/:listingType, this defines the :listingType
@@ -474,6 +476,7 @@ export class SearchPageComponent extends Component {
                 searchListingsError={searchListingsError}
                 noResultsInfo={noResultsInfo}
               />
+              <VendorBulletin bulletins={bulletins} />
               <div
                 className={classNames(css.listingsForGridVariant, {
                   [css.newSearchInProgress]: !(listingsAreLoaded || searchListingsError),
@@ -529,6 +532,14 @@ const EnhancedSearchPage = props => {
   const history = useHistory();
   const location = useLocation();
 
+  // Fetch vendor bulletins on mount
+  const [bulletins, setBulletins] = useState([]);
+  useEffect(() => {
+    fetchBulletins()
+      .then(data => setBulletins(data.bulletins || []))
+      .catch(() => {});
+  }, []);
+
   const searchListingsError = props.searchListingsError;
   if (isForbiddenError(searchListingsError)) {
     // This can happen if private marketplace mode is active
@@ -571,6 +582,7 @@ const EnhancedSearchPage = props => {
       history={history}
       location={location}
       currentUser={currentUser}
+      bulletins={bulletins}
       {...restOfProps}
     />
   );

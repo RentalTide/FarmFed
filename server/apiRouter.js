@@ -22,6 +22,15 @@ const { getHandler: getGeofenceSettings, putHandler: putGeofenceSettings } = req
 const validateGeofence = require('./api/validate-geofence');
 const estimateCartDelivery = require('./api/estimate-cart-delivery');
 
+const { getHandler: getPickupSettings, putHandler: putPickupSettings } = require('./api/pickup-settings');
+const { getHandler: getTaxSettings, putHandler: putTaxSettings } = require('./api/tax-settings');
+const { getHandler: getBulletins, putHandler: putBulletins, getAllHandler: getAllBulletins } = require('./api/bulletin-settings');
+const { followHandler, unfollowHandler, getFollowedHandler } = require('./api/follow-vendor');
+const activeOrderGroup = require('./api/active-order-group');
+const reportDeliveryProblem = require('./api/report-delivery-problem');
+const dailyOrderCount = require('./api/daily-order-count');
+const { getNotificationsHandler, notifyFollowersHandler, markReadHandler } = require('./api/notifications');
+
 const adminPendingUsers = require('./api/admin/pending-users');
 const adminApproveUser = require('./api/admin/approve-user');
 const adminRejectUser = require('./api/admin/reject-user');
@@ -68,6 +77,15 @@ router.use('/estimate-cart-delivery', bodyParser.json());
 router.use('/admin', bodyParser.json());
 router.use('/create-onfleet-task', bodyParser.json());
 router.use('/onfleet-webhook', bodyParser.json());
+router.use('/pickup-settings', bodyParser.json());
+router.use('/tax-settings', bodyParser.json());
+router.use('/bulletin-settings', bodyParser.json());
+router.use('/follow-vendor', bodyParser.json());
+router.use('/active-order-group', bodyParser.json());
+router.use('/report-delivery-problem', bodyParser.json());
+router.use('/daily-order-count', bodyParser.json());
+router.use('/notifications', bodyParser.json());
+router.use('/notify-followers', bodyParser.json());
 
 // ================ API router endpoints: ================ //
 
@@ -87,6 +105,38 @@ router.get('/geofence-settings', getGeofenceSettings);
 router.put('/geofence-settings', putGeofenceSettings);
 router.post('/validate-geofence', validateGeofence);
 router.post('/estimate-cart-delivery', estimateCartDelivery);
+
+// Pickup schedule settings endpoints
+router.get('/pickup-settings', getPickupSettings);
+router.put('/pickup-settings', putPickupSettings);
+
+// Tax settings endpoints
+router.get('/tax-settings', getTaxSettings);
+router.put('/tax-settings', putTaxSettings);
+
+// Bulletin board endpoints
+router.get('/bulletin-settings', getBulletins);
+router.put('/bulletin-settings', putBulletins);
+router.get('/bulletin-settings/all', getAllBulletins);
+
+// Vendor follow endpoints
+router.post('/follow-vendor', followHandler);
+router.delete('/follow-vendor', unfollowHandler);
+router.get('/follow-vendor', getFollowedHandler);
+
+// Order group endpoint (for add-to-existing-order feature)
+router.get('/active-order-group', activeOrderGroup);
+
+// Delivery problem reporting
+router.post('/report-delivery-problem', reportDeliveryProblem);
+
+// Daily order count for vendor order cap
+router.get('/daily-order-count', dailyOrderCount);
+
+// Notification endpoints
+router.get('/notifications', getNotificationsHandler);
+router.post('/notify-followers', notifyFollowersHandler);
+router.put('/notifications/read', markReadHandler);
 
 // Admin user management endpoints
 router.get('/admin/pending-users', adminPendingUsers);

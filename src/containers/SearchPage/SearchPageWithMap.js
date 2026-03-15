@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useState, useEffect } from 'react';
 import { connect } from 'react-redux';
 import { compose } from 'redux';
 import { useHistory, useLocation } from 'react-router-dom';
@@ -36,7 +36,8 @@ import {
 import { getListingsById } from '../../ducks/marketplaceData.duck';
 import { manageDisableScrolling, isScrollingDisabled } from '../../ducks/ui.duck';
 
-import { H3, H5, ModalInMobile, NamedRedirect, Page } from '../../components';
+import { H3, H5, ModalInMobile, NamedRedirect, Page, VendorBulletin } from '../../components';
+import { fetchBulletins } from '../../util/api';
 import TopbarContainer from '../../containers/TopbarContainer/TopbarContainer';
 
 import { setActiveListing } from './SearchPage.duck';
@@ -351,6 +352,7 @@ export class SearchPageComponent extends Component {
       config,
       params: currentPathParams = {},
       currentUser,
+      bulletins,
     } = this.props;
 
     // If the search page variant is of type /s/:listingType, this defines the :listingType
@@ -612,6 +614,7 @@ export class SearchPageComponent extends Component {
                 })}
               </SearchFiltersPrimary>
             </MainPanelHeader>
+            <VendorBulletin bulletins={bulletins} />
             {isSecondaryFiltersOpen ? (
               <div className={classNames(css.searchFiltersPanel)}>
                 <SearchFiltersSecondary
@@ -731,6 +734,14 @@ const EnhancedSearchPage = props => {
   const history = useHistory();
   const location = useLocation();
 
+  // Fetch vendor bulletins on mount
+  const [bulletins, setBulletins] = useState([]);
+  useEffect(() => {
+    fetchBulletins()
+      .then(data => setBulletins(data.bulletins || []))
+      .catch(() => {});
+  }, []);
+
   const searchListingsError = props.searchListingsError;
   if (isForbiddenError(searchListingsError)) {
     // This can happen if private marketplace mode is active
@@ -773,6 +784,7 @@ const EnhancedSearchPage = props => {
       history={history}
       location={location}
       currentUser={currentUser}
+      bulletins={bulletins}
       {...restOfProps}
     />
   );

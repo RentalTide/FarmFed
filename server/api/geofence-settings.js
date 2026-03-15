@@ -1,9 +1,21 @@
-const { getGeofence, setGeofence } = require('../api-util/geofence');
+const { getGeofence, setGeofence, getVendorPolygon, getConsumerPolygon, setDualGeofence } = require('../api-util/geofence');
 const { getSdk, handleError } = require('../api-util/sdk');
+
+const isValidPolygon = polygon => {
+  return (
+    polygon &&
+    polygon.type === 'Polygon' &&
+    Array.isArray(polygon.coordinates) &&
+    Array.isArray(polygon.coordinates[0]) &&
+    polygon.coordinates[0].length >= 4
+  );
+};
 
 const getHandler = (req, res) => {
   const polygon = getGeofence();
-  res.status(200).json({ polygon });
+  const vendorPolygon = getVendorPolygon();
+  const consumerPolygon = getConsumerPolygon();
+  res.status(200).json({ polygon, vendorPolygon, consumerPolygon });
 };
 
 const putHandler = (req, res) => {
@@ -19,27 +31,41 @@ const putHandler = (req, res) => {
         return res.status(403).json({ error: 'Forbidden: admin access required' });
       }
 
-      const { polygon } = req.body || {};
+      const { polygon, vendorPolygon, consumerPolygon } = req.body || {};
 
-      // Allow null to clear the geofence
-      if (polygon === null) {
-        setGeofence(null);
-        return res.status(200).json({ polygon: null });
+      // Support dual polygon update
+      if (vendorPolygon !== undefined || consumerPolygon !== undefined) {
+        if (vendorPolygon !== null && vendorPolygon !== undefined && !isValidPolygon(vendorPolygon)) {
+          return res.status(400).json({ error: 'Invalid vendor polygon' });
+        }
+        if (consumerPolygon !== null && consumerPolygon !== undefined && !isValidPolygon(consumerPolygon)) {
+          return res.status(400).json({ error: 'Invalid consumer polygon' });
+        }
+
+        setDualGeofence({
+          vendorPolygon: vendorPolygon || getVendorPolygon(),
+          consumerPolygon: consumerPolygon || getConsumerPolygon(),
+        });
+
+        return res.status(200).json({
+          polygon: getGeofence(),
+          vendorPolygon: getVendorPolygon(),
+          consumerPolygon: getConsumerPolygon(),
+        });
       }
 
-      // Validate GeoJSON Polygon shape
-      if (
-        !polygon ||
-        polygon.type !== 'Polygon' ||
-        !Array.isArray(polygon.coordinates) ||
-        !Array.isArray(polygon.coordinates[0]) ||
-        polygon.coordinates[0].length < 4
-      ) {
+      // Legacy single polygon update
+      if (polygon === null) {
+        setGeofence(null);
+        return res.status(200).json({ polygon: null, vendorPolygon: getVendorPolygon(), consumerPolygon: null });
+      }
+
+      if (!isValidPolygon(polygon)) {
         return res.status(400).json({ error: 'Invalid polygon: must be a GeoJSON Polygon with at least 4 coordinates' });
       }
 
       setGeofence(polygon);
-      res.status(200).json({ polygon });
+      res.status(200).json({ polygon, vendorPolygon: getVendorPolygon(), consumerPolygon: polygon });
     })
     .catch(e => {
       handleError(res, e);

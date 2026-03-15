@@ -1,0 +1,104 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--borderRadiusMedium);
+  background-color: var(--colorGrey50);
+  border: 1px solid var(--colorGrey100);
+}
+
+.bulletinTrack {
+  width: 100%;
+}
+
+.bulletin {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+
+  @media (--viewportMedium) {
+    flex-direction: row;
+  }
+}
+
+.image {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+
+  @media (--viewportMedium) {
+    width: 240px;
+    max-height: none;
+    min-height: 140px;
+  }
+}
+
+.content {
+  padding: 16px;
+  flex: 1;
+
+  @media (--viewportMedium) {
+    padding: 20px 24px;
+  }
+}
+
+.title {
+  margin: 0 0 8px 0;
+  font-family: var(--fontFamily);
+  font-weight: var(--fontWeightBold);
+  font-size: 18px;
+  line-height: 24px;
+  color: var(--colorGrey900);
+
+  @media (--viewportMedium) {
+    font-size: 20px;
+    line-height: 28px;
+  }
+}
+
+.description {
+  margin: 0;
+  font-family: var(--fontFamily);
+  font-weight: var(--fontWeightRegular);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--colorGrey700);
+
+  @media (--viewportMedium) {
+    font-size: 16px;
+    line-height: 24px;
+  }
+}
+
+.dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background-color: var(--colorGrey300);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: var(--colorGrey500);
+  }
+}
+
+.dotActive {
+  background-color: var(--marketplaceColor);
+
+  &:hover {
+    background-color: var(--marketplaceColor);
+  }
+}

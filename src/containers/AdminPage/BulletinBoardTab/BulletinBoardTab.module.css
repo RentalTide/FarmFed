@@ -1,0 +1,180 @@
+@import '../../../styles/customMediaQueries.css';
+
+.description {
+  color: var(--colorGrey700, #4a4a4a);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.bulletinList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.bulletinItem {
+  padding: 16px;
+  border: 1px solid var(--colorGrey100, #e0e0e0);
+  border-radius: 4px;
+  background-color: white;
+}
+
+.bulletinContent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bulletinHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.bulletinItemTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: var(--fontWeightBold);
+}
+
+.bulletinActions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.editButton {
+  background: none;
+  border: 1px solid var(--marketplaceColor);
+  color: var(--marketplaceColor);
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.editButton:hover {
+  background-color: var(--marketplaceColor);
+  color: white;
+}
+
+.deleteButton {
+  background: none;
+  border: 1px solid var(--colorFail, #ff0000);
+  color: var(--colorFail, #ff0000);
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.deleteButton:hover {
+  background-color: var(--colorFail, #ff0000);
+  color: white;
+}
+
+.bulletinItemDescription {
+  margin: 0;
+  color: var(--colorGrey700, #4a4a4a);
+  line-height: 1.5;
+}
+
+.bulletinDates {
+  font-size: 13px;
+  color: var(--colorGrey500, #b2b2b2);
+}
+
+.emptyMessage {
+  color: var(--colorGrey500, #b2b2b2);
+  font-style: italic;
+  margin-bottom: 24px;
+}
+
+.bulletinForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.label {
+  font-weight: var(--fontWeightMedium);
+  margin-bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input {
+  padding: 8px 12px;
+  border: 1px solid var(--colorGrey100, #e0e0e0);
+  border-radius: 4px;
+  font-size: 16px;
+  width: 100%;
+}
+
+.textarea {
+  padding: 8px 12px;
+  border: 1px solid var(--colorGrey100, #e0e0e0);
+  border-radius: 4px;
+  font-size: 16px;
+  width: 100%;
+  resize: vertical;
+  font-family: var(--fontFamily);
+}
+
+.dateRow {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.dateInput {
+  padding: 8px 12px;
+  border: 1px solid var(--colorGrey100, #e0e0e0);
+  border-radius: 4px;
+  font-size: 16px;
+  width: 180px;
+}
+
+.formActions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.submitButton {
+  composes: buttonDefault from global;
+  max-width: 200px;
+}
+
+.cancelButton {
+  background: none;
+  border: 1px solid var(--colorGrey100, #e0e0e0);
+  padding: 8px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--colorGrey700, #4a4a4a);
+}
+
+.cancelButton:hover {
+  background-color: var(--colorGrey50, #f9f9f9);
+}
+
+.addButton {
+  composes: buttonDefault from global;
+  max-width: 200px;
+  margin-top: 8px;
+}
+
+.successMessage {
+  color: var(--colorSuccess);
+  margin-top: 12px;
+}
+
+.errorMessage {
+  color: var(--colorFail);
+  margin-top: 12px;
+}

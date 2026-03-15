@@ -33,6 +33,7 @@ import {
   isNegotiationProcess,
 } from '../../transactions/transaction';
 
+import appSettings from '../../config/settings';
 import { getMarketplaceEntities } from '../../ducks/marketplaceData.duck';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 import {
@@ -68,15 +69,10 @@ const getUnitLineItem = lineItems => {
 // Booking data (start & end) are bit different depending on display times and
 // if "end" refers to last day booked or the first exclusive day
 const bookingData = (tx, lineItemUnitType, timeZone) => {
-  // Attributes: displayStart and displayEnd can be used to differentiate shown time range
-  // from actual start and end times used for availability reservation. It can help in situations
-  // where there are preparation time needed between bookings.
-  // Read more: https://www.sharetribe.com/api-reference/marketplace.html#bookings
   const { start, end, displayStart, displayEnd } = tx.booking.attributes;
   const bookingStart = displayStart || start;
   const bookingEndRaw = displayEnd || end;
 
-  // LINE_ITEM_DAY uses exclusive end day, so we subtract one day from the end date
   const isDayBooking = [LINE_ITEM_DAY].includes(lineItemUnitType);
   const bookingEnd = isDayBooking
     ? subtractTime(bookingEndRaw, 1, 'days', timeZone)
@@ -142,14 +138,6 @@ const handleSortSelect = (tab, routeConfiguration, history) => urlParam => {
 
 /**
  * The InboxItem component.
- *
- * @component
- * @param {Object} props
- * @param {TX_TRANSITION_ACTOR_CUSTOMER | TX_TRANSITION_ACTOR_PROVIDER} props.transactionRole - The transaction role
- * @param {propTypes.transaction} props.tx - The transaction
- * @param {intlShape} props.intl - The intl object
- * @param {stateDataShape} props.stateData - The state data
- * @returns {JSX.Element} inbox item component
  */
 export const InboxItem = props => {
   const {
@@ -232,23 +220,12 @@ export const InboxItem = props => {
   );
 };
 
+// Valid tab names
+const LEGACY_TABS = ['orders', 'sales'];
+const REDESIGNED_TABS = ['new-orders', 'completed', 'messages', 'orders', 'sales'];
+
 /**
  * The InboxPage component.
- *
- * @component
- * @param {Object} props
- * @param {Object} props.currentUser - The current user
- * @param {boolean} props.fetchInProgress - Whether the fetch is in progress
- * @param {propTypes.error} props.fetchOrdersOrSalesError - The fetch orders or sales error
- * @param {propTypes.pagination} props.pagination - The pagination object
- * @param {Object} props.params - The params object
- * @param {string} props.params.tab - The tab
- * @param {number} props.providerNotificationCount - The provider notification count
- * @param {number} props.customerNotificationCount - The customer notification count
- * @param {boolean} props.scrollingDisabled - Whether scrolling is disabled
- * @param {Array<propTypes.transaction>} props.transactions - The transactions array
- * @param {Object} props.intl - The intl object
- * @returns {JSX.Element} inbox page component
  */
 export const InboxPageComponent = props => {
   const config = useConfiguration();
@@ -268,7 +245,11 @@ export const InboxPageComponent = props => {
     transactions,
   } = props;
   const { tab } = params;
-  const validTab = tab === 'orders' || tab === 'sales';
+
+  const useRedesign = appSettings.featureFlags.inboxRedesign;
+  const validTabs = useRedesign ? REDESIGNED_TABS : LEGACY_TABS;
+  const validTab = validTabs.includes(tab);
+
   if (!validTab) {
     return <NotFoundPage staticContext={props.staticContext} />;
   }
@@ -278,7 +259,7 @@ export const InboxPageComponent = props => {
     currentUser
   );
 
-  const isOrders = tab === 'orders';
+  const isOrders = tab === 'orders' || tab === 'new-orders' || tab === 'completed' || tab === 'messages';
   const hasNoResults = !fetchInProgress && transactions.length === 0 && !fetchOrdersOrSalesError;
   const ordersTitle = intl.formatMessage({ id: 'InboxPage.ordersTitle' });
   const salesTitle = intl.formatMessage({ id: 'InboxPage.salesTitle' });
@@ -310,7 +291,6 @@ export const InboxPageComponent = props => {
     const isPurchase = isPurchaseProcess(transactionProcess);
     const isNegotiation = isNegotiationProcess(transactionProcess);
 
-    // Render InboxItem only if the latest transition of the transaction is handled in the `txState` function.
     return stateData ? (
       <li key={tx.id.uuid} className={css.listItem}>
         <InboxItem
@@ -335,47 +315,120 @@ export const InboxPageComponent = props => {
   const hasTransactions =
     !fetchInProgress && hasOrderOrSaleTransactions(transactions, isOrders, currentUser);
 
-  const ordersTabMaybe = isCustomerUserType
-    ? [
-        {
-          text: (
-            <span>
-              <FormattedMessage id="InboxPage.ordersTabTitle" />
-              {customerNotificationCount > 0 ? (
-                <NotificationBadge count={customerNotificationCount} />
-              ) : null}
-            </span>
-          ),
-          selected: isOrders,
-          linkProps: {
-            name: 'InboxPage',
-            params: { tab: 'orders' },
-          },
+  // Build tabs based on feature flag
+  let tabs = [];
+  if (useRedesign) {
+    // Redesigned tabs: New Orders, Completed, Messages
+    tabs = [
+      {
+        text: (
+          <span>
+            <FormattedMessage id="InboxPage.newOrdersTabTitle" />
+            {customerNotificationCount > 0 ? (
+              <NotificationBadge count={customerNotificationCount} />
+            ) : null}
+          </span>
+        ),
+        selected: tab === 'new-orders',
+        linkProps: {
+          name: 'InboxPage',
+          params: { tab: 'new-orders' },
         },
-      ]
-    : [];
-
-  const salesTabMaybe = isProviderUserType
-    ? [
-        {
-          text: (
-            <span>
-              <FormattedMessage id="InboxPage.salesTabTitle" />
-              {providerNotificationCount > 0 ? (
-                <NotificationBadge count={providerNotificationCount} />
-              ) : null}
-            </span>
-          ),
-          selected: !isOrders,
-          linkProps: {
-            name: 'InboxPage',
-            params: { tab: 'sales' },
-          },
+      },
+      {
+        text: <FormattedMessage id="InboxPage.completedTabTitle" />,
+        selected: tab === 'completed',
+        linkProps: {
+          name: 'InboxPage',
+          params: { tab: 'completed' },
         },
-      ]
-    : [];
+      },
+      {
+        text: <FormattedMessage id="InboxPage.messagesTabTitle" />,
+        selected: tab === 'messages',
+        linkProps: {
+          name: 'InboxPage',
+          params: { tab: 'messages' },
+        },
+      },
+    ];
 
-  const tabs = [...ordersTabMaybe, ...salesTabMaybe];
+    // Also include sales tab for providers
+    if (isProviderUserType) {
+      tabs.push({
+        text: (
+          <span>
+            <FormattedMessage id="InboxPage.salesTabTitle" />
+            {providerNotificationCount > 0 ? (
+              <NotificationBadge count={providerNotificationCount} />
+            ) : null}
+          </span>
+        ),
+        selected: tab === 'sales',
+        linkProps: {
+          name: 'InboxPage',
+          params: { tab: 'sales' },
+        },
+      });
+    }
+  } else {
+    // Legacy tabs
+    const ordersTabMaybe = isCustomerUserType
+      ? [
+          {
+            text: (
+              <span>
+                <FormattedMessage id="InboxPage.ordersTabTitle" />
+                {customerNotificationCount > 0 ? (
+                  <NotificationBadge count={customerNotificationCount} />
+                ) : null}
+              </span>
+            ),
+            selected: tab === 'orders',
+            linkProps: {
+              name: 'InboxPage',
+              params: { tab: 'orders' },
+            },
+          },
+        ]
+      : [];
+
+    const salesTabMaybe = isProviderUserType
+      ? [
+          {
+            text: (
+              <span>
+                <FormattedMessage id="InboxPage.salesTabTitle" />
+                {providerNotificationCount > 0 ? (
+                  <NotificationBadge count={providerNotificationCount} />
+                ) : null}
+              </span>
+            ),
+            selected: tab === 'sales',
+            linkProps: {
+              name: 'InboxPage',
+              params: { tab: 'sales' },
+            },
+          },
+        ]
+      : [];
+
+    tabs = [...ordersTabMaybe, ...salesTabMaybe];
+  }
+
+  const noResultsMessageId = useRedesign
+    ? tab === 'new-orders'
+      ? 'InboxPage.noNewOrdersFound'
+      : tab === 'completed'
+      ? 'InboxPage.noCompletedFound'
+      : tab === 'messages'
+      ? 'InboxPage.noMessagesFound'
+      : isOrders
+      ? 'InboxPage.noOrdersFound'
+      : 'InboxPage.noSalesFound'
+    : isOrders
+    ? 'InboxPage.noOrdersFound'
+    : 'InboxPage.noSalesFound';
 
   return (
     <Page title={title} scrollingDisabled={scrollingDisabled}>
@@ -425,9 +478,7 @@ export const InboxPageComponent = props => {
           )}
           {hasNoResults ? (
             <li key="noResults" className={css.noResults}>
-              <FormattedMessage
-                id={isOrders ? 'InboxPage.noOrdersFound' : 'InboxPage.noSalesFound'}
-              />
+              <FormattedMessage id={noResultsMessageId} />
             </li>
           ) : null}
         </ul>
