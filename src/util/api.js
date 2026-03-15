@@ -366,6 +366,24 @@ export const markNotificationsRead = () => {
   });
 };
 
+// ====== Push Notification Device Tokens ====== //
+
+export const registerDeviceToken = ({ token, platform }) => {
+  return request('/api/device-tokens', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, platform }),
+  });
+};
+
+export const unregisterDeviceToken = ({ token }) => {
+  return request('/api/device-tokens', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token }),
+  });
+};
+
 // ====== Daily Order Count ====== //
 
 export const fetchDailyOrderCount = ({ listingId }) => {

@@ -1,5 +1,7 @@
 const { getSdk, getIntegrationSdk, handleError } = require('../api-util/sdk');
 const { addNotification, getNotificationsForUser, markReadForUser } = require('../api-util/notifications');
+const { getTokensForUsers } = require('../api-util/deviceTokens');
+const { sendPushNotifications } = require('../api-util/pushSender');
 
 /**
  * GET /api/notifications — fetch unread notifications for the current user
@@ -46,7 +48,9 @@ const notifyFollowersHandler = async (req, res) => {
     const usersResponse = await integrationSdk.users.query({ perPage: 100 });
     const users = usersResponse.data.data || [];
 
+    const notifiedUserIds = [];
     let notifiedCount = 0;
+
     for (const user of users) {
       const privateData = user.attributes.profile.privateData || {};
       const followedVendors = Array.isArray(privateData.followedVendors)
@@ -54,15 +58,33 @@ const notifyFollowersHandler = async (req, res) => {
         : [];
 
       if (followedVendors.includes(vendorId)) {
+        const userId = user.id.uuid;
         addNotification({
-          userId: user.id.uuid,
+          userId,
           vendorId,
           vendorName,
           listingId,
           listingTitle: listingTitle || 'a new listing',
         });
+        notifiedUserIds.push(userId);
         notifiedCount++;
       }
+    }
+
+    // Send push notifications to followers' devices
+    if (notifiedUserIds.length > 0) {
+      const deviceTokens = getTokensForUsers(notifiedUserIds);
+      const pushMessages = deviceTokens.map(dt => ({
+        token: dt.token,
+        title: vendorName,
+        body: `New listing: ${listingTitle || 'a new listing'}`,
+        data: { listingId, vendorId, listingTitle, type: 'new_listing' },
+      }));
+
+      // Fire and forget — don't block the response on push delivery
+      sendPushNotifications(pushMessages).catch(err => {
+        console.error('Failed to send push notifications:', err);
+      });
     }
 
     res.status(200).json({ notifiedCount });

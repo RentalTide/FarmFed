@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import classNames from 'classnames';
 import { useIntl } from '../../util/reactIntl';
 import { fetchNotifications, markNotificationsRead } from '../../util/api';
+import { registerPushToken, checkInjectedPushToken } from '../../util/pushNotifications';
 import NamedLink from '../NamedLink/NamedLink';
 
 import css from './NotificationBell.module.css';
@@ -30,6 +31,12 @@ const NotificationBell = props => {
     const interval = setInterval(loadNotifications, POLL_INTERVAL);
     return () => clearInterval(interval);
   }, [loadNotifications]);
+
+  // Register for push notifications when authenticated user mounts this component
+  useEffect(() => {
+    registerPushToken();
+    checkInjectedPushToken();
+  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {

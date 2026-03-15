@@ -48,6 +48,13 @@
           "photosPermission": "FarmFed needs access to your photos to upload images for listings.",
           "cameraPermission": "FarmFed needs access to your camera to take photos for listings."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#2ecc71"
+        }
       ]
     ],
     "extra": {

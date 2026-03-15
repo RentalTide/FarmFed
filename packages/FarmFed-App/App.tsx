@@ -3,6 +3,8 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
+import * as Notifications from 'expo-notifications';
+import * as Device from 'expo-device';
 import { readAsStringAsync } from 'expo-file-system';
 import {
   StyleSheet,
@@ -20,11 +22,94 @@ const SITE_URL = 'https://farmfed-e9c8faa5736a.herokuapp.com';
 
 SplashScreen.preventAutoHideAsync();
 
+// Configure how notifications are displayed when app is foregrounded
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
+
+/**
+ * Register for push notifications and return the Expo push token.
+ * Returns null if permissions are denied or device is a simulator.
+ */
+async function registerForPushNotifications(): Promise<string | null> {
+  if (!Device.isDevice) {
+    console.log('Push notifications require a physical device');
+    return null;
+  }
+
+  const { status: existingStatus } = await Notifications.getPermissionsAsync();
+  let finalStatus = existingStatus;
+
+  if (existingStatus !== 'granted') {
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+  }
+
+  if (finalStatus !== 'granted') {
+    console.log('Push notification permission not granted');
+    return null;
+  }
+
+  // Get the Expo push token
+  const tokenData = await Notifications.getExpoPushTokenAsync({
+    projectId: '6cb78586-e9e6-4425-a874-2fea026341eb',
+  });
+
+  // Configure Android notification channel
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('default', {
+      name: 'Default',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#2ecc71',
+    });
+  }
+
+  return tokenData.data;
+}
+
 export default function App() {
   const webViewRef = useRef<WebView>(null);
   const [canGoBack, setCanGoBack] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const pushTokenRef = useRef<string | null>(null);
+
+  // Register for push notifications on mount
+  useEffect(() => {
+    registerForPushNotifications().then(token => {
+      if (token) {
+        pushTokenRef.current = token;
+        // Inject token into WebView so the web app can register it with the server
+        webViewRef.current?.injectJavaScript(`
+          window.__EXPO_PUSH_TOKEN__ = ${JSON.stringify(token)};
+          true;
+        `);
+      }
+    });
+  }, []);
+
+  // Handle notification taps — navigate WebView to the relevant page
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+      const data = response.notification.request.content.data;
+      if (data?.listingId && webViewRef.current) {
+        const slug = (data.listingTitle as string || 'listing')
+          .toLowerCase()
+          .replace(/\s+/g, '-');
+        webViewRef.current.injectJavaScript(`
+          window.location.href = '/l/${slug}/${data.listingId}';
+          true;
+        `);
+      }
+    });
+
+    return () => subscription.remove();
+  }, []);
 
   // Android hardware back button
   useEffect(() => {
@@ -49,6 +134,14 @@ export default function App() {
     setIsLoaded(true);
     setHasError(false);
     SplashScreen.hideAsync();
+
+    // Inject push token into WebView after load
+    if (pushTokenRef.current) {
+      webViewRef.current?.injectJavaScript(`
+        window.__EXPO_PUSH_TOKEN__ = ${JSON.stringify(pushTokenRef.current)};
+        true;
+      `);
+    }
   }, []);
 
   const onError = useCallback(() => {
@@ -170,6 +263,25 @@ export default function App() {
           }
         } catch (e: any) {
           if (callbackId) rejectCallback(callbackId, e.message || 'Camera failed');
+        }
+        break;
+      }
+
+      // --- Push Notification Token Request ---
+      case 'requestPushToken': {
+        try {
+          let token = pushTokenRef.current;
+          if (!token) {
+            token = await registerForPushNotifications();
+            pushTokenRef.current = token;
+          }
+          if (token && callbackId) {
+            resolveCallback(callbackId, { token, platform: Platform.OS });
+          } else if (callbackId) {
+            rejectCallback(callbackId, 'Push notifications not available');
+          }
+        } catch (e: any) {
+          if (callbackId) rejectCallback(callbackId, e.message || 'Push registration failed');
         }
         break;
       }

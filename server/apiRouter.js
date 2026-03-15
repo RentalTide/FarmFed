@@ -30,6 +30,7 @@ const activeOrderGroup = require('./api/active-order-group');
 const reportDeliveryProblem = require('./api/report-delivery-problem');
 const dailyOrderCount = require('./api/daily-order-count');
 const { getNotificationsHandler, notifyFollowersHandler, markReadHandler } = require('./api/notifications');
+const { registerHandler: registerDeviceToken, unregisterHandler: unregisterDeviceToken } = require('./api/device-tokens');
 
 const adminPendingUsers = require('./api/admin/pending-users');
 const adminApproveUser = require('./api/admin/approve-user');
@@ -86,6 +87,7 @@ router.use('/report-delivery-problem', bodyParser.json());
 router.use('/daily-order-count', bodyParser.json());
 router.use('/notifications', bodyParser.json());
 router.use('/notify-followers', bodyParser.json());
+router.use('/device-tokens', bodyParser.json());
 
 // ================ API router endpoints: ================ //
 
@@ -137,6 +139,10 @@ router.get('/daily-order-count', dailyOrderCount);
 router.get('/notifications', getNotificationsHandler);
 router.post('/notify-followers', notifyFollowersHandler);
 router.put('/notifications/read', markReadHandler);
+
+// Push notification device token endpoints
+router.post('/device-tokens', registerDeviceToken);
+router.delete('/device-tokens', unregisterDeviceToken);
 
 // Admin user management endpoints
 router.get('/admin/pending-users', adminPendingUsers);
