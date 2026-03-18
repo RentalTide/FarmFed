@@ -1,5 +1,6 @@
 import classNames from 'classnames';
 import { ExternalLink, LinkedLogo } from '../../../../components';
+import { isNativeApp } from '../../../../util/capacitor';
 
 import Field from '../../Field';
 import BlockBuilder from '../../BlockBuilder';
@@ -135,30 +136,32 @@ const SectionFooter = props => {
                 <BlockBuilder blocks={linksWithBlockId} sectionId={sectionId} options={options} />
               </div>
             ) : null}
-            <div className={css.appBadges}>
-              <ExternalLink
-                href="https://apps.apple.com/app/farmfed/id0000000000"
-                className={css.appBadgeLink}
-                title="Download FarmFed on the App Store"
-              >
-                <img
-                  src="/static/icons/app-store-badge.webp"
-                  alt="Download on the App Store"
-                  className={css.appBadgeImage}
-                />
-              </ExternalLink>
-              <ExternalLink
-                href="https://play.google.com/store/apps/details?id=com.farmfed.app"
-                className={css.appBadgeLink}
-                title="Get FarmFed on Google Play"
-              >
-                <img
-                  src="/static/icons/google-play-badge.webp"
-                  alt="Get it on Google Play"
-                  className={css.appBadgeImage}
-                />
-              </ExternalLink>
-            </div>
+            {!isNativeApp() && (
+              <div className={css.appBadges}>
+                <ExternalLink
+                  href="https://apps.apple.com/app/farmfed/id0000000000"
+                  className={css.appBadgeLink}
+                  title="Download FarmFed on the App Store"
+                >
+                  <img
+                    src="/static/icons/app-store-badge.webp"
+                    alt="Download on the App Store"
+                    className={css.appBadgeImage}
+                  />
+                </ExternalLink>
+                <ExternalLink
+                  href="https://play.google.com/store/apps/details?id=com.farmfed.app"
+                  className={css.appBadgeLink}
+                  title="Get FarmFed on Google Play"
+                >
+                  <img
+                    src="/static/icons/google-play-badge.webp"
+                    alt="Get it on Google Play"
+                    className={css.appBadgeImage}
+                  />
+                </ExternalLink>
+              </div>
+            )}
             <Field data={copyright} className={css.copyright} />
           </div>
           <div className={classNames(css.grid, getGridCss(numberOfColumns))}>

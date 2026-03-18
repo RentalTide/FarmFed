@@ -14,11 +14,18 @@ import {
   BackHandler,
   Platform,
   Share,
+  View,
+  Pressable,
+  ActivityIndicator,
 } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView, WebViewNavigation, WebViewMessageEvent } from 'react-native-webview';
+import { Ionicons } from '@expo/vector-icons';
 
 const SITE_URL = 'https://farmfed-e9c8faa5736a.herokuapp.com';
+const BRAND_GREEN = '#2ecc71';
+const INACTIVE_GRAY = '#8E8E93';
+const TAB_BAR_HEIGHT = 56;
 
 SplashScreen.preventAutoHideAsync();
 
@@ -72,11 +79,129 @@ async function registerForPushNotifications(): Promise<string | null> {
   return tokenData.data;
 }
 
+// --- Tab definitions ---
+interface TabDef {
+  key: string;
+  label: string;
+  path: string;
+  iconName: keyof typeof Ionicons.glyphMap;
+  iconNameActive: keyof typeof Ionicons.glyphMap;
+}
+
+const ICON_SIZE = 24;
+
+const TABS: TabDef[] = [
+  { key: 'home', label: 'Home', path: '/', iconName: 'home-outline', iconNameActive: 'home' },
+  { key: 'search', label: 'Search', path: '/s', iconName: 'search-outline', iconNameActive: 'search' },
+  { key: 'sell', label: 'Sell', path: '/l/new', iconName: 'add-circle-outline', iconNameActive: 'add-circle' },
+  { key: 'inbox', label: 'Inbox', path: '/inbox/sales', iconName: 'chatbubble-outline', iconNameActive: 'chatbubble' },
+  { key: 'profile', label: 'Profile', path: '/profile-settings', iconName: 'person-outline', iconNameActive: 'person' },
+];
+
+function getActiveTab(url: string): string {
+  try {
+    const pathname = new URL(url).pathname;
+    if (pathname === '/') return 'home';
+    if (pathname.startsWith('/s')) return 'search';
+    if (pathname.startsWith('/l/new')) return 'sell';
+    if (pathname.startsWith('/inbox')) return 'inbox';
+    if (pathname.startsWith('/profile-settings') || pathname.startsWith('/account')) return 'profile';
+  } catch {}
+  return '';
+}
+
+// JavaScript injected before web content loads to intercept SPA navigations
+const URL_TRACKING_JS = `
+(function() {
+  function notifyUrl() {
+    window.ReactNativeWebView && window.ReactNativeWebView.postMessage(
+      JSON.stringify({ type: 'urlChanged', payload: { url: window.location.href } })
+    );
+  }
+
+  // Intercept pushState / replaceState
+  var origPush = history.pushState;
+  var origReplace = history.replaceState;
+  history.pushState = function() {
+    origPush.apply(this, arguments);
+    notifyUrl();
+  };
+  history.replaceState = function() {
+    origReplace.apply(this, arguments);
+    notifyUrl();
+  };
+
+  // Intercept popstate (back/forward)
+  window.addEventListener('popstate', notifyUrl);
+
+  // Initial notification
+  notifyUrl();
+})();
+true;
+`;
+
+// CSS injected to add bottom padding so content isn't hidden behind tab bar
+const BOTTOM_PADDING_CSS = `
+(function() {
+  var style = document.createElement('style');
+  style.textContent = 'body { padding-bottom: ${TAB_BAR_HEIGHT}px !important; }';
+  document.head.appendChild(style);
+})();
+true;
+`;
+
+// --- Tab Bar Component ---
+function TabBar({
+  activeTab,
+  onTabPress,
+}: {
+  activeTab: string;
+  onTabPress: (tab: TabDef) => void;
+}) {
+  const insets = useSafeAreaInsets();
+
+  return (
+    <View style={[styles.tabBar, { paddingBottom: insets.bottom }]}>
+      {TABS.map(tab => {
+        const isActive = tab.key === activeTab;
+        const color = isActive ? BRAND_GREEN : INACTIVE_GRAY;
+        return (
+          <Pressable
+            key={tab.key}
+            style={styles.tabItem}
+            onPress={() => onTabPress(tab)}
+            accessibilityRole="tab"
+            accessibilityLabel={tab.label}
+            accessibilityState={{ selected: isActive }}
+          >
+            <Ionicons
+              name={isActive ? tab.iconNameActive : tab.iconName}
+              size={ICON_SIZE}
+              color={color}
+            />
+            <Text style={[styles.tabLabel, { color }]}>{tab.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+// --- Loading Indicator ---
+function LoadingIndicator() {
+  return (
+    <View style={styles.loadingContainer}>
+      <ActivityIndicator size="large" color={BRAND_GREEN} />
+    </View>
+  );
+}
+
 export default function App() {
   const webViewRef = useRef<WebView>(null);
   const [canGoBack, setCanGoBack] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [activeTab, setActiveTab] = useState('home');
   const pushTokenRef = useRef<string | null>(null);
 
   // Register for push notifications on mount
@@ -128,6 +253,9 @@ export default function App() {
 
   const onNavigationStateChange = useCallback((navState: WebViewNavigation) => {
     setCanGoBack(navState.canGoBack);
+    if (navState.url) {
+      setActiveTab(getActiveTab(navState.url));
+    }
   }, []);
 
   const onLoadEnd = useCallback(() => {
@@ -142,6 +270,9 @@ export default function App() {
         true;
       `);
     }
+
+    // Inject bottom padding CSS
+    webViewRef.current?.injectJavaScript(BOTTOM_PADDING_CSS);
   }, []);
 
   const onError = useCallback(() => {
@@ -174,6 +305,16 @@ export default function App() {
     `);
   }, []);
 
+  // Handle tab press — navigate WebView and provide haptic feedback
+  const onTabPress = useCallback((tab: TabDef) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    webViewRef.current?.injectJavaScript(`
+      window.location.href = '${tab.path}';
+      true;
+    `);
+    setActiveTab(tab.key);
+  }, []);
+
   // Handle messages from the WebView
   const onMessage = useCallback(async (event: WebViewMessageEvent) => {
     let data: { type: string; payload: any; callbackId?: number };
@@ -186,6 +327,14 @@ export default function App() {
     const { type, payload, callbackId } = data;
 
     switch (type) {
+      // --- URL Changed (SPA navigation tracking) ---
+      case 'urlChanged': {
+        if (payload?.url) {
+          setActiveTab(getActiveTab(payload.url));
+        }
+        break;
+      }
+
       // --- Haptic Feedback ---
       case 'haptic': {
         try {
@@ -327,13 +476,17 @@ export default function App() {
           onHttpError={onError}
           onMessage={onMessage}
           allowsBackForwardNavigationGestures={true}
-          startInLoadingState={false}
+          startInLoadingState={true}
+          renderLoading={() => <LoadingIndicator />}
+          pullToRefreshEnabled={Platform.OS === 'ios'}
+          injectedJavaScriptBeforeContentLoaded={URL_TRACKING_JS}
           javaScriptEnabled={true}
           domStorageEnabled={true}
           sharedCookiesEnabled={true}
           allowsInlineMediaPlayback={true}
           mediaPlaybackRequiresUserAction={false}
         />
+        <TabBar activeTab={activeTab} onTabPress={onTabPress} />
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -346,6 +499,30 @@ const styles = StyleSheet.create({
   },
   webview: {
     flex: 1,
+  },
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: '#ffffff',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#D1D1D6',
+    paddingTop: 6,
+  },
+  tabItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 4,
+  },
+  tabLabel: {
+    fontSize: 10,
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  loadingContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   errorContainer: {
     flex: 1,
