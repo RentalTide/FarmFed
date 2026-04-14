@@ -46,6 +46,7 @@ const dataLoader = require('./dataLoader');
 const { generateCSPNonce, csp } = require('./csp');
 const sdkUtils = require('./api-util/sdk');
 const { getSDKProxy } = require('./api-util/sdkCacheProxy');
+const settingsStore = require('./api-util/settingsStore');
 
 const buildPath = path.resolve(__dirname, '..', 'build');
 const dev = process.env.REACT_APP_ENV === 'development';
@@ -342,6 +343,10 @@ if (cspEnabled) {
     res.status(204).end();
   });
 }
+
+settingsStore
+  .init(['delivery-settings', 'tax-settings', 'pickup-settings', 'geofence-settings', 'bulletin-settings'])
+  .catch(e => console.error('[settingsStore] init failed:', e.message));
 
 const server = app.listen(PORT, () => {
   const mode = dev ? 'development' : 'production';

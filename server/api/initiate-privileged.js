@@ -1,5 +1,6 @@
 const sharetribeSdk = require('sharetribe-flex-sdk');
 const { transactionLineItems } = require('../api-util/lineItems');
+const { attachAuthorToListing } = require('../api-util/attachAuthor');
 const { isIntentionToMakeOffer } = require('../api-util/negotiation');
 const {
   getSdk,
@@ -63,6 +64,8 @@ module.exports = (req, res) => {
       const currency = listing.attributes.price?.currency || orderData.currency;
       const { providerCommission, customerCommission } =
         commissionAsset?.type === 'jsonAsset' ? commissionAsset.attributes.data : {};
+
+      await attachAuthorToListing(listing, bodyParams?.params?.listingId);
 
       lineItems = await transactionLineItems(
         listing,

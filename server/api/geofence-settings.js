@@ -42,30 +42,32 @@ const putHandler = (req, res) => {
           return res.status(400).json({ error: 'Invalid consumer polygon' });
         }
 
-        setDualGeofence({
+        return setDualGeofence({
           vendorPolygon: vendorPolygon || getVendorPolygon(),
           consumerPolygon: consumerPolygon || getConsumerPolygon(),
-        });
-
-        return res.status(200).json({
-          polygon: getGeofence(),
-          vendorPolygon: getVendorPolygon(),
-          consumerPolygon: getConsumerPolygon(),
+        }).then(() => {
+          res.status(200).json({
+            polygon: getGeofence(),
+            vendorPolygon: getVendorPolygon(),
+            consumerPolygon: getConsumerPolygon(),
+          });
         });
       }
 
       // Legacy single polygon update
       if (polygon === null) {
-        setGeofence(null);
-        return res.status(200).json({ polygon: null, vendorPolygon: getVendorPolygon(), consumerPolygon: null });
+        return setGeofence(null).then(() => {
+          res.status(200).json({ polygon: null, vendorPolygon: getVendorPolygon(), consumerPolygon: null });
+        });
       }
 
       if (!isValidPolygon(polygon)) {
         return res.status(400).json({ error: 'Invalid polygon: must be a GeoJSON Polygon with at least 4 coordinates' });
       }
 
-      setGeofence(polygon);
-      res.status(200).json({ polygon, vendorPolygon: getVendorPolygon(), consumerPolygon: polygon });
+      return setGeofence(polygon).then(() => {
+        res.status(200).json({ polygon, vendorPolygon: getVendorPolygon(), consumerPolygon: polygon });
+      });
     })
     .catch(e => {
       handleError(res, e);

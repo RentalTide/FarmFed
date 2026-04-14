@@ -41,9 +41,10 @@ const putHandler = (req, res) => {
         return res.status(400).json({ error: 'Invalid cutoff time format (expected HH:MM)' });
       }
 
-      setPickupSettings({ pickupDays, cutoffDay, cutoffTime });
-      const nextPickupDate = getNextPickupDate();
-      res.status(200).json({ pickupDays, cutoffDay, cutoffTime, nextPickupDate });
+      return setPickupSettings({ pickupDays, cutoffDay, cutoffTime }).then(() => {
+        const nextPickupDate = getNextPickupDate();
+        res.status(200).json({ pickupDays, cutoffDay, cutoffTime, nextPickupDate });
+      });
     })
     .catch(e => handleError(res, e));
 };

@@ -25,6 +25,7 @@ import {
   clearTaxUpdateSuccess,
   updateBulletins,
   clearBulletinsUpdateSuccess,
+  setVendorTaxExempt,
 } from './AdminPage.duck';
 
 import DeliverySettingsTab from './DeliverySettingsTab/DeliverySettingsTab';
@@ -47,6 +48,7 @@ const AdminPageComponent = props => {
   const {
     currentUser,
     deliveryRatePerMileCents,
+    deliveryFlatFeeCents,
     deliveryFetchInProgress,
     deliveryUpdateInProgress,
     deliveryUpdateSuccess,
@@ -74,6 +76,8 @@ const AdminPageComponent = props => {
     bulletinsUpdateInProgress,
     bulletinsUpdateSuccess,
     bulletinsError,
+    vendors,
+    vendorTaxExemptInProgress,
     scrollingDisabled,
     onUpdateDeliverySettings,
     onClearDeliverySuccess,
@@ -87,6 +91,7 @@ const AdminPageComponent = props => {
     onClearTaxSuccess,
     onUpdateBulletins,
     onClearBulletinsSuccess,
+    onSetVendorTaxExempt,
   } = props;
 
   const intl = useIntl();
@@ -149,6 +154,7 @@ const AdminPageComponent = props => {
             {activeTab === DELIVERY_TAB && (
               <DeliverySettingsTab
                 deliveryRatePerMileCents={deliveryRatePerMileCents}
+                deliveryFlatFeeCents={deliveryFlatFeeCents}
                 updateInProgress={deliveryUpdateInProgress}
                 updateSuccess={deliveryUpdateSuccess}
                 error={deliveryError}
@@ -201,6 +207,9 @@ const AdminPageComponent = props => {
                 error={taxError}
                 onUpdateSettings={onUpdateTaxSettings}
                 onClearSuccess={onClearTaxSuccess}
+                vendors={vendors}
+                vendorTaxExemptInProgress={vendorTaxExemptInProgress}
+                onSetVendorTaxExempt={onSetVendorTaxExempt}
               />
             )}
 
@@ -225,6 +234,7 @@ const mapStateToProps = state => {
   const { currentUser } = state.user;
   const {
     deliveryRatePerMileCents,
+    deliveryFlatFeeCents,
     deliveryFetchInProgress,
     deliveryUpdateInProgress,
     deliveryUpdateSuccess,
@@ -252,11 +262,14 @@ const mapStateToProps = state => {
     bulletinsUpdateInProgress,
     bulletinsUpdateSuccess,
     bulletinsError,
+    vendors,
+    vendorTaxExemptInProgress,
   } = state.AdminPage;
 
   return {
     currentUser,
     deliveryRatePerMileCents,
+    deliveryFlatFeeCents,
     deliveryFetchInProgress,
     deliveryUpdateInProgress,
     deliveryUpdateSuccess,
@@ -284,6 +297,8 @@ const mapStateToProps = state => {
     bulletinsUpdateInProgress,
     bulletinsUpdateSuccess,
     bulletinsError,
+    vendors,
+    vendorTaxExemptInProgress,
     scrollingDisabled: isScrollingDisabled(state),
   };
 };
@@ -301,6 +316,7 @@ const mapDispatchToProps = dispatch => ({
   onClearTaxSuccess: () => dispatch(clearTaxUpdateSuccess()),
   onUpdateBulletins: params => dispatch(updateBulletins(params)),
   onClearBulletinsSuccess: () => dispatch(clearBulletinsUpdateSuccess()),
+  onSetVendorTaxExempt: params => dispatch(setVendorTaxExempt(params)),
 });
 
 const AdminPage = compose(

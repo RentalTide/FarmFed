@@ -33,8 +33,9 @@ const putHandler = (req, res) => {
         return res.status(400).json({ error: 'enabled must be a boolean' });
       }
 
-      setTaxSettings({ taxRate, taxLabel, enabled });
-      res.status(200).json({ taxRate, taxLabel, enabled });
+      return setTaxSettings({ taxRate, taxLabel, enabled }).then(() => {
+        res.status(200).json({ taxRate, taxLabel, enabled });
+      });
     })
     .catch(e => handleError(res, e));
 };

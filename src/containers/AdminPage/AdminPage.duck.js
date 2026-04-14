@@ -13,6 +13,8 @@ import {
   updateTaxSettings as updateTaxAPI,
   fetchAllBulletins as fetchBulletinsAPI,
   updateBulletins as updateBulletinsAPI,
+  fetchVendors as fetchVendorsAPI,
+  setVendorTaxExempt as setVendorTaxExemptAPI,
 } from '../../util/api';
 import { storableError } from '../../util/errors';
 
@@ -31,9 +33,9 @@ export const fetchDeliverySettingsThunk = createAsyncThunk(
 
 export const updateDeliverySettingsThunk = createAsyncThunk(
   'AdminPage/updateDeliverySettings',
-  async ({ deliveryRatePerMileCents }, { rejectWithValue }) => {
+  async (params, { rejectWithValue }) => {
     try {
-      return await updateDeliveryAPI({ deliveryRatePerMileCents });
+      return await updateDeliveryAPI(params);
     } catch (e) {
       return rejectWithValue(storableError(e));
     }
@@ -164,11 +166,34 @@ export const updateBulletinsThunk = createAsyncThunk(
   }
 );
 
+export const fetchVendorsThunk = createAsyncThunk(
+  'AdminPage/fetchVendors',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await fetchVendorsAPI();
+    } catch (e) {
+      return rejectWithValue(storableError(e));
+    }
+  }
+);
+
+export const setVendorTaxExemptThunk = createAsyncThunk(
+  'AdminPage/setVendorTaxExempt',
+  async ({ userId, taxExempt }, { rejectWithValue }) => {
+    try {
+      return await setVendorTaxExemptAPI({ userId, taxExempt });
+    } catch (e) {
+      return rejectWithValue(storableError(e));
+    }
+  }
+);
+
 // ================ Slice ================ //
 
 const initialState = {
   // Delivery
   deliveryRatePerMileCents: 0,
+  deliveryFlatFeeCents: 0,
   deliveryFetchInProgress: false,
   deliveryUpdateInProgress: false,
   deliveryUpdateSuccess: false,
@@ -205,6 +230,12 @@ const initialState = {
   bulletinsUpdateInProgress: false,
   bulletinsUpdateSuccess: false,
   bulletinsError: null,
+  // Vendors (for tax-exempt management)
+  vendors: [],
+  vendorsFetchInProgress: false,
+  vendorsError: null,
+  vendorTaxExemptInProgress: null,
+  vendorTaxExemptError: null,
 };
 
 const adminPageSlice = createSlice({
@@ -237,6 +268,7 @@ const adminPageSlice = createSlice({
       .addCase(fetchDeliverySettingsThunk.fulfilled, (state, action) => {
         state.deliveryFetchInProgress = false;
         state.deliveryRatePerMileCents = action.payload.deliveryRatePerMileCents || 0;
+        state.deliveryFlatFeeCents = action.payload.deliveryFlatFeeCents || 0;
       })
       .addCase(fetchDeliverySettingsThunk.rejected, (state, action) => {
         state.deliveryFetchInProgress = false;
@@ -250,7 +282,8 @@ const adminPageSlice = createSlice({
       .addCase(updateDeliverySettingsThunk.fulfilled, (state, action) => {
         state.deliveryUpdateInProgress = false;
         state.deliveryUpdateSuccess = true;
-        state.deliveryRatePerMileCents = action.payload.deliveryRatePerMileCents;
+        state.deliveryRatePerMileCents = action.payload.deliveryRatePerMileCents || 0;
+        state.deliveryFlatFeeCents = action.payload.deliveryFlatFeeCents || 0;
       })
       .addCase(updateDeliverySettingsThunk.rejected, (state, action) => {
         state.deliveryUpdateInProgress = false;
@@ -408,6 +441,34 @@ const adminPageSlice = createSlice({
       .addCase(updateBulletinsThunk.rejected, (state, action) => {
         state.bulletinsUpdateInProgress = false;
         state.bulletinsError = action.payload;
+      })
+      // Vendors
+      .addCase(fetchVendorsThunk.pending, state => {
+        state.vendorsFetchInProgress = true;
+        state.vendorsError = null;
+      })
+      .addCase(fetchVendorsThunk.fulfilled, (state, action) => {
+        state.vendorsFetchInProgress = false;
+        state.vendors = action.payload.vendors || [];
+      })
+      .addCase(fetchVendorsThunk.rejected, (state, action) => {
+        state.vendorsFetchInProgress = false;
+        state.vendorsError = action.payload;
+      })
+      .addCase(setVendorTaxExemptThunk.pending, (state, action) => {
+        state.vendorTaxExemptInProgress = action.meta.arg.userId;
+        state.vendorTaxExemptError = null;
+      })
+      .addCase(setVendorTaxExemptThunk.fulfilled, (state, action) => {
+        state.vendorTaxExemptInProgress = null;
+        const { userId, taxExempt } = action.payload;
+        state.vendors = state.vendors.map(v =>
+          v.id === userId ? { ...v, taxExempt } : v
+        );
+      })
+      .addCase(setVendorTaxExemptThunk.rejected, (state, action) => {
+        state.vendorTaxExemptInProgress = null;
+        state.vendorTaxExemptError = action.payload;
       });
   },
 });
@@ -474,6 +535,14 @@ export const updateBulletins = params => dispatch => {
   return dispatch(updateBulletinsThunk(params)).unwrap();
 };
 
+export const fetchVendors = () => dispatch => {
+  return dispatch(fetchVendorsThunk()).unwrap();
+};
+
+export const setVendorTaxExempt = params => dispatch => {
+  return dispatch(setVendorTaxExemptThunk(params)).unwrap();
+};
+
 // ================ loadData ================ //
 
 export const loadData = () => dispatch => {
@@ -484,6 +553,7 @@ export const loadData = () => dispatch => {
     dispatch(fetchPickupSettings()),
     dispatch(fetchTaxSettings()),
     dispatch(fetchBulletins()),
+    dispatch(fetchVendors()),
   ]);
 };
 

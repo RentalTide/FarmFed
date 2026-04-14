@@ -11,6 +11,9 @@ const TaxSettingsTab = props => {
     error,
     onUpdateSettings,
     onClearSuccess,
+    vendors = [],
+    vendorTaxExemptInProgress,
+    onSetVendorTaxExempt,
   } = props;
 
   const intl = useIntl();
@@ -128,6 +131,46 @@ const TaxSettingsTab = props => {
           {intl.formatMessage({ id: 'AdminPage.saveError' })}
         </p>
       )}
+
+      <section className={css.vendorSection}>
+        <h3 className={css.vendorSectionTitle}>
+          {intl.formatMessage({ id: 'AdminPage.perShopTaxExemption' })}
+        </h3>
+        <p className={css.vendorSectionHelp}>
+          {intl.formatMessage({ id: 'AdminPage.perShopTaxExemptionHelp' })}
+        </p>
+        {vendors.length === 0 ? (
+          <p className={css.emptyState}>
+            {intl.formatMessage({ id: 'AdminPage.noVendors' })}
+          </p>
+        ) : (
+          <ul className={css.vendorList}>
+            {vendors.map(v => {
+              const isActioning = vendorTaxExemptInProgress === v.id;
+              const name = [v.firstName, v.lastName].filter(Boolean).join(' ') || v.displayName || v.email;
+              return (
+                <li key={v.id} className={css.vendorRow}>
+                  <span className={css.vendorName}>{name}</span>
+                  <span className={css.vendorEmail}>{v.email}</span>
+                  <label className={css.vendorToggle}>
+                    <input
+                      type="checkbox"
+                      checked={!!v.taxExempt}
+                      disabled={isActioning}
+                      onChange={e =>
+                        onSetVendorTaxExempt({ userId: v.id, taxExempt: e.target.checked })
+                      }
+                    />
+                    <span>
+                      {intl.formatMessage({ id: 'AdminPage.taxExemptToggleLabel' })}
+                    </span>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
     </div>
   );
 };

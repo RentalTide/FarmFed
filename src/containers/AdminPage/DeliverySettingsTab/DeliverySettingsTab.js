@@ -3,9 +3,13 @@ import { useIntl } from '../../../util/reactIntl';
 
 import css from './DeliverySettingsTab.module.css';
 
+const centsToDollarString = cents =>
+  cents > 0 ? (cents / 100).toFixed(2) : '';
+
 const DeliverySettingsTab = props => {
   const {
     deliveryRatePerMileCents,
+    deliveryFlatFeeCents,
     updateInProgress,
     updateSuccess,
     error,
@@ -15,12 +19,15 @@ const DeliverySettingsTab = props => {
 
   const intl = useIntl();
   const [rateInput, setRateInput] = useState('');
+  const [flatInput, setFlatInput] = useState('');
 
   useEffect(() => {
-    if (deliveryRatePerMileCents > 0) {
-      setRateInput((deliveryRatePerMileCents / 100).toFixed(2));
-    }
+    setRateInput(centsToDollarString(deliveryRatePerMileCents));
   }, [deliveryRatePerMileCents]);
+
+  useEffect(() => {
+    setFlatInput(centsToDollarString(deliveryFlatFeeCents));
+  }, [deliveryFlatFeeCents]);
 
   useEffect(() => {
     if (updateSuccess) {
@@ -31,13 +38,17 @@ const DeliverySettingsTab = props => {
 
   const handleSubmit = e => {
     e.preventDefault();
-    const dollars = parseFloat(rateInput);
-    if (isNaN(dollars) || dollars < 0) return;
-    const cents = Math.round(dollars * 100);
-    onUpdateSettings({ deliveryRatePerMileCents: cents });
+    const rateDollars = parseFloat(rateInput || '0');
+    const flatDollars = parseFloat(flatInput || '0');
+    if (isNaN(rateDollars) || rateDollars < 0 || isNaN(flatDollars) || flatDollars < 0) return;
+    onUpdateSettings({
+      deliveryRatePerMileCents: Math.round(rateDollars * 100),
+      deliveryFlatFeeCents: Math.round(flatDollars * 100),
+    });
   };
 
   const currentRateDollars = (deliveryRatePerMileCents / 100).toFixed(2);
+  const currentFlatDollars = ((deliveryFlatFeeCents || 0) / 100).toFixed(2);
 
   return (
     <div>
@@ -46,7 +57,7 @@ const DeliverySettingsTab = props => {
           {intl.formatMessage({ id: 'AdminDeliverySettingsPage.currentRate' })}
         </div>
         <div className={css.currentRateValue}>
-          ${currentRateDollars}/mi
+          ${currentFlatDollars} + ${currentRateDollars}/mi
         </div>
       </div>
 
@@ -68,6 +79,25 @@ const DeliverySettingsTab = props => {
           />
           <span className={css.perMile}>/mi</span>
         </div>
+
+        <label className={css.label} style={{ marginTop: 16 }}>
+          {intl.formatMessage({ id: 'AdminDeliverySettingsPage.flatFeeLabel' })}
+        </label>
+        <div className={css.inputWrapper}>
+          <span className={css.currencyPrefix}>$</span>
+          <input
+            className={css.input}
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="0.00"
+            value={flatInput}
+            onChange={e => setFlatInput(e.target.value)}
+            disabled={updateInProgress}
+          />
+          <span className={css.perMile}>flat</span>
+        </div>
+
         <button type="submit" className={css.submitButton} disabled={updateInProgress}>
           {intl.formatMessage({ id: 'AdminDeliverySettingsPage.saveButton' })}
         </button>

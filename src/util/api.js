@@ -221,6 +221,23 @@ export const rejectUser = ({ userId }) => {
   });
 };
 
+// List vendor users with tax-exempt flags (admin only).
+export const fetchVendors = () => {
+  return request('/api/admin/vendors', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
+// Toggle a vendor's tax-exempt flag (admin only).
+export const setVendorTaxExempt = ({ userId, taxExempt }) => {
+  return request('/api/admin/set-vendor-tax-exempt', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, taxExempt }),
+  });
+};
+
 // Create an OnFleet delivery task for a shipping transaction.
 export const createOnfleetTask = ({ transactionId }) => {
   return request('/api/create-onfleet-task', {

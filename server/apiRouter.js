@@ -35,6 +35,8 @@ const { registerHandler: registerDeviceToken, unregisterHandler: unregisterDevic
 const adminPendingUsers = require('./api/admin/pending-users');
 const adminApproveUser = require('./api/admin/approve-user');
 const adminRejectUser = require('./api/admin/reject-user');
+const adminListVendors = require('./api/admin/list-vendors');
+const adminSetVendorTaxExempt = require('./api/admin/set-vendor-tax-exempt');
 
 const createOnfleetTask = require('./api/create-onfleet-task');
 const onfleetWebhook = require('./api/onfleet-webhook');
@@ -148,6 +150,8 @@ router.delete('/device-tokens', unregisterDeviceToken);
 router.get('/admin/pending-users', adminPendingUsers);
 router.post('/admin/approve-user', adminApproveUser);
 router.post('/admin/reject-user', adminRejectUser);
+router.get('/admin/vendors', adminListVendors);
+router.post('/admin/set-vendor-tax-exempt', adminSetVendorTaxExempt);
 
 // OnFleet delivery integration endpoints
 router.post('/create-onfleet-task', createOnfleetTask);

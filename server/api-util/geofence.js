@@ -1,51 +1,42 @@
-const fs = require('fs');
-const path = require('path');
+const settingsStore = require('./settingsStore');
 
-const SETTINGS_PATH = path.resolve(__dirname, '../data/geofence-settings.json');
+const NAMESPACE = 'geofence-settings';
 
-const readSettings = () => {
-  try {
-    return JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf8'));
-  } catch (e) {
-    return {};
-  }
+const readSettings = () => settingsStore.get(NAMESPACE) || {};
+
+const writeSettings = async data => {
+  await settingsStore.set(NAMESPACE, { ...data, updatedAt: new Date().toISOString() });
 };
 
-// Backward-compatible: returns the default polygon (used by existing code)
 const getGeofence = () => {
   const data = readSettings();
-  // Support new dual format: use consumerPolygon if present, else fall back to polygon
   return data.consumerPolygon || data.polygon || null;
 };
 
-const setGeofence = polygon => {
+const setGeofence = async polygon => {
   const data = readSettings();
-  // When setting via old API, update both polygon and consumerPolygon
-  data.polygon = polygon || null;
-  data.consumerPolygon = polygon || null;
-  data.updatedAt = new Date().toISOString();
-  fs.writeFileSync(SETTINGS_PATH, JSON.stringify(data, null, 2), 'utf8');
+  await writeSettings({
+    ...data,
+    polygon: polygon || null,
+    consumerPolygon: polygon || null,
+  });
 };
 
-// New dual geofence getters/setters
-const getVendorPolygon = () => {
-  const data = readSettings();
-  return data.vendorPolygon || null;
-};
+const getVendorPolygon = () => readSettings().vendorPolygon || null;
 
 const getConsumerPolygon = () => {
   const data = readSettings();
   return data.consumerPolygon || data.polygon || null;
 };
 
-const setDualGeofence = ({ vendorPolygon, consumerPolygon }) => {
+const setDualGeofence = async ({ vendorPolygon, consumerPolygon }) => {
   const data = readSettings();
-  data.vendorPolygon = vendorPolygon || null;
-  data.consumerPolygon = consumerPolygon || null;
-  // Keep polygon in sync with consumerPolygon for backward compat
-  data.polygon = consumerPolygon || null;
-  data.updatedAt = new Date().toISOString();
-  fs.writeFileSync(SETTINGS_PATH, JSON.stringify(data, null, 2), 'utf8');
+  await writeSettings({
+    ...data,
+    vendorPolygon: vendorPolygon || null,
+    consumerPolygon: consumerPolygon || null,
+    polygon: consumerPolygon || null,
+  });
 };
 
 module.exports = {

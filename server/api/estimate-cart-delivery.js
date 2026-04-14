@@ -1,7 +1,7 @@
 const { getSdk, getIntegrationSdk } = require('../api-util/sdk');
 const { geocodeAddress } = require('../api-util/geocode');
 const { haversineDistanceMiles } = require('../api-util/distance');
-const { getDeliveryRate } = require('../api-util/deliveryRate');
+const { getDeliverySettings } = require('../api-util/deliveryRate');
 
 /**
  * Calculate the optimal route distance through a set of supplier locations
@@ -155,8 +155,9 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'listingIds and shippingAddress are required' });
     }
 
-    const rateCentsPerMile = getDeliveryRate();
-    if (!rateCentsPerMile || rateCentsPerMile <= 0) {
+    const { deliveryRatePerMileCents: rateCentsPerMile, deliveryFlatFeeCents: flatFeeCents } =
+      getDeliverySettings();
+    if ((!rateCentsPerMile || rateCentsPerMile <= 0) && (!flatFeeCents || flatFeeCents <= 0)) {
       return res.json({ totalDistanceMiles: 0, totalFeeCents: 0, rateCentsPerMile: 0 });
     }
 
@@ -227,7 +228,7 @@ module.exports = async (req, res) => {
     const supplierLocations = (await Promise.all(locationPromises)).filter(Boolean);
 
     if (supplierLocations.length === 0) {
-      return res.json({ totalDistanceMiles: 0, totalFeeCents: 0, rateCentsPerMile });
+      return res.json({ totalDistanceMiles: 0, totalFeeCents: flatFeeCents, rateCentsPerMile, flatFeeCents });
     }
 
     // Deduplicate locations (same supplier / very close suppliers)
@@ -238,12 +239,13 @@ module.exports = async (req, res) => {
 
     // Calculate optimal route distance
     const totalDistanceMiles = calculateRouteDistance(uniqueLocations, buyerLocation);
-    const totalFeeCents = Math.round(totalDistanceMiles * rateCentsPerMile);
+    const totalFeeCents = Math.round(totalDistanceMiles * rateCentsPerMile) + flatFeeCents;
 
     return res.json({
       totalDistanceMiles: Math.round(totalDistanceMiles * 10) / 10,
       totalFeeCents,
       rateCentsPerMile,
+      flatFeeCents,
     });
   } catch (e) {
     console.error('estimate-cart-delivery error:', e);

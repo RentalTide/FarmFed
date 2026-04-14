@@ -22,7 +22,7 @@ import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-
 import { WebView, WebViewNavigation, WebViewMessageEvent } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 
-const SITE_URL = 'https://farmfed-e9c8faa5736a.herokuapp.com';
+const SITE_URL = 'https://www.farmfed.us';
 const BRAND_GREEN = '#2ecc71';
 const INACTIVE_GRAY = '#8E8E93';
 const TAB_BAR_HEIGHT = 56;
@@ -281,6 +281,19 @@ export default function App() {
     SplashScreen.hideAsync();
   }, []);
 
+  // The web server returns 401/403/404 with a valid HTML body that contains
+  // a client-side redirect (e.g. to /signup for auth-protected routes when
+  // logged out). Treat those as normal navigations, not connection errors.
+  const onHttpError = useCallback((event: any) => {
+    const status = event?.nativeEvent?.statusCode;
+    if (status === 401 || status === 403 || status === 404) {
+      setIsLoaded(true);
+      SplashScreen.hideAsync();
+      return;
+    }
+    onError();
+  }, [onError]);
+
   const retry = useCallback(() => {
     setHasError(false);
     setIsLoaded(false);
@@ -473,7 +486,7 @@ export default function App() {
           onNavigationStateChange={onNavigationStateChange}
           onLoadEnd={onLoadEnd}
           onError={onError}
-          onHttpError={onError}
+          onHttpError={onHttpError}
           onMessage={onMessage}
           allowsBackForwardNavigationGestures={true}
           startInLoadingState={true}

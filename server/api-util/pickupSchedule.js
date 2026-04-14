@@ -1,7 +1,6 @@
-const fs = require('fs');
-const path = require('path');
+const settingsStore = require('./settingsStore');
 
-const SETTINGS_PATH = path.resolve(__dirname, '../data/pickup-settings.json');
+const NAMESPACE = 'pickup-settings';
 
 const DEFAULT_SETTINGS = {
   pickupDays: ['saturday'],
@@ -10,26 +9,22 @@ const DEFAULT_SETTINGS = {
 };
 
 const getPickupSettings = () => {
-  try {
-    const data = JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf8'));
-    return {
-      pickupDays: Array.isArray(data.pickupDays) ? data.pickupDays : DEFAULT_SETTINGS.pickupDays,
-      cutoffDay: data.cutoffDay || DEFAULT_SETTINGS.cutoffDay,
-      cutoffTime: data.cutoffTime || DEFAULT_SETTINGS.cutoffTime,
-    };
-  } catch (e) {
-    return DEFAULT_SETTINGS;
-  }
+  const data = settingsStore.get(NAMESPACE) || {};
+  return {
+    pickupDays: Array.isArray(data.pickupDays) ? data.pickupDays : DEFAULT_SETTINGS.pickupDays,
+    cutoffDay: data.cutoffDay || DEFAULT_SETTINGS.cutoffDay,
+    cutoffTime: data.cutoffTime || DEFAULT_SETTINGS.cutoffTime,
+  };
 };
 
-const setPickupSettings = settings => {
+const setPickupSettings = async settings => {
   const data = {
     pickupDays: settings.pickupDays,
     cutoffDay: settings.cutoffDay,
     cutoffTime: settings.cutoffTime,
     updatedAt: new Date().toISOString(),
   };
-  fs.writeFileSync(SETTINGS_PATH, JSON.stringify(data, null, 2), 'utf8');
+  await settingsStore.set(NAMESPACE, data);
 };
 
 // Calculate the next available pickup date based on current settings
@@ -72,7 +67,6 @@ const getNextPickupDate = () => {
       daysToAdd = candidateDays;
       break;
     } else if (isPastCutoff) {
-      // If past cutoff, we need at least next week's pickup day
       const nextWeekDiff = diff === 0 ? 7 : diff;
       if (nextWeekDiff > (cutoffDayNum - currentDay + 7) % 7) {
         daysToAdd = nextWeekDiff;

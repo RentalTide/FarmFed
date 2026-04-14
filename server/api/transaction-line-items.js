@@ -19,24 +19,29 @@ module.exports = (req, res) => {
       const { providerCommission, customerCommission } =
         commissionAsset?.type === 'jsonAsset' ? commissionAsset.attributes.data : {};
 
-      // If listing has no geolocation and shipping is requested, try author's protectedData.address
-      const isShipping = orderData?.deliveryMethod === 'shipping';
-      const hasGeolocation = listing.attributes.geolocation?.lat && listing.attributes.geolocation?.lng;
+      // Try to fetch the listing's author via Integration SDK so we can read
+      // private flags (tax-exemption) and fall back to author address for geolocation.
+      try {
+        const integrationSdk = getIntegrationSdk();
+        const listingResponse = await integrationSdk.listings.show({
+          id: listingId,
+          include: ['author'],
+        });
+        const included = listingResponse.data.included || [];
+        const author = included.find(r => r.type === 'user');
+        if (author) {
+          listing.author = author;
+        }
 
-      if (isShipping && !hasGeolocation) {
-        try {
-          const integrationSdk = getIntegrationSdk();
-          const listingResponse = await integrationSdk.listings.show({
-            id: listingId,
-            include: ['author'],
-          });
-          const included = listingResponse.data.included || [];
-          const author = included.find(r => r.type === 'user');
-          const authorAddress = author?.attributes?.profile?.protectedData?.address;
+        const isShipping = orderData?.deliveryMethod === 'shipping';
+        const hasGeolocation =
+          listing.attributes.geolocation?.lat && listing.attributes.geolocation?.lng;
+        const authorAddress = author?.attributes?.profile?.protectedData?.address;
 
-          if (authorAddress && authorAddress.lat && authorAddress.lng) {
+        if (isShipping && !hasGeolocation && authorAddress) {
+          if (authorAddress.lat && authorAddress.lng) {
             listing.attributes.geolocation = { lat: authorAddress.lat, lng: authorAddress.lng };
-          } else if (authorAddress && authorAddress.street) {
+          } else if (authorAddress.street) {
             const coords = await geocodeAddress({
               line1: authorAddress.street,
               city: authorAddress.city,
@@ -46,9 +51,9 @@ module.exports = (req, res) => {
             });
             listing.attributes.geolocation = coords;
           }
-        } catch (e) {
-          // Integration API may not be available (403) — fall through gracefully
         }
+      } catch (e) {
+        // Integration API may not be available (403) — fall through gracefully.
       }
 
       const lineItems = await transactionLineItems(

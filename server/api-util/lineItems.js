@@ -7,7 +7,7 @@ const {
 } = require('./lineItemHelpers');
 const { types } = require('sharetribe-flex-sdk');
 const { Money } = types;
-const { getDeliveryRate } = require('./deliveryRate');
+const { getDeliverySettings } = require('./deliveryRate');
 const { haversineDistanceMiles } = require('./distance');
 const { geocodeAddress } = require('./geocode');
 const { getTaxSettings } = require('./taxSettings');
@@ -41,7 +41,8 @@ const getItemQuantityAndLineItems = async (orderData, publicData, currency, geol
       }
       // If customShippingFeeCents is 0, shippingFee stays null (no shipping line item)
     } else {
-      const ratePerMileCents = getDeliveryRate();
+      const { deliveryRatePerMileCents: ratePerMileCents, deliveryFlatFeeCents: flatFeeCents } =
+        getDeliverySettings();
       const shippingAddress = orderData && orderData.shippingAddress;
       const hasGeolocation = geolocation && geolocation.lat && geolocation.lng;
 
@@ -54,7 +55,7 @@ const getItemQuantityAndLineItems = async (orderData, publicData, currency, geol
             buyerCoords.lat,
             buyerCoords.lng
           );
-          const deliveryFeeCents = Math.round(distance * ratePerMileCents);
+          const deliveryFeeCents = Math.round(distance * ratePerMileCents) + flatFeeCents;
           if (deliveryFeeCents > 0) {
             shippingFee = new Money(deliveryFeeCents, currency);
           }
@@ -62,6 +63,9 @@ const getItemQuantityAndLineItems = async (orderData, publicData, currency, geol
           // Geocoding failed — fall back to per-listing flat rate
           console.error('Distance-based delivery fee failed, using flat rate:', e.message);
         }
+      } else if (flatFeeCents > 0 && !shippingPriceInSubunitsOneItem) {
+        // No per-mile rate configured, but admin flat fee is — charge that alone.
+        shippingFee = new Money(flatFeeCents, currency);
       }
 
       // Fallback: use per-listing flat shipping rate
@@ -98,9 +102,19 @@ const getOfferQuantityAndLineItems = orderData => {
  * Get tax line item if tax is enabled in settings.
  * Tax is calculated on the subtotal (order + extra line items, excluding commissions).
  */
-const getTaxLineItemMaybe = (order, extraLineItems, currency) => {
+const getTaxLineItemMaybe = (order, extraLineItems, currency, listing) => {
   const taxSettings = getTaxSettings();
   if (!taxSettings.enabled || taxSettings.taxRate <= 0) {
+    return [];
+  }
+
+  // Per-shop tax exemption: skip tax for this transaction if the listing's
+  // provider (author) is marked as tax-exempt. The handler attaches the author
+  // user onto listing.author before calling transactionLineItems.
+  const authorTaxExempt =
+    listing?.author?.attributes?.profile?.privateData?.taxExempt === true;
+  const listingTaxExempt = listing?.attributes?.publicData?.taxExempt === true;
+  if (authorTaxExempt || listingTaxExempt) {
     return [];
   }
 
@@ -302,7 +316,7 @@ exports.transactionLineItems = async (listing, orderData, providerCommission, cu
 
   // Let's keep the base price (order) as first line item and provider and customer commissions as last.
   // Note: the order matters only if OrderBreakdown component doesn't recognize line-item.
-  const taxLineItems = getTaxLineItemMaybe(order, extraLineItems, currency);
+  const taxLineItems = getTaxLineItemMaybe(order, extraLineItems, currency, listing);
   const lineItems = [
     order,
     ...extraLineItems,

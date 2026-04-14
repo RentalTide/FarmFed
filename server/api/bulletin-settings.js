@@ -38,8 +38,9 @@ const putHandler = (req, res) => {
         }
       }
 
-      setBulletins(bulletins);
-      res.status(200).json({ bulletins });
+      return setBulletins(bulletins).then(() => {
+        res.status(200).json({ bulletins });
+      });
     })
     .catch(e => handleError(res, e));
 };
