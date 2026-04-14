@@ -1,7 +1,7 @@
 const { getPickupSettings, setPickupSettings, getNextPickupDate, isCutoffPassed } = require('../api-util/pickupSchedule');
 const { getSdk, handleError } = require('../api-util/sdk');
 
-const VALID_DAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+const VALID_DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
 const getHandler = (req, res) => {
   const settings = getPickupSettings();

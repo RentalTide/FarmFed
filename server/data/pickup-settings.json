@@ -1,8 +1,6 @@
 {
-  "pickupDays": [
-    "saturday"
-  ],
-  "cutoffDay": "thursday",
+  "pickupDays": ["sat"],
+  "cutoffDay": "thu",
   "cutoffTime": "18:00",
-  "updatedAt": "2026-03-15T03:01:24.385Z"
+  "updatedAt": "2026-04-14T18:58:00.000Z"
 }

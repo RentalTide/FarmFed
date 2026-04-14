@@ -3,16 +3,23 @@ const settingsStore = require('./settingsStore');
 const NAMESPACE = 'pickup-settings';
 
 const DEFAULT_SETTINGS = {
-  pickupDays: ['saturday'],
-  cutoffDay: 'thursday',
+  pickupDays: ['sat'],
+  cutoffDay: 'thu',
   cutoffTime: '18:00',
 };
 
+const LEGACY_DAY_MAP = {
+  sunday: 'sun', monday: 'mon', tuesday: 'tue', wednesday: 'wed',
+  thursday: 'thu', friday: 'fri', saturday: 'sat',
+};
+const normalizeDay = d => LEGACY_DAY_MAP[d] || d;
+
 const getPickupSettings = () => {
   const data = settingsStore.get(NAMESPACE) || {};
+  const rawDays = Array.isArray(data.pickupDays) ? data.pickupDays : DEFAULT_SETTINGS.pickupDays;
   return {
-    pickupDays: Array.isArray(data.pickupDays) ? data.pickupDays : DEFAULT_SETTINGS.pickupDays,
-    cutoffDay: data.cutoffDay || DEFAULT_SETTINGS.cutoffDay,
+    pickupDays: rawDays.map(normalizeDay),
+    cutoffDay: normalizeDay(data.cutoffDay || DEFAULT_SETTINGS.cutoffDay),
     cutoffTime: data.cutoffTime || DEFAULT_SETTINGS.cutoffTime,
   };
 };
@@ -30,15 +37,7 @@ const setPickupSettings = async settings => {
 // Calculate the next available pickup date based on current settings
 const getNextPickupDate = () => {
   const settings = getPickupSettings();
-  const dayMap = {
-    sunday: 0,
-    monday: 1,
-    tuesday: 2,
-    wednesday: 3,
-    thursday: 4,
-    friday: 5,
-    saturday: 6,
-  };
+  const dayMap = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
 
   const now = new Date();
   const cutoffDayNum = dayMap[settings.cutoffDay];
@@ -89,10 +88,7 @@ const getNextPickupDate = () => {
 
 const isCutoffPassed = () => {
   const settings = getPickupSettings();
-  const dayMap = {
-    sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
-    thursday: 4, friday: 5, saturday: 6,
-  };
+  const dayMap = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
   const now = new Date();
   const cutoffDayNum = dayMap[settings.cutoffDay];
   const cutoffHour = parseInt(settings.cutoffTime.split(':')[0], 10);

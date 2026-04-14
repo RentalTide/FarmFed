@@ -1,6 +1,10 @@
 const { getSdk, getIntegrationSdk, handleError } = require('../../api-util/sdk');
 
-// Admin-only: list all provider/vendor users with their tax-exempt flag.
+// Admin-only: list all non-consumer (vendor) users with their tax-exempt flag.
+// We pull everyone and filter client-side because Sharetribe's query metadata
+// filter is case-sensitive and different marketplaces use different labels
+// ("Farmer", "Provider", "Vendor", etc.). Anything that isn't labeled a consumer
+// counts as a vendor here.
 module.exports = async (req, res) => {
   try {
     const sdk = getSdk(req, res);
@@ -16,23 +20,30 @@ module.exports = async (req, res) => {
     const vendors = [];
 
     while (true) {
-      const resp = await integrationSdk.users.query({
-        pub_userType: 'provider',
-        perPage,
-        page,
-      });
+      const resp = await integrationSdk.users.query({ perPage, page });
       const batch = resp.data.data || [];
+
       for (const user of batch) {
         const profile = user.attributes?.profile || {};
+        const userType = (profile.publicData?.userType || '').toString();
+        const normalized = userType.toLowerCase();
+        const state = user.attributes?.state;
+        const isExcludedState = state === 'pendingApproval' || state === 'banned' || state === 'deleted';
+        const isConsumer = normalized === 'consumer' || normalized === 'customer' || normalized === 'buyer';
+
+        if (isExcludedState || isConsumer) continue;
+
         vendors.push({
           id: user.id?.uuid || user.id,
           firstName: profile.firstName || '',
           lastName: profile.lastName || '',
           displayName: profile.displayName || '',
           email: user.attributes?.email || '',
+          userType,
           taxExempt: profile.privateData?.taxExempt === true,
         });
       }
+
       const totalPages = resp.data.meta?.totalPages || 1;
       if (page >= totalPages || batch.length === 0) break;
       page += 1;
