@@ -1568,6 +1568,7 @@
   "AdminPage.cutoffDayLabel": "Order Cutoff Day",
   "AdminPage.cutoffTimeLabel": "Order Cutoff Time",
   "AdminPage.nextPickupDate": "Next pickup date",
+  "AdminPage.nextPickupLabel": "Next pickup:",
   "AdminPage.pickupSaveButton": "Save Pickup Settings",
   "AdminPage.pickupSaveSuccess": "Pickup settings saved successfully.",
   "AdminPage.pickupSaveError": "Failed to save pickup settings.",
