@@ -59,7 +59,7 @@
     "react-moment-proptypes": "^1.8.1",
     "react-redux": "9.2.0",
     "react-router-dom": "^5.3.4",
-    "redis": "^4.7.1",
+    "redis": "^4",
     "rehype-react": "^6.2.1",
     "rehype-sanitize": "^4.0.0",
     "remark-parse": "^9.0.0",
