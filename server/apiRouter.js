@@ -21,6 +21,7 @@ const { getHandler: getDeliverySettings, putHandler: putDeliverySettings } = req
 const { getHandler: getGeofenceSettings, putHandler: putGeofenceSettings } = require('./api/geofence-settings');
 const validateGeofence = require('./api/validate-geofence');
 const estimateCartDelivery = require('./api/estimate-cart-delivery');
+const calculateCartFee = require('./api/calculate-cart-fee');
 
 const { getHandler: getPickupSettings, putHandler: putPickupSettings } = require('./api/pickup-settings');
 const { getHandler: getTaxSettings, putHandler: putTaxSettings } = require('./api/tax-settings');
@@ -77,6 +78,7 @@ router.use('/delivery-settings', bodyParser.json());
 router.use('/geofence-settings', bodyParser.json());
 router.use('/validate-geofence', bodyParser.json());
 router.use('/estimate-cart-delivery', bodyParser.json());
+router.use('/calculate-cart-fee', bodyParser.json());
 router.use('/admin', bodyParser.json());
 router.use('/create-onfleet-task', bodyParser.json());
 router.use('/onfleet-webhook', bodyParser.json());
@@ -109,6 +111,7 @@ router.get('/geofence-settings', getGeofenceSettings);
 router.put('/geofence-settings', putGeofenceSettings);
 router.post('/validate-geofence', validateGeofence);
 router.post('/estimate-cart-delivery', estimateCartDelivery);
+router.post('/calculate-cart-fee', calculateCartFee);
 
 // Pickup schedule settings endpoints
 router.get('/pickup-settings', getPickupSettings);

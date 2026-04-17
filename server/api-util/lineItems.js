@@ -275,6 +275,17 @@ exports.transactionLineItems = async (listing, orderData, providerCommission, cu
       ? getOfferQuantityAndLineItems(orderData)
       : {};
 
+  // Cart-level customer commission override: when a cart contains multiple items,
+  // the frontend computes a single platform fee against the cart subtotal and
+  // attaches the full amount to the first item (0 for the rest). This bypasses
+  // the per-item min/percent calculation that would otherwise multiply the
+  // minimum across items.
+  const customCustomerCommissionCents =
+    orderData && typeof orderData.customCustomerCommissionCents === 'number'
+      ? orderData.customCustomerCommissionCents
+      : null;
+  const hasCustomCustomerCommission = customCustomerCommissionCents != null;
+
   const { quantity, units, seats, extraLineItems } = quantityAndExtraLineItems;
 
   // Throw error if there is no quantity information given
@@ -317,12 +328,26 @@ exports.transactionLineItems = async (listing, orderData, providerCommission, cu
   // Let's keep the base price (order) as first line item and provider and customer commissions as last.
   // Note: the order matters only if OrderBreakdown component doesn't recognize line-item.
   const taxLineItems = getTaxLineItemMaybe(order, extraLineItems, currency, listing);
+
+  const customerCommissionLineItems = hasCustomCustomerCommission
+    ? customCustomerCommissionCents > 0
+      ? [
+          {
+            code: 'line-item/customer-commission',
+            unitPrice: new Money(customCustomerCommissionCents, currency),
+            quantity: 1,
+            includeFor: ['customer'],
+          },
+        ]
+      : []
+    : getCustomerCommissionMaybe(customerCommission, order, currency);
+
   const lineItems = [
     order,
     ...extraLineItems,
     ...taxLineItems,
     ...getProviderCommissionMaybe(providerCommission, order, currency),
-    ...getCustomerCommissionMaybe(customerCommission, order, currency),
+    ...customerCommissionLineItems,
   ];
 
   return lineItems;

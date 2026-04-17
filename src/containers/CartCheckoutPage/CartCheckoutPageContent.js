@@ -3,14 +3,14 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FormattedMessage } from '../../util/reactIntl';
 import { formatMoney } from '../../util/currency';
 import { types as sdkTypes } from '../../util/sdkLoader';
-import { transactionLineItems, estimateCartDelivery, fetchPickupSettings, fetchActiveOrderGroup } from '../../util/api';
+import { calculateCartFee, estimateCartDelivery, fetchPickupSettings, fetchActiveOrderGroup } from '../../util/api';
 import appSettings from '../../config/settings';
 
 import { NamedLink, PrimaryButton } from '../../components';
 
 import css from './CartCheckoutPage.module.css';
 
-const { Money, UUID } = sdkTypes;
+const { Money } = sdkTypes;
 
 const stripeElementsOptions = {
   fonts: [{ cssSrc: 'https://fonts.googleapis.com/css?family=Inter' }],
@@ -212,38 +212,34 @@ const CartCheckoutPageContent = props => {
     };
   }, [paymentChoice, config?.stripe?.publishableKey]);
 
-  // Fetch marketplace fee from line items
-  useEffect(() => {
-    if (!selectedDeliveryMethod || !cartItems.length) return;
+  // Fetch marketplace fee: a single platform fee for the entire cart subtotal
+  // (5% OR $3.99 minimum — whichever is greater), charged once per order.
+  const cartSubtotalCents = cartItems.reduce((sum, item) => {
+    const amount = item.listing?.attributes?.price?.amount || 0;
+    return sum + amount * (item.quantity || 1);
+  }, 0);
 
-    Promise.all(
-      cartItems.map(item =>
-        transactionLineItems({
-          listingId: new UUID(item.listingId),
-          orderData: {
-            deliveryMethod: selectedDeliveryMethod,
-            stockReservationQuantity: item.quantity,
-          },
-        })
-      )
-    )
-      .then(responses => {
-        let totalFee = 0;
-        responses.forEach(res => {
-          const lineItems = res?.data || [];
-          const feeLine = lineItems.find(
-            li => li.code === 'line-item/customer-commission'
-          );
-          if (feeLine) {
-            totalFee += Math.abs(feeLine.lineTotal?.amount || feeLine.unitPrice?.amount || 0);
-          }
-        });
-        setEstimatedFee(totalFee > 0 ? totalFee : null);
+  useEffect(() => {
+    if (!cartSubtotalCents) {
+      setEstimatedFee(null);
+      return;
+    }
+
+    let cancelled = false;
+    calculateCartFee({ subtotalCents: cartSubtotalCents })
+      .then(res => {
+        if (cancelled) return;
+        const feeCents = res?.data?.feeCents;
+        setEstimatedFee(feeCents > 0 ? feeCents : null);
       })
       .catch(() => {
-        setEstimatedFee(null);
+        if (!cancelled) setEstimatedFee(null);
       });
-  }, [selectedDeliveryMethod, cartItems]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [cartSubtotalCents]);
 
   // Fetch route-based delivery estimate (supplier → supplier → buyer)
   useEffect(() => {
@@ -360,10 +356,11 @@ const CartCheckoutPageContent = props => {
         processAlias: cartItems[0]?.listing?.attributes?.publicData?.transactionProcessAlias || 'default-purchase/release-1',
         savedPaymentMethodId,
         stripeCustomer,
+        cartFeeCents: estimatedFee || 0,
         ...orderGroupMaybe,
       });
     },
-    [cartItems, shippingAddress, hasShippingItems, selectedDeliveryMethod, onProcessCheckout, paymentChoice, defaultPaymentMethod, stripeCustomer]
+    [cartItems, shippingAddress, hasShippingItems, selectedDeliveryMethod, onProcessCheckout, paymentChoice, defaultPaymentMethod, stripeCustomer, estimatedFee]
   );
 
   // Success/Results view
@@ -497,43 +494,53 @@ const CartCheckoutPageContent = props => {
           </div>
         ) : null}
 
-        {shippingAvailable && pickupAvailable ? (
+        {shippingAvailable || pickupAvailable ? (
           <div className={css.deliveryMethodSection}>
             <h3 className={css.sectionTitle}>
               <FormattedMessage id="CartCheckoutPage.deliveryMethodTitle" />
             </h3>
             <div className={css.deliveryOptions}>
-              <label className={css.deliveryOption}>
-                <input
-                  type="radio"
-                  name="deliveryMethod"
-                  value="pickup"
-                  checked={selectedDeliveryMethod === 'pickup'}
-                  onChange={() => {
-                    setSelectedDeliveryMethod('pickup');
-                    setEstimatedDelivery(null);
-                    setEstimatedFee(null);
-                  }}
-                  className={css.radioInput}
-                />
-                <span className={css.radioLabel}>
-                  <FormattedMessage id="CartCheckoutPage.pickupOption" />
-                </span>
-              </label>
-              <label className={css.deliveryOption}>
-                <input
-                  type="radio"
-                  name="deliveryMethod"
-                  value="shipping"
-                  checked={selectedDeliveryMethod === 'shipping'}
-                  onChange={() => setSelectedDeliveryMethod('shipping')}
-                  className={css.radioInput}
-                />
-                <span className={css.radioLabel}>
-                  <FormattedMessage id="CartCheckoutPage.shippingOption" />
-                </span>
-              </label>
+              {pickupAvailable ? (
+                <label className={css.deliveryOption}>
+                  <input
+                    type="radio"
+                    name="deliveryMethod"
+                    value="pickup"
+                    checked={selectedDeliveryMethod === 'pickup'}
+                    disabled={!shippingAvailable}
+                    onChange={() => {
+                      setSelectedDeliveryMethod('pickup');
+                      setEstimatedDelivery(null);
+                    }}
+                    className={css.radioInput}
+                  />
+                  <span className={css.radioLabel}>
+                    <FormattedMessage id="CartCheckoutPage.pickupOption" />
+                  </span>
+                </label>
+              ) : null}
+              {shippingAvailable ? (
+                <label className={css.deliveryOption}>
+                  <input
+                    type="radio"
+                    name="deliveryMethod"
+                    value="shipping"
+                    checked={selectedDeliveryMethod === 'shipping'}
+                    disabled={!pickupAvailable}
+                    onChange={() => setSelectedDeliveryMethod('shipping')}
+                    className={css.radioInput}
+                  />
+                  <span className={css.radioLabel}>
+                    <FormattedMessage id="CartCheckoutPage.shippingOption" />
+                  </span>
+                </label>
+              ) : null}
             </div>
+            {selectedDeliveryMethod === 'shipping' && estimatedDelivery == null && !estimatingBreakdown ? (
+              <p className={css.deliveryHint}>
+                <FormattedMessage id="CartCheckoutPage.deliveryFeeHint" />
+              </p>
+            ) : null}
           </div>
         ) : null}
 
@@ -734,7 +741,7 @@ const CartCheckoutPageContent = props => {
         <PrimaryButton
           type="submit"
           className={css.submitButton}
-          disabled={(paymentChoice === 'new' && !cardReady) || checkoutInProgress || (shippingAvailable && pickupAvailable && !selectedDeliveryMethod)}
+          disabled={(paymentChoice === 'new' && !cardReady) || checkoutInProgress || ((shippingAvailable || pickupAvailable) && !selectedDeliveryMethod)}
         >
           {checkoutInProgress ? (
             <FormattedMessage

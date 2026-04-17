@@ -33,6 +33,13 @@ export const transitions = {
   // the transaction will expire automatically.
   EXPIRE_PAYMENT: 'transition/expire-payment',
 
+  // After payment is confirmed, the vendor has 24 hours to accept or decline the order.
+  // Accept captures the payment and moves to PURCHASED. Decline (manual or auto)
+  // refunds the customer and moves to DECLINED.
+  ACCEPT_ORDER: 'transition/accept-order',
+  DECLINE_ORDER: 'transition/decline-order',
+  AUTO_DECLINE_ORDER: 'transition/auto-decline-order',
+
   // Provider or opeartor can mark the product shipped/delivered
   MARK_DELIVERED: 'transition/mark-delivered',
   OPERATOR_MARK_DELIVERED: 'transition/operator-mark-delivered',
@@ -97,6 +104,8 @@ export const states = {
   INQUIRY: 'inquiry',
   PENDING_PAYMENT: 'pending-payment',
   PAYMENT_EXPIRED: 'payment-expired',
+  PENDING_ACCEPTANCE: 'pending-acceptance',
+  DECLINED: 'declined',
   PURCHASED: 'purchased',
   DELIVERED: 'delivered',
   RECEIVED: 'received',
@@ -143,11 +152,22 @@ export const graph = {
     [states.PENDING_PAYMENT]: {
       on: {
         [transitions.EXPIRE_PAYMENT]: states.PAYMENT_EXPIRED,
-        [transitions.CONFIRM_PAYMENT]: states.PURCHASED,
+        [transitions.CONFIRM_PAYMENT]: states.PENDING_ACCEPTANCE,
       },
     },
 
     [states.PAYMENT_EXPIRED]: {},
+
+    [states.PENDING_ACCEPTANCE]: {
+      on: {
+        [transitions.ACCEPT_ORDER]: states.PURCHASED,
+        [transitions.DECLINE_ORDER]: states.DECLINED,
+        [transitions.AUTO_DECLINE_ORDER]: states.DECLINED,
+      },
+    },
+
+    [states.DECLINED]: {},
+
     [states.PURCHASED]: {
       on: {
         [transitions.MARK_DELIVERED]: states.DELIVERED,
@@ -213,6 +233,9 @@ export const graph = {
 export const isRelevantPastTransition = transition => {
   return [
     transitions.CONFIRM_PAYMENT,
+    transitions.ACCEPT_ORDER,
+    transitions.DECLINE_ORDER,
+    transitions.AUTO_DECLINE_ORDER,
     transitions.AUTO_CANCEL,
     transitions.CANCEL,
     transitions.MARK_DELIVERED,
@@ -268,6 +291,8 @@ export const isCompleted = transition => {
 export const isRefunded = transition => {
   const txRefundedTransitions = [
     transitions.EXPIRE_PAYMENT,
+    transitions.DECLINE_ORDER,
+    transitions.AUTO_DECLINE_ORDER,
     transitions.CANCEL,
     transitions.AUTO_CANCEL,
     transitions.AUTO_CANCEL_FROM_DISPUTED,
@@ -276,4 +301,4 @@ export const isRefunded = transition => {
   return txRefundedTransitions.includes(transition);
 };
 
-export const statesNeedingProviderAttention = [states.PURCHASED];
+export const statesNeedingProviderAttention = [states.PENDING_ACCEPTANCE, states.PURCHASED];

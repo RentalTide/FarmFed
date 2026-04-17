@@ -178,6 +178,16 @@ export const estimateCartDelivery = ({ listingIds, shippingAddress }) => {
   });
 };
 
+// Calculate the FarmFed platform fee for an entire cart in a single call.
+// Returns { data: { feeCents, percentage, minimumCents } }.
+export const calculateCartFee = ({ subtotalCents }) => {
+  return request('/api/calculate-cart-fee', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ subtotalCents }),
+  });
+};
+
 // Fetch the geofence polygon settings.
 export const fetchGeofenceSettings = () => {
   return request('/api/geofence-settings', {

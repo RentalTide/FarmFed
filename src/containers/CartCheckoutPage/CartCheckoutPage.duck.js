@@ -12,7 +12,7 @@ import { setCurrentUserHasOrders } from '../../ducks/user.duck';
  * For new cards, sets up a reusable PaymentMethod via SetupIntent before processing.
  */
 const processCartCheckoutPayloadCreator = async (
-  { cartItems, stripe, card, billingDetails, shippingDetails, processAlias, savedPaymentMethodId, stripeCustomer, orderGroupId, customShippingFeeCents },
+  { cartItems, stripe, card, billingDetails, shippingDetails, processAlias, savedPaymentMethodId, stripeCustomer, orderGroupId, customShippingFeeCents, cartFeeCents },
   { dispatch, extra: sdk, rejectWithValue }
 ) => {
   const results = [];
@@ -97,6 +97,12 @@ const processCartCheckoutPayloadCreator = async (
   }
 
   let shippingFeeAssigned = false;
+  // Charge the platform fee once per cart: full amount on the first item,
+  // 0 on every other item. If adding to an existing order group, skip the
+  // fee entirely (the original order already paid it).
+  let cartFeeAssigned = false;
+  const shouldApplyCartFee =
+    typeof cartFeeCents === 'number' && cartFeeCents >= 0 && !orderGroupId;
 
   for (let i = 0; i < cartItems.length; i++) {
     const item = cartItems[i];
@@ -133,10 +139,24 @@ const processCartCheckoutPayloadCreator = async (
 
       const orderGroupMaybe = orderGroupId ? { orderGroupId } : {};
 
+      // Assign the single cart fee to the first item only; subsequent items
+      // send customCustomerCommissionCents: 0 so the backend skips commission
+      // line items entirely for them.
+      const customCartFeeMaybe = orderGroupId
+        ? { customCustomerCommissionCents: 0 }
+        : shouldApplyCartFee
+          ? { customCustomerCommissionCents: cartFeeAssigned ? 0 : cartFeeCents }
+          : {};
+
+      if (shouldApplyCartFee && !cartFeeAssigned) {
+        cartFeeAssigned = true;
+      }
+
       const orderData = {
         ...(deliveryMethod ? { deliveryMethod } : {}),
         ...shippingAddressMaybe,
         ...customShippingMaybe,
+        ...customCartFeeMaybe,
         ...orderGroupMaybe,
       };
 

@@ -26,11 +26,35 @@
   {:name :transition/confirm-payment,
    :actor :actor.role/customer,
    :actions
-   [{:name :action/accept-stock-reservation}
-    {:name :action/stripe-confirm-payment-intent}
-    {:name :action/stripe-capture-payment-intent}],
+   [{:name :action/stripe-confirm-payment-intent}],
    :from :state/pending-payment,
+   :to :state/pending-acceptance}
+  {:name :transition/accept-order,
+   :actor :actor.role/provider,
+   :actions
+   [{:name :action/accept-stock-reservation}
+    {:name :action/stripe-capture-payment-intent}],
+   :from :state/pending-acceptance,
    :to :state/purchased}
+  {:name :transition/decline-order,
+   :actor :actor.role/provider,
+   :actions
+   [{:name :action/calculate-full-refund}
+    {:name :action/stripe-refund-payment}
+    {:name :action/decline-stock-reservation}],
+   :from :state/pending-acceptance,
+   :to :state/declined}
+  {:name :transition/auto-decline-order,
+   :at
+   {:fn/plus
+    [{:fn/timepoint [:time/first-entered-state :state/pending-acceptance]}
+     {:fn/period ["P1D"]}]},
+   :actions
+   [{:name :action/calculate-full-refund}
+    {:name :action/stripe-refund-payment}
+    {:name :action/decline-stock-reservation}],
+   :from :state/pending-acceptance,
+   :to :state/declined}
   {:name :transition/expire-payment,
    :at
    {:fn/plus
@@ -201,6 +225,30 @@
    :on :transition/confirm-payment,
    :to :actor.role/provider,
    :template :purchase-new-order}
+  {:name :notification/purchase-accept-reminder,
+   :on :transition/confirm-payment,
+   :at
+   {:fn/plus
+    [{:fn/timepoint [:time/first-entered-state :state/pending-acceptance]}
+     {:fn/period ["PT20H"]}]},
+   :to :actor.role/provider,
+   :template :purchase-new-order}
+  {:name :notification/purchase-accepted-customer,
+   :on :transition/accept-order,
+   :to :actor.role/customer,
+   :template :purchase-order-receipt}
+  {:name :notification/purchase-declined-customer,
+   :on :transition/decline-order,
+   :to :actor.role/customer,
+   :template :purchase-order-canceled-to-customer}
+  {:name :notification/purchase-auto-declined-customer,
+   :on :transition/auto-decline-order,
+   :to :actor.role/customer,
+   :template :purchase-order-canceled-to-customer}
+  {:name :notification/purchase-auto-declined-provider,
+   :on :transition/auto-decline-order,
+   :to :actor.role/provider,
+   :template :purchase-order-canceled-to-provider}
   {:name :notification/shipping-reminder,
    :on :transition/confirm-payment,
    :at

@@ -25,6 +25,7 @@ import BookingLocationMaybe from './BookingLocationMaybe';
 import FeedSection from './FeedSection';
 import DiminishedActionButtonMaybe from './DiminishedActionButtonMaybe';
 import PanelHeading from './PanelHeading';
+import AcceptanceDeadlineMaybe from './AcceptanceDeadlineMaybe';
 
 import css from './TransactionPanel.module.css';
 
@@ -168,6 +169,7 @@ export class TransactionPanelComponent extends Component {
       rootClassName,
       className,
       currentUser,
+      transaction,
       transactionRole,
       listing,
       customer,
@@ -287,6 +289,12 @@ export class TransactionPanelComponent extends Component {
               listingId={listing?.id?.uuid}
               listingTitle={listingTitle}
               listingDeleted={listingDeleted}
+            />
+
+            <AcceptanceDeadlineMaybe
+              show={!!stateData.showAcceptanceDeadline}
+              transaction={transaction}
+              isProvider={isProvider}
             />
 
             <TextMaybe

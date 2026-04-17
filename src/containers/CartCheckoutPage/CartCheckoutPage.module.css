@@ -210,6 +210,13 @@
   cursor: pointer;
 }
 
+.deliveryHint {
+  margin: 12px 0 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--colorGrey500, #6b6b6b);
+}
+
 .radioInput {
   accent-color: var(--marketplaceColor);
   width: 16px;

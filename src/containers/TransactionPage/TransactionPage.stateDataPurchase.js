@@ -15,6 +15,7 @@ import {
 export const getStateDataForPurchaseProcess = (txInfo, processInfo) => {
   const { transaction, transactionRole, nextTransitions } = txInfo;
   const isProviderBanned = transaction?.provider?.attributes?.banned;
+  const isCustomerBanned = transaction?.customer?.attributes?.banned;
   const isShippable = transaction?.attributes?.protectedData?.deliveryMethod === 'shipping';
   const _ = CONDITIONAL_RESOLVER_WILDCARD;
 
@@ -39,6 +40,31 @@ export const getStateDataForPurchaseProcess = (txInfo, processInfo) => {
       return { processName, processState, showOrderPanel };
     })
     .cond([states.INQUIRY, PROVIDER], () => {
+      return { processName, processState, showDetailCardHeadings: true };
+    })
+    .cond([states.PENDING_ACCEPTANCE, CUSTOMER], () => {
+      return {
+        processName,
+        processState,
+        showDetailCardHeadings: true,
+        showExtraInfo: true,
+        showAcceptanceDeadline: true,
+      };
+    })
+    .cond([states.PENDING_ACCEPTANCE, PROVIDER], () => {
+      const primary = isCustomerBanned ? null : actionButtonProps(transitions.ACCEPT_ORDER, PROVIDER);
+      const secondary = isCustomerBanned ? null : actionButtonProps(transitions.DECLINE_ORDER, PROVIDER);
+      return {
+        processName,
+        processState,
+        showDetailCardHeadings: true,
+        showActionButtons: true,
+        showAcceptanceDeadline: true,
+        primaryButtonProps: primary,
+        secondaryButtonProps: secondary,
+      };
+    })
+    .cond([states.DECLINED, _], () => {
       return { processName, processState, showDetailCardHeadings: true };
     })
     .cond([states.PURCHASED, CUSTOMER], () => {
