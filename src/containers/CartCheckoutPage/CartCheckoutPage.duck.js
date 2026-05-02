@@ -97,12 +97,32 @@ const processCartCheckoutPayloadCreator = async (
   }
 
   let shippingFeeAssigned = false;
-  // Charge the platform fee once per cart: full amount on the first item,
-  // 0 on every other item. If adding to an existing order group, skip the
-  // fee entirely (the original order already paid it).
-  let cartFeeAssigned = false;
+  // Charge the platform fee once per cart, but split it proportionally across
+  // every transaction so that one vendor declining doesn't refund the whole
+  // fee. Each transaction's share is round(cartFee × itemSubtotal / cartSubtotal),
+  // with any rounding remainder added to the last transaction so the parts
+  // sum exactly to cartFeeCents. If adding to an existing order group, skip
+  // the fee entirely (the original order already paid it).
   const shouldApplyCartFee =
-    typeof cartFeeCents === 'number' && cartFeeCents >= 0 && !orderGroupId;
+    typeof cartFeeCents === 'number' && cartFeeCents > 0 && !orderGroupId;
+  const itemSubtotalsCents = cartItems.map(item =>
+    (item.listing?.attributes?.price?.amount || 0) * (item.quantity || 1)
+  );
+  const cartSubtotalCents = itemSubtotalsCents.reduce((s, x) => s + x, 0);
+  const cartFeeAllocations = (() => {
+    if (!shouldApplyCartFee) return cartItems.map(() => 0);
+    const shares = new Array(cartItems.length).fill(0);
+    let allocated = 0;
+    for (let i = 0; i < cartItems.length - 1; i++) {
+      const share = cartSubtotalCents > 0
+        ? Math.round((cartFeeCents * itemSubtotalsCents[i]) / cartSubtotalCents)
+        : Math.floor(cartFeeCents / cartItems.length);
+      shares[i] = share;
+      allocated += share;
+    }
+    shares[cartItems.length - 1] = cartFeeCents - allocated;
+    return shares;
+  })();
 
   for (let i = 0; i < cartItems.length; i++) {
     const item = cartItems[i];
@@ -139,18 +159,10 @@ const processCartCheckoutPayloadCreator = async (
 
       const orderGroupMaybe = orderGroupId ? { orderGroupId } : {};
 
-      // Assign the single cart fee to the first item only; subsequent items
-      // send customCustomerCommissionCents: 0 so the backend skips commission
-      // line items entirely for them.
+      // Assign this item's share of the platform fee (pre-computed above).
       const customCartFeeMaybe = orderGroupId
         ? { customCustomerCommissionCents: 0 }
-        : shouldApplyCartFee
-          ? { customCustomerCommissionCents: cartFeeAssigned ? 0 : cartFeeCents }
-          : {};
-
-      if (shouldApplyCartFee && !cartFeeAssigned) {
-        cartFeeAssigned = true;
-      }
+        : { customCustomerCommissionCents: cartFeeAllocations[i] };
 
       const orderData = {
         ...(deliveryMethod ? { deliveryMethod } : {}),
