@@ -507,7 +507,6 @@ const CartCheckoutPageContent = props => {
                     name="deliveryMethod"
                     value="pickup"
                     checked={selectedDeliveryMethod === 'pickup'}
-                    disabled={!shippingAvailable}
                     onChange={() => {
                       setSelectedDeliveryMethod('pickup');
                       setEstimatedDelivery(null);
@@ -526,7 +525,6 @@ const CartCheckoutPageContent = props => {
                     name="deliveryMethod"
                     value="shipping"
                     checked={selectedDeliveryMethod === 'shipping'}
-                    disabled={!pickupAvailable}
                     onChange={() => setSelectedDeliveryMethod('shipping')}
                     className={css.radioInput}
                   />
