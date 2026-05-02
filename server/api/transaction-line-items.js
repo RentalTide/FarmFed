@@ -1,7 +1,6 @@
 const { transactionLineItems } = require('../api-util/lineItems');
 const { getSdk, getIntegrationSdk, handleError, serialize, fetchCommission } = require('../api-util/sdk');
 const { constructValidLineItems } = require('../api-util/lineItemHelpers');
-const { geocodeAddress } = require('../api-util/geocode');
 
 module.exports = (req, res) => {
   const { isOwnListing, listingId, orderData } = req.body;
@@ -19,8 +18,9 @@ module.exports = (req, res) => {
       const { providerCommission, customerCommission } =
         commissionAsset?.type === 'jsonAsset' ? commissionAsset.attributes.data : {};
 
-      // Try to fetch the listing's author via Integration SDK so we can read
-      // private flags (tax-exemption) and fall back to author address for geolocation.
+      // Fetch the listing's author via Integration SDK to read private flags
+      // (e.g. tax-exemption). Shipping origin is the FarmFed hub, not the
+      // vendor's address, so no geolocation lookup is needed here.
       try {
         const integrationSdk = getIntegrationSdk();
         const listingResponse = await integrationSdk.listings.show({
@@ -31,26 +31,6 @@ module.exports = (req, res) => {
         const author = included.find(r => r.type === 'user');
         if (author) {
           listing.author = author;
-        }
-
-        const isShipping = orderData?.deliveryMethod === 'shipping';
-        const hasGeolocation =
-          listing.attributes.geolocation?.lat && listing.attributes.geolocation?.lng;
-        const authorAddress = author?.attributes?.profile?.protectedData?.address;
-
-        if (isShipping && !hasGeolocation && authorAddress) {
-          if (authorAddress.lat && authorAddress.lng) {
-            listing.attributes.geolocation = { lat: authorAddress.lat, lng: authorAddress.lng };
-          } else if (authorAddress.street) {
-            const coords = await geocodeAddress({
-              line1: authorAddress.street,
-              city: authorAddress.city,
-              state: authorAddress.state,
-              postalCode: authorAddress.zip,
-              country: authorAddress.country,
-            });
-            listing.attributes.geolocation = coords;
-          }
         }
       } catch (e) {
         // Integration API may not be available (403) — fall through gracefully.

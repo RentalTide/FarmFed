@@ -68,3 +68,35 @@
   color: var(--colorFail);
   margin-top: 12px;
 }
+
+.currentOrigin {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--colorGrey700, #4a4a4a);
+}
+
+.originHelper {
+  font-size: 13px;
+  color: var(--colorGrey700, #4a4a4a);
+  margin: -8px 0 0 0;
+}
+
+.textInput {
+  padding: 8px 12px;
+  border: 1px solid var(--colorGrey100, #e0e0e0);
+  border-radius: 4px;
+  font-size: 14px;
+  width: 100%;
+}
+
+.originRow {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+@media (--viewportSmall) {
+  .originRow {
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+  }
+}

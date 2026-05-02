@@ -14,16 +14,16 @@ const { getTaxSettings } = require('./taxSettings');
 
 /**
  * Get quantity and add extra line-items that are related to delivery method.
- * Uses marketplace-wide per-mile delivery rate when available, falling back
- * to the per-listing flat shipping rate.
+ * For shipping, distance is measured from the FarmFed hub (admin-configurable
+ * via Delivery Settings) to the buyer. Falls back to the per-listing flat
+ * shipping rate when the hub or per-mile rate is not set.
  *
  * @param {Object} orderData should contain stockReservationQuantity and deliveryMethod
  * @param {Object} publicData should contain shipping prices
  * @param {string} currency should point to the currency of listing's price
- * @param {Object|null} geolocation listing geolocation { lat, lng }
  * @returns {Promise<{quantity: number, extraLineItems: Array}>}
  */
-const getItemQuantityAndLineItems = async (orderData, publicData, currency, geolocation) => {
+const getItemQuantityAndLineItems = async (orderData, publicData, currency) => {
   const quantity = orderData ? orderData.stockReservationQuantity : null;
   const deliveryMethod = orderData && orderData.deliveryMethod;
   const isShipping = deliveryMethod === 'shipping';
@@ -41,17 +41,20 @@ const getItemQuantityAndLineItems = async (orderData, publicData, currency, geol
       }
       // If customShippingFeeCents is 0, shippingFee stays null (no shipping line item)
     } else {
-      const { deliveryRatePerMileCents: ratePerMileCents, deliveryFlatFeeCents: flatFeeCents } =
-        getDeliverySettings();
+      const {
+        deliveryRatePerMileCents: ratePerMileCents,
+        deliveryFlatFeeCents: flatFeeCents,
+        hubOrigin,
+      } = getDeliverySettings();
       const shippingAddress = orderData && orderData.shippingAddress;
-      const hasGeolocation = geolocation && geolocation.lat && geolocation.lng;
+      const hasHub = hubOrigin && Number.isFinite(hubOrigin.lat) && Number.isFinite(hubOrigin.lng);
 
-      if (ratePerMileCents > 0 && hasGeolocation && shippingAddress) {
+      if (ratePerMileCents > 0 && hasHub && shippingAddress) {
         try {
           const buyerCoords = await geocodeAddress(shippingAddress);
           const distance = haversineDistanceMiles(
-            geolocation.lat,
-            geolocation.lng,
+            hubOrigin.lat,
+            hubOrigin.lng,
             buyerCoords.lat,
             buyerCoords.lng
           );
@@ -223,7 +226,6 @@ const getDateRangeQuantityAndLineItems = (orderData, code) => {
  */
 exports.transactionLineItems = async (listing, orderData, providerCommission, customerCommission) => {
   const publicData = listing.attributes.publicData;
-  const geolocation = listing.attributes.geolocation || null;
   // Note: the unitType needs to be one of the following:
   // day, night, hour, fixed, or item (these are related to payment processes)
   const { unitType, priceVariants, priceVariationsEnabled } = publicData;
@@ -264,7 +266,7 @@ exports.transactionLineItems = async (listing, orderData, providerCommission, cu
   // E.g. by default, "shipping-fee" is tied to 'item' aka buying products.
   const quantityAndExtraLineItems =
     unitType === 'item'
-      ? await getItemQuantityAndLineItems(orderData, publicData, currency, geolocation)
+      ? await getItemQuantityAndLineItems(orderData, publicData, currency)
       : unitType === 'fixed'
       ? getFixedQuantityAndLineItems(orderData)
       : unitType === 'hour'

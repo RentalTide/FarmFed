@@ -1,4 +1,8 @@
-const { getDeliverySettings, setDeliverySettings } = require('../api-util/deliveryRate');
+const {
+  getDeliverySettings,
+  setDeliverySettings,
+  resolveHubOrigin,
+} = require('../api-util/deliveryRate');
 const { getSdk, handleError } = require('../api-util/sdk');
 
 const getHandler = (req, res) => {
@@ -10,7 +14,7 @@ const putHandler = (req, res) => {
 
   sdk.currentUser
     .show({ include: [] })
-    .then(response => {
+    .then(async response => {
       const currentUser = response.data.data;
       const isAdmin = currentUser?.attributes?.profile?.privateData?.isAdmin === true;
 
@@ -36,14 +40,29 @@ const putHandler = (req, res) => {
         return res.status(400).json({ error: 'deliveryFlatFeeCents must be a non-negative integer' });
       }
 
-      return setDeliverySettings({
+      let hubOrigin = current.hubOrigin;
+      if (body.hubOrigin) {
+        const { line1, city, state, postalCode, country, lat, lng } = body.hubOrigin;
+        if (!line1 || !city) {
+          return res.status(400).json({ error: 'hubOrigin requires line1 and city' });
+        }
+        try {
+          hubOrigin = await resolveHubOrigin({ line1, city, state, postalCode, country, lat, lng });
+        } catch (e) {
+          return res.status(400).json({ error: `Failed to geocode hubOrigin: ${e.message}` });
+        }
+      }
+
+      await setDeliverySettings({
         deliveryRatePerMileCents: ratePerMile,
         deliveryFlatFeeCents: flatFee,
-      }).then(() => {
-        res.status(200).json({
-          deliveryRatePerMileCents: ratePerMile,
-          deliveryFlatFeeCents: flatFee,
-        });
+        hubOrigin,
+      });
+
+      res.status(200).json({
+        deliveryRatePerMileCents: ratePerMile,
+        deliveryFlatFeeCents: flatFee,
+        hubOrigin,
       });
     })
     .catch(e => handleError(res, e));

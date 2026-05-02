@@ -49,6 +49,7 @@ const AdminPageComponent = props => {
     currentUser,
     deliveryRatePerMileCents,
     deliveryFlatFeeCents,
+    hubOrigin,
     deliveryFetchInProgress,
     deliveryUpdateInProgress,
     deliveryUpdateSuccess,
@@ -155,6 +156,7 @@ const AdminPageComponent = props => {
               <DeliverySettingsTab
                 deliveryRatePerMileCents={deliveryRatePerMileCents}
                 deliveryFlatFeeCents={deliveryFlatFeeCents}
+                hubOrigin={hubOrigin}
                 updateInProgress={deliveryUpdateInProgress}
                 updateSuccess={deliveryUpdateSuccess}
                 error={deliveryError}
@@ -235,6 +237,7 @@ const mapStateToProps = state => {
   const {
     deliveryRatePerMileCents,
     deliveryFlatFeeCents,
+    hubOrigin,
     deliveryFetchInProgress,
     deliveryUpdateInProgress,
     deliveryUpdateSuccess,
@@ -270,6 +273,7 @@ const mapStateToProps = state => {
     currentUser,
     deliveryRatePerMileCents,
     deliveryFlatFeeCents,
+    hubOrigin,
     deliveryFetchInProgress,
     deliveryUpdateInProgress,
     deliveryUpdateSuccess,

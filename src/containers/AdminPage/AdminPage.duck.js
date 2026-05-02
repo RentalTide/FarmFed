@@ -194,6 +194,7 @@ const initialState = {
   // Delivery
   deliveryRatePerMileCents: 0,
   deliveryFlatFeeCents: 0,
+  hubOrigin: null,
   deliveryFetchInProgress: false,
   deliveryUpdateInProgress: false,
   deliveryUpdateSuccess: false,
@@ -269,6 +270,7 @@ const adminPageSlice = createSlice({
         state.deliveryFetchInProgress = false;
         state.deliveryRatePerMileCents = action.payload.deliveryRatePerMileCents || 0;
         state.deliveryFlatFeeCents = action.payload.deliveryFlatFeeCents || 0;
+        state.hubOrigin = action.payload.hubOrigin || null;
       })
       .addCase(fetchDeliverySettingsThunk.rejected, (state, action) => {
         state.deliveryFetchInProgress = false;
@@ -284,6 +286,7 @@ const adminPageSlice = createSlice({
         state.deliveryUpdateSuccess = true;
         state.deliveryRatePerMileCents = action.payload.deliveryRatePerMileCents || 0;
         state.deliveryFlatFeeCents = action.payload.deliveryFlatFeeCents || 0;
+        state.hubOrigin = action.payload.hubOrigin || state.hubOrigin;
       })
       .addCase(updateDeliverySettingsThunk.rejected, (state, action) => {
         state.deliveryUpdateInProgress = false;
