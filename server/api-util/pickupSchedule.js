@@ -34,56 +34,43 @@ const setPickupSettings = async settings => {
   await settingsStore.set(NAMESPACE, data);
 };
 
-// Calculate the next available pickup date based on current settings
+// Calculate the next available delivery date based on current settings.
+// Rule: orders placed before the next upcoming cutoff are delivered on the
+// FIRST scheduled delivery day that falls AFTER that cutoff. Orders placed
+// after a cutoff have to wait for the cutoff after that.
 const getNextPickupDate = () => {
   const settings = getPickupSettings();
   const dayMap = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
 
-  const now = new Date();
-  const cutoffDayNum = dayMap[settings.cutoffDay];
-  const cutoffHour = parseInt(settings.cutoffTime.split(':')[0], 10);
-  const cutoffMinute = parseInt(settings.cutoffTime.split(':')[1], 10);
-
-  // Check if we're past the cutoff for this week
-  const currentDay = now.getDay();
-  const currentHour = now.getHours();
-  const currentMinute = now.getMinutes();
-  const isPastCutoff =
-    currentDay > cutoffDayNum ||
-    (currentDay === cutoffDayNum &&
-      (currentHour > cutoffHour || (currentHour === cutoffHour && currentMinute >= cutoffMinute)));
-
-  // Find the next pickup day
-  const pickupDayNums = settings.pickupDays.map(d => dayMap[d]).sort((a, b) => a - b);
+  const pickupDayNums = settings.pickupDays.map(d => dayMap[d]).filter(n => n !== undefined);
   if (pickupDayNums.length === 0) return null;
+  const pickupDaySet = new Set(pickupDayNums);
 
-  let daysToAdd = null;
-  for (const pickupDay of pickupDayNums) {
-    const diff = (pickupDay - currentDay + 7) % 7;
-    const candidateDays = diff === 0 ? 7 : diff; // If today is pickup day, next week
+  const cutoffDayNum = dayMap[settings.cutoffDay];
+  const [cutoffHour, cutoffMinute] = settings.cutoffTime.split(':').map(s => parseInt(s, 10));
 
-    if (!isPastCutoff && candidateDays <= 7) {
-      daysToAdd = candidateDays;
-      break;
-    } else if (isPastCutoff) {
-      const nextWeekDiff = diff === 0 ? 7 : diff;
-      if (nextWeekDiff > (cutoffDayNum - currentDay + 7) % 7) {
-        daysToAdd = nextWeekDiff;
-        break;
-      }
+  const now = new Date();
+
+  // Find the next upcoming cutoff datetime (not strictly in the past).
+  const offsetToCutoffDay = (cutoffDayNum - now.getDay() + 7) % 7;
+  const nextCutoff = new Date(now);
+  nextCutoff.setDate(now.getDate() + offsetToCutoffDay);
+  nextCutoff.setHours(cutoffHour, cutoffMinute, 0, 0);
+  if (nextCutoff <= now) {
+    // Today is cutoff day but we're past the time → next week's same cutoff.
+    nextCutoff.setDate(nextCutoff.getDate() + 7);
+  }
+
+  // First delivery day strictly AFTER the next cutoff.
+  for (let offset = 1; offset <= 14; offset++) {
+    const candidate = new Date(nextCutoff);
+    candidate.setDate(nextCutoff.getDate() + offset);
+    candidate.setHours(0, 0, 0, 0);
+    if (pickupDaySet.has(candidate.getDay())) {
+      return candidate.toISOString();
     }
   }
-
-  if (daysToAdd === null) {
-    daysToAdd = (pickupDayNums[0] - currentDay + 7) % 7;
-    if (daysToAdd === 0) daysToAdd = 7;
-    if (isPastCutoff) daysToAdd += 7;
-  }
-
-  const nextPickup = new Date(now);
-  nextPickup.setDate(nextPickup.getDate() + daysToAdd);
-  nextPickup.setHours(0, 0, 0, 0);
-  return nextPickup.toISOString();
+  return null;
 };
 
 const isCutoffPassed = () => {
