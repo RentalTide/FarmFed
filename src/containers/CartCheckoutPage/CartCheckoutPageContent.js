@@ -542,15 +542,15 @@ const CartCheckoutPageContent = props => {
           </div>
         ) : null}
 
-        {appSettings.featureFlags.pickupSchedule && nextPickupDate && selectedDeliveryMethod === 'pickup' ? (
+        {appSettings.featureFlags.pickupSchedule && nextPickupDate && selectedDeliveryMethod === 'shipping' ? (
           <div className={css.pickupDateInfo}>
             <FormattedMessage
-              id="CartCheckoutPage.nextPickupDate"
+              id="CartCheckoutPage.nextDeliveryDate"
               values={{ date: new Date(nextPickupDate).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }) }}
             />
             {pickupCutoffPassed ? (
               <p className={css.cutoffWarning}>
-                <FormattedMessage id="CartCheckoutPage.cutoffPassed" />
+                <FormattedMessage id="CartCheckoutPage.deliveryCutoffPassed" />
               </p>
             ) : null}
           </div>
@@ -739,7 +739,12 @@ const CartCheckoutPageContent = props => {
         <PrimaryButton
           type="submit"
           className={css.submitButton}
-          disabled={(paymentChoice === 'new' && !cardReady) || checkoutInProgress || ((shippingAvailable || pickupAvailable) && !selectedDeliveryMethod)}
+          disabled={
+            (paymentChoice === 'new' && !cardReady) ||
+            checkoutInProgress ||
+            ((shippingAvailable || pickupAvailable) && !selectedDeliveryMethod) ||
+            (selectedDeliveryMethod === 'shipping' && pickupCutoffPassed)
+          }
         >
           {checkoutInProgress ? (
             <FormattedMessage

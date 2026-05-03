@@ -1,0 +1,25 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 0;
+  padding: 8px 0;
+  font-size: 14px;
+  font-weight: var(--fontWeightMedium);
+  color: var(--colorGrey700, #4a4a4a);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.root:hover {
+  color: var(--marketplaceColor);
+}
+
+.arrow {
+  font-size: 18px;
+  line-height: 1;
+  transform: translateY(-1px);
+}

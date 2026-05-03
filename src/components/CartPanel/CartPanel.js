@@ -176,6 +176,9 @@ const CartPanel = props => {
               <button className={css.checkoutButton} onClick={handleCheckout} type="button">
                 <FormattedMessage id="CartPanel.checkoutButton" />
               </button>
+              <button className={css.continueShoppingButton} onClick={onClose} type="button">
+                <FormattedMessage id="CartPanel.continueShoppingButton" />
+              </button>
             </div>
           </>
         )}

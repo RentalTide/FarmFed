@@ -57,6 +57,7 @@ import {
   NamedRedirect,
   OrderPanel,
   LayoutSingleColumn,
+  BackToResultsLink,
 } from '../../components';
 
 // Related components and modules
@@ -354,6 +355,7 @@ export const ListingPageComponent = props => {
       <LayoutSingleColumn className={css.pageRoot} topbar={topbar} footer={<FooterContainer />}>
         <div className={css.contentWrapperForProductLayout}>
           <div className={css.mainColumnForProductLayout}>
+            <BackToResultsLink className={css.backToResultsLink} />
             {mounted && currentListing.id && noPayoutDetailsSetWithOwnListing ? (
               <ActionBarMaybe
                 className={css.actionBarForProductLayout}

@@ -337,6 +337,16 @@
   }
 }
 
+.backToResultsLink {
+  margin: 8px 24px 0 24px;
+}
+
+.backToResultsWrapper {
+  max-width: var(--contentMaxWidth);
+  margin: 8px auto 0 auto;
+  padding: 0 24px;
+}
+
 .contentWrapperForProductLayout {
   margin: 0 0 56px 0;
 

@@ -16,6 +16,12 @@ import {
   getQueryParamNames,
 } from '../../util/search';
 import {
+  saveScrollPosition,
+  getSavedScrollPosition,
+  clearSavedScrollPosition,
+  tryRestoreScroll,
+} from '../../util/scrollMemory';
+import {
   NO_ACCESS_PAGE_USER_PENDING_APPROVAL,
   NO_ACCESS_PAGE_VIEW_LISTINGS,
   parse,
@@ -539,6 +545,22 @@ const EnhancedSearchPage = props => {
       .then(data => setBulletins(data.bulletins || []))
       .catch(() => {});
   }, []);
+
+  // Restore scroll position when arriving back at the same search URL
+  // (e.g. browser Back from a listing). Save it again whenever navigating
+  // away from this page so the next return restores the correct spot.
+  const currentUrl = `${location.pathname}${location.search}`;
+  useEffect(() => {
+    const saved = getSavedScrollPosition();
+    if (saved && saved.url === currentUrl && Number.isFinite(saved.y) && saved.y > 0) {
+      tryRestoreScroll(saved.y);
+      clearSavedScrollPosition();
+    }
+    const unlisten = history.listen(() => {
+      saveScrollPosition(currentUrl);
+    });
+    return unlisten;
+  }, [currentUrl, history]);
 
   const searchListingsError = props.searchListingsError;
   if (isForbiddenError(searchListingsError)) {
