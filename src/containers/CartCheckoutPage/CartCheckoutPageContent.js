@@ -329,10 +329,19 @@ const CartCheckoutPageContent = props => {
           }
         : undefined;
 
-      // Apply selected delivery method to items that support shipping
+      // Apply the customer's selected delivery method to every cart item.
+      // We propagate even when the listing only supports the one selected
+      // method (the most common case after the May bulk-enable, where every
+      // listing has shippingEnabled=true but pickupEnabled=false). Without
+      // this, the backend never sees deliveryMethod === 'shipping', so the
+      // shipping-fee line item is never generated and the customer is not
+      // charged for delivery.
       const itemsWithDelivery = cartItems.map(item => {
         const publicData = item.listing?.attributes?.publicData;
-        if (publicData?.shippingEnabled && publicData?.pickupEnabled) {
+        const supportsSelected =
+          (selectedDeliveryMethod === 'shipping' && publicData?.shippingEnabled) ||
+          (selectedDeliveryMethod === 'pickup' && publicData?.pickupEnabled);
+        if (selectedDeliveryMethod && supportsSelected) {
           return { ...item, deliveryMethod: selectedDeliveryMethod };
         }
         return item;

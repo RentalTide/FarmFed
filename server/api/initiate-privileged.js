@@ -80,9 +80,14 @@ module.exports = (req, res) => {
     .then(trustedSdk => {
       const { params } = bodyParams;
 
-      // Persist orderGroupId in protectedData if provided
-      const orderGroupProtectedData = orderData?.orderGroupId
-        ? { protectedData: { ...(params.protectedData || {}), orderGroupId: orderData.orderGroupId } }
+      // Persist deliveryMethod and orderGroupId in protectedData so the
+      // transaction record carries them through to the vendor's inbox,
+      // OnFleet task creation, and the transaction breakdown UI.
+      const extraProtectedData = {};
+      if (orderData?.deliveryMethod) extraProtectedData.deliveryMethod = orderData.deliveryMethod;
+      if (orderData?.orderGroupId) extraProtectedData.orderGroupId = orderData.orderGroupId;
+      const protectedDataMaybe = Object.keys(extraProtectedData).length
+        ? { protectedData: { ...(params.protectedData || {}), ...extraProtectedData } }
         : {};
 
       // Add lineItems to the body params
@@ -92,7 +97,7 @@ module.exports = (req, res) => {
           ...params,
           lineItems,
           ...metadataMaybe,
-          ...orderGroupProtectedData,
+          ...protectedDataMaybe,
         },
       };
 
