@@ -411,6 +411,17 @@ export const unregisterDeviceToken = ({ token }) => {
   });
 };
 
+// Notify the server that a transaction transition just occurred so it can
+// dispatch a push notification to the relevant party (vendor or customer).
+// Fire-and-forget — never throw on failure, push is best-effort.
+export const notifyTransition = ({ transactionId, transition }) => {
+  return request('/api/push/transition', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ transactionId, transition }),
+  }).catch(() => null);
+};
+
 // ====== Daily Order Count ====== //
 
 export const fetchDailyOrderCount = ({ listingId }) => {

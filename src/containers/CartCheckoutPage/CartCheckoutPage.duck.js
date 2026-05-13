@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { initiatePrivileged, estimateCartDelivery, createOnfleetTask } from '../../util/api';
+import { initiatePrivileged, estimateCartDelivery, createOnfleetTask, notifyTransition } from '../../util/api';
 import { storableError } from '../../util/errors';
 import * as log from '../../util/log';
 import { clearCart, removeItems } from '../../ducks/cart.duck';
@@ -226,6 +226,9 @@ const processCartCheckoutPayloadCreator = async (
         },
         { expand: true }
       );
+
+      // Fire push to vendor (best-effort, non-blocking)
+      notifyTransition({ transactionId: orderId.uuid, transition: 'transition/confirm-payment' });
 
       dispatch(setCurrentUserHasOrders());
 

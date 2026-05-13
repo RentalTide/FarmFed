@@ -32,6 +32,7 @@ const reportDeliveryProblem = require('./api/report-delivery-problem');
 const dailyOrderCount = require('./api/daily-order-count');
 const { getNotificationsHandler, notifyFollowersHandler, markReadHandler } = require('./api/notifications');
 const { registerHandler: registerDeviceToken, unregisterHandler: unregisterDeviceToken } = require('./api/device-tokens');
+const pushTransition = require('./api/push-transition');
 
 const adminPendingUsers = require('./api/admin/pending-users');
 const adminApproveUser = require('./api/admin/approve-user');
@@ -92,6 +93,7 @@ router.use('/daily-order-count', bodyParser.json());
 router.use('/notifications', bodyParser.json());
 router.use('/notify-followers', bodyParser.json());
 router.use('/device-tokens', bodyParser.json());
+router.use('/push/transition', bodyParser.json());
 
 // ================ API router endpoints: ================ //
 
@@ -148,6 +150,7 @@ router.put('/notifications/read', markReadHandler);
 // Push notification device token endpoints
 router.post('/device-tokens', registerDeviceToken);
 router.delete('/device-tokens', unregisterDeviceToken);
+router.post('/push/transition', pushTransition);
 
 // Admin user management endpoints
 router.get('/admin/pending-users', adminPendingUsers);

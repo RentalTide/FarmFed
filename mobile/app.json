@@ -1,0 +1,77 @@
+{
+  "expo": {
+    "name": "FarmFed",
+    "slug": "farmfed",
+    "version": "1.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "farmfed",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": false,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#EDE5DA"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.farmfed.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "FarmFed needs access to your camera to upload listing photos.",
+        "NSPhotoLibraryUsageDescription": "FarmFed needs access to your photos to upload listing images.",
+        "NSPhotoLibraryAddUsageDescription": "FarmFed saves shared images to your photo library.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#EDE5DA"
+      },
+      "package": "com.farmfed.app",
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.NOTIFICATIONS",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.NOTIFICATIONS",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#3F2E14"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "FarmFed needs access to your photos to upload listing images.",
+          "cameraPermission": "FarmFed needs access to your camera to capture listing photos."
+        }
+      ]
+    ],
+    "extra": {
+      "siteUrl": "https://www.farmfed.us",
+      "eas": {
+        "projectId": "6cb78586-e9e6-4425-a874-2fea026341eb"
+      }
+    },
+    "owner": "nickadian",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/6cb78586-e9e6-4425-a874-2fea026341eb"
+    }
+  }
+}

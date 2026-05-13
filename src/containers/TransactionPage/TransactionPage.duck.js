@@ -11,7 +11,7 @@ import {
   stringifyDateToISO8601,
 } from '../../util/dates';
 import { isTransactionsTransitionInvalidTransition, storableError } from '../../util/errors';
-import { transactionLineItems, transitionPrivileged } from '../../util/api';
+import { transactionLineItems, transitionPrivileged, notifyTransition } from '../../util/api';
 import * as log from '../../util/log';
 import {
   updatedEntities,
@@ -365,6 +365,13 @@ const makeTransitionPayloadCreator = (
     .then(response => {
       dispatch(addMarketplaceEntities(response));
       dispatch(fetchCurrentUserNotifications());
+
+      // Fire push to the relevant party (best-effort, non-blocking).
+      // The server picks recipient/template based on the transition name.
+      const txIdStr = typeof txId === 'string' ? txId : txId?.uuid;
+      if (txIdStr) {
+        notifyTransition({ transactionId: txIdStr, transition: transitionName });
+      }
 
       // There could be automatic transitions after this transition
       // For example mark-received-from-purchased > auto-complete.

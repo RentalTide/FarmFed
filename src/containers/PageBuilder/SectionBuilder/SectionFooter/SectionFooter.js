@@ -139,7 +139,7 @@ const SectionFooter = props => {
             {!isNativeApp() && (
               <div className={css.appBadges}>
                 <ExternalLink
-                  href="https://apps.apple.com/app/farmfed/id0000000000"
+                  href="https://apps.apple.com/us/app/farmfed/id6759292590"
                   className={css.appBadgeLink}
                   title="Download FarmFed on the App Store"
                 >
