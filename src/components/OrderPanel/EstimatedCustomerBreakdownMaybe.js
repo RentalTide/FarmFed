@@ -87,7 +87,16 @@ const estimatedCustomerTransaction = (
 ) => {
   const transitions = process?.transitions;
   const now = new Date();
-  const customerLineItems = lineItems.filter(item => item.includeFor.includes('customer'));
+  // The customer commission (FarmFed platform fee) is intentionally hidden
+  // from the listing-page preview. It looks misleading there — buyers
+  // perceive it as a per-item charge when in reality the cart-checkout
+  // flow computes one fee per ORDER (max of 5% or $3.99) and splits it
+  // across line items. The real fee shows up at the cart breakdown.
+  const isPreviewLineItem = li =>
+    li.code === 'line-item/customer-commission';
+  const customerLineItems = lineItems
+    .filter(item => item.includeFor.includes('customer'))
+    .filter(item => !isPreviewLineItem(item));
   const providerLineItems = lineItems.filter(item => item.includeFor.includes('provider'));
   const payinTotal = estimatedTotalPrice(customerLineItems, marketplaceCurrency);
   const payoutTotal = estimatedTotalPrice(providerLineItems, marketplaceCurrency);
