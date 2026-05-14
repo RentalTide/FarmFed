@@ -1340,6 +1340,8 @@
   "TransactionPage.ActivityFeed.default-purchase.completed": "{stateStatus, select, current {The listing was received. {reviewLink}} other {The listing was received.}}",
   "TransactionPage.ActivityFeed.default-purchase.delivered": "{deliveryMethod, select, shipping {The listing was shipped.} other {The listing was delivered.}}",
   "TransactionPage.ActivityFeed.default-purchase.disputed": "The order was disputed.",
+  "TransactionPage.ActivityFeed.default-purchase.pending-acceptance": "{actor, select, you {You placed an order for {listingTitle}. Awaiting vendor acceptance.} other {{otherUsersName} placed an order for {listingTitle}. Awaiting your acceptance.}}",
+  "TransactionPage.ActivityFeed.default-purchase.declined": "{actor, select, you {You declined the order.} other {The order was declined.}}",
   "TransactionPage.ActivityFeed.default-purchase.purchased": "{actor, select, you {You placed an order for {listingTitle}.} other {{otherUsersName} placed an order for {listingTitle}.}}",
   "TransactionPage.ActivityFeed.default-purchase.received": "The listing was received.",
   "TransactionPage.ActivityFeed.default-purchase.reviewed": "{actor, select, you {You left a review for {otherUsersName}.} other {{otherUsersName} left a review for you. {reviewLink}}}",

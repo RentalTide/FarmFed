@@ -83,13 +83,16 @@ const getItemQuantityAndLineItems = async (orderData, publicData, currency) => {
     }
   }
 
+  // Hub-and-spoke delivery: shipping fee is included on the customer's bill
+  // but NOT on the provider's payout. FarmFed runs delivery from the hub, so
+  // the fee is platform revenue (covered by the customer), not vendor revenue.
   const deliveryLineItem = !!shippingFee
     ? [
         {
           code: 'line-item/shipping-fee',
           unitPrice: shippingFee,
           quantity: 1,
-          includeFor: ['customer', 'provider'],
+          includeFor: ['customer'],
         },
       ]
     : [];
