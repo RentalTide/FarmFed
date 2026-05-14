@@ -221,7 +221,11 @@ export default function App() {
           originWhitelist={['*']}
           setSupportMultipleWindows={false}
           onShouldStartLoadWithRequest={req => {
-            // Open external links (different host) in the system browser
+            // Only redirect actual user link clicks to the system browser.
+            // Subresource loads (scripts like Stripe's js.stripe.com, iframes,
+            // mapbox tiles, etc.) come through as navigationType "other" and
+            // must be allowed inside the WebView.
+            if (req.navigationType !== 'click') return true;
             try {
               const url = new URL(req.url);
               const target = new URL(SITE_URL);
