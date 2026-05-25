@@ -217,6 +217,17 @@
   color: var(--colorGrey500, #6b6b6b);
 }
 
+.pickupNote {
+  margin: 12px 0 0 0;
+  padding: 10px 14px;
+  background-color: var(--colorInfoLight, #e8f4fd);
+  border: 1px solid var(--colorInfo, #3b82f6);
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--colorGrey900);
+}
+
 .radioInput {
   accent-color: var(--marketplaceColor);
   width: 16px;

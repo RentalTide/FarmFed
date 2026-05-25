@@ -151,26 +151,16 @@ const CartCheckoutPageContent = props => {
     }
   }, [completedResults]);
 
-  // Check if any cart items support shipping (from listing publicData)
+  // Check if any cart items support delivery/shipping (from listing publicData)
   const shippingAvailable = cartItems.some(
     item => item.listing?.attributes?.publicData?.shippingEnabled
   );
-  const pickupAvailable = cartItems.some(
-    item => item.listing?.attributes?.publicData?.pickupEnabled
-  );
+  // Self pickup is always offered: buyers can collect directly from the vendor
+  // (coordinated via in-app messaging) regardless of listing settings.
+  const pickupAvailable = true;
 
-  // Initialize delivery method from cart items or default
-  useEffect(() => {
-    if (selectedDeliveryMethod) return;
-    const cartMethod = cartItems.find(item => item.deliveryMethod)?.deliveryMethod;
-    if (cartMethod) {
-      setSelectedDeliveryMethod(cartMethod);
-    } else if (shippingAvailable && !pickupAvailable) {
-      setSelectedDeliveryMethod('shipping');
-    } else if (pickupAvailable && !shippingAvailable) {
-      setSelectedDeliveryMethod('pickup');
-    }
-  }, [cartItems, shippingAvailable, pickupAvailable, selectedDeliveryMethod]);
+  // The buyer must consciously choose a delivery method at checkout — we do not
+  // auto-select one, so no one forgets to pick delivery vs. self pickup.
 
   const hasShippingItems = selectedDeliveryMethod === 'shipping' && shippingAvailable;
 
@@ -330,21 +320,18 @@ const CartCheckoutPageContent = props => {
         : undefined;
 
       // Apply the customer's selected delivery method to every cart item.
-      // We propagate even when the listing only supports the one selected
-      // method (the most common case after the May bulk-enable, where every
-      // listing has shippingEnabled=true but pickupEnabled=false). Without
-      // this, the backend never sees deliveryMethod === 'shipping', so the
-      // shipping-fee line item is never generated and the customer is not
-      // charged for delivery.
+      // Self pickup is offered for every order, so it always propagates — the
+      // buyer coordinates collection with each vendor via in-app messaging.
+      // Delivery (shipping) propagates only to listings that support it so the
+      // backend generates the shipping-fee line item and charges for delivery
+      // (the common case after the May bulk-enable: shippingEnabled=true).
       const itemsWithDelivery = cartItems.map(item => {
-        const publicData = item.listing?.attributes?.publicData;
-        const supportsSelected =
-          (selectedDeliveryMethod === 'shipping' && publicData?.shippingEnabled) ||
-          (selectedDeliveryMethod === 'pickup' && publicData?.pickupEnabled);
-        if (selectedDeliveryMethod && supportsSelected) {
-          return { ...item, deliveryMethod: selectedDeliveryMethod };
+        if (!selectedDeliveryMethod) return item;
+        if (selectedDeliveryMethod === 'pickup') {
+          return { ...item, deliveryMethod: 'pickup' };
         }
-        return item;
+        const shippingEnabled = item.listing?.attributes?.publicData?.shippingEnabled;
+        return shippingEnabled ? { ...item, deliveryMethod: 'shipping' } : item;
       });
 
       const savedPaymentMethodId = paymentChoice === 'saved' && defaultPaymentMethod?.attributes?.stripePaymentMethodId
@@ -546,6 +533,11 @@ const CartCheckoutPageContent = props => {
             {selectedDeliveryMethod === 'shipping' && estimatedDelivery == null && !estimatingBreakdown ? (
               <p className={css.deliveryHint}>
                 <FormattedMessage id="CartCheckoutPage.deliveryFeeHint" />
+              </p>
+            ) : null}
+            {selectedDeliveryMethod === 'pickup' ? (
+              <p className={css.pickupNote}>
+                <FormattedMessage id="CartCheckoutPage.selfPickupNote" />
               </p>
             ) : null}
           </div>
