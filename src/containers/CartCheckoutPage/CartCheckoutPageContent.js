@@ -743,8 +743,7 @@ const CartCheckoutPageContent = props => {
           disabled={
             (paymentChoice === 'new' && !cardReady) ||
             checkoutInProgress ||
-            ((shippingAvailable || pickupAvailable) && !selectedDeliveryMethod) ||
-            (selectedDeliveryMethod === 'shipping' && pickupCutoffPassed)
+            ((shippingAvailable || pickupAvailable) && !selectedDeliveryMethod)
           }
         >
           {checkoutInProgress ? (

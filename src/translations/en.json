@@ -139,7 +139,7 @@
   "CartCheckoutPage.nextPickupDate": "Next pickup: {date}",
   "CartCheckoutPage.cutoffPassed": "The ordering cutoff for this pickup has passed. Your order will be ready for the following pickup.",
   "CartCheckoutPage.nextDeliveryDate": "Next delivery: {date}",
-  "CartCheckoutPage.deliveryCutoffPassed": "The ordering cutoff for this delivery has passed. Choose pickup, or check back after the next cutoff to place a delivery order.",
+  "CartCheckoutPage.deliveryCutoffPassed": "You've missed this week's ordering cutoff, so your order will be delivered on the next available delivery date shown above.",
   "CartCheckoutPage.addToExistingOrder": "Add to this week's order",
   "CartCheckoutPage.addToExistingOrderNote": "These items will be added to your existing order with no additional delivery fee.",
   "CartIcon.ariaLabel": "Shopping cart",
