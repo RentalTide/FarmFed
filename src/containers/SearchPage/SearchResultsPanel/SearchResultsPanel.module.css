@@ -32,18 +32,21 @@
 .listingCards {
   padding: 0 0 72px 0;
 
+  /* FB Marketplace-style grid: 2 columns on mobile/app with tight gaps */
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
-  gap: 24px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
   width: 100%;
 
   @media (min-width: 550px) {
     grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
   }
 
   @media (--viewportMedium) {
     padding: 0 0 96px 0;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
   }
 
   @media (--viewportLarge) {

@@ -28,6 +28,8 @@ const { getHandler: getTaxSettings, putHandler: putTaxSettings } = require('./ap
 const { getHandler: getBulletins, putHandler: putBulletins, getAllHandler: getAllBulletins } = require('./api/bulletin-settings');
 const { followHandler, unfollowHandler, getFollowedHandler } = require('./api/follow-vendor');
 const activeOrderGroup = require('./api/active-order-group');
+const linkDeliveryItems = require('./api/link-delivery-items');
+const reconcileDelivery = require('./api/reconcile-delivery');
 const reportDeliveryProblem = require('./api/report-delivery-problem');
 const dailyOrderCount = require('./api/daily-order-count');
 const { getNotificationsHandler, notifyFollowersHandler, markReadHandler } = require('./api/notifications');
@@ -88,6 +90,8 @@ router.use('/tax-settings', bodyParser.json());
 router.use('/bulletin-settings', bodyParser.json());
 router.use('/follow-vendor', bodyParser.json());
 router.use('/active-order-group', bodyParser.json());
+router.use('/link-delivery-items', bodyParser.json());
+router.use('/reconcile-delivery', bodyParser.json());
 router.use('/report-delivery-problem', bodyParser.json());
 router.use('/daily-order-count', bodyParser.json());
 router.use('/notifications', bodyParser.json());
@@ -135,6 +139,11 @@ router.get('/follow-vendor', getFollowedHandler);
 
 // Order group endpoint (for add-to-existing-order feature)
 router.get('/active-order-group', activeOrderGroup);
+
+// Standalone delivery: link item transactions to a delivery order, and
+// reconcile delivery orders (refund-on-full-denial / capture-on-accept).
+router.post('/link-delivery-items', linkDeliveryItems);
+router.post('/reconcile-delivery', reconcileDelivery);
 
 // Delivery problem reporting
 router.post('/report-delivery-problem', reportDeliveryProblem);

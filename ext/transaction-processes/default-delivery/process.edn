@@ -1,0 +1,90 @@
+;; FarmFed "default-delivery" transaction process.
+;;
+;; A standalone delivery order. One delivery transaction is created per cart
+;; order group, carrying the whole route delivery fee. It is intentionally
+;; decoupled from the individual item (default-purchase) transactions so that
+;; a single vendor declining their item does NOT refund delivery. Delivery is
+;; only refunded ("kicked back") when the WHOLE order is denied — i.e. every
+;; item transaction in the group ends up declined/expired/canceled. That
+;; reconciliation is driven server-side via the operator transitions below
+;; (see server/api/reconcile-delivery.js).
+;;
+;; State model (mirrors the pre-capture portion of default-purchase):
+;;   initial -> pending-payment -> paid -> captured -> completed
+;;                                  \-> refunded         (all items denied)
+;;                  \-> payment-expired
+;;
+;; "paid" = payment authorized but NOT captured (same as purchase's
+;; pending-acceptance). Refunding from here voids the authorization, exactly
+;; like default-purchase's decline-order. Capturing happens only once at least
+;; one item in the order is accepted.
+{:format :v3,
+ :transitions
+ [{:name :transition/request-payment,
+   :actor :actor.role/customer,
+   :privileged? true,
+   :actions
+   [{:name :action/update-protected-data}
+    {:name :action/privileged-set-line-items}
+    {:name :action/stripe-create-payment-intent}],
+   :to :state/pending-payment}
+  {:name :transition/confirm-payment,
+   :actor :actor.role/customer,
+   :actions
+   [{:name :action/stripe-confirm-payment-intent}],
+   :from :state/pending-payment,
+   :to :state/paid}
+  {:name :transition/expire-payment,
+   :at
+   {:fn/plus
+    [{:fn/timepoint [:time/first-entered-state :state/pending-payment]}
+     {:fn/period ["PT15M"]}]},
+   :actions
+   [{:name :action/calculate-full-refund}
+    {:name :action/stripe-refund-payment}],
+   :from :state/pending-payment,
+   :to :state/payment-expired}
+
+  ;; All items in the order were denied -> refund delivery in full.
+  {:name :transition/operator-refund,
+   :actor :actor.role/operator,
+   :actions
+   [{:name :action/calculate-full-refund}
+    {:name :action/stripe-refund-payment}],
+   :from :state/paid,
+   :to :state/refunded}
+
+  ;; At least one item was accepted -> capture the delivery payment.
+  {:name :transition/operator-capture,
+   :actor :actor.role/operator,
+   :actions [{:name :action/stripe-capture-payment-intent}],
+   :from :state/paid,
+   :to :state/captured}
+
+  ;; Safety net: if reconciliation never ran, capture after all item
+  ;; auto-declines (P1D) have certainly resolved.
+  {:name :transition/auto-capture,
+   :at
+   {:fn/plus
+    [{:fn/timepoint [:time/first-entered-state :state/paid]}
+     {:fn/period ["P3D"]}]},
+   :actions [{:name :action/stripe-capture-payment-intent}],
+   :from :state/paid,
+   :to :state/captured}
+
+  ;; Pay the captured delivery fee out to the hub (the delivery listing's
+  ;; provider). Tune the auto-payout period to your settlement preference.
+  {:name :transition/operator-payout,
+   :actor :actor.role/operator,
+   :actions [{:name :action/stripe-create-payout}],
+   :from :state/captured,
+   :to :state/completed}
+  {:name :transition/auto-payout,
+   :at
+   {:fn/plus
+    [{:fn/timepoint [:time/first-entered-state :state/captured]}
+     {:fn/period ["P7D"]}]},
+   :actions [{:name :action/stripe-create-payout}],
+   :from :state/captured,
+   :to :state/completed}],
+ :notifications []}

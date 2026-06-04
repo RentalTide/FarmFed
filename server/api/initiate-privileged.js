@@ -86,6 +86,12 @@ module.exports = (req, res) => {
       const extraProtectedData = {};
       if (orderData?.deliveryMethod) extraProtectedData.deliveryMethod = orderData.deliveryMethod;
       if (orderData?.orderGroupId) extraProtectedData.orderGroupId = orderData.orderGroupId;
+      // Standalone delivery linkage: the delivery transaction marks itself with
+      // isDeliveryOrder; each item transaction stores the delivery transaction's
+      // id so reconciliation can find the delivery order for the group.
+      if (orderData?.isDeliveryOrder) extraProtectedData.isDeliveryOrder = true;
+      if (orderData?.deliveryTransactionId)
+        extraProtectedData.deliveryTransactionId = orderData.deliveryTransactionId;
       const protectedDataMaybe = Object.keys(extraProtectedData).length
         ? { protectedData: { ...(params.protectedData || {}), ...extraProtectedData } }
         : {};

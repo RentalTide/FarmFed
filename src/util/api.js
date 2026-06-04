@@ -358,6 +358,26 @@ export const fetchActiveOrderGroup = () => {
   });
 };
 
+// Link item transactions to a standalone delivery transaction's order group
+// so reconciliation can decide whether the whole order was denied.
+export const linkDeliveryItems = ({ deliveryTransactionId, itemTransactionIds }) => {
+  return request('/api/link-delivery-items', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ deliveryTransactionId, itemTransactionIds }),
+  }).catch(() => null);
+};
+
+// Reconcile a delivery transaction (refund if all items denied, capture if any
+// accepted). Best-effort fast path; the cron job is the robust backstop.
+export const reconcileDeliveryOrder = ({ deliveryTransactionId }) => {
+  return request('/api/reconcile-delivery', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ deliveryTransactionId }),
+  }).catch(() => null);
+};
+
 // ====== Delivery Problem Report ====== //
 
 export const reportDeliveryProblem = ({ transactionId, category, description }) => {

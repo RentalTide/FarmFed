@@ -121,6 +121,7 @@
   "CartCheckoutPage.title": "Cart Checkout",
   "CartCheckoutPage.subtotal": "Subtotal",
   "CartCheckoutPage.delivery": "Delivery",
+  "CartCheckoutPage.deliveryOrderLabel": "Delivery",
   "CartCheckoutPage.deliveryEstimateFailed": "Unable to estimate delivery fee. Please check your address.",
   "CartCheckoutPage.deliveryFeeHint": "Enter your delivery address below to see the delivery fee — it's calculated from the distance between each vendor and your address.",
   "CartCheckoutPage.marketplaceFee": "FarmFed fee",

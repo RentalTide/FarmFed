@@ -293,9 +293,12 @@ const validVariantConfig = (hostedVariant, defaultVariant, validVariantTypes, fa
 };
 
 const mergeLayouts = (layoutConfig, defaultLayout) => {
+  // FarmFed: the local configLayout.searchPage is authoritative (FB-marketplace
+  // grid), so it takes precedence over the hosted Console layout asset. Swap the
+  // first two args back to restore upstream "hosted wins" behavior.
   const searchPage = validVariantConfig(
-    layoutConfig?.searchPage,
     defaultLayout?.searchPage,
+    layoutConfig?.searchPage,
     ['map', 'grid'],
     { variantType: 'grid' }
   );
