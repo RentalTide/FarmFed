@@ -50,6 +50,18 @@ is accepted, the delivery payment is captured.
    The listing's author (the hub account) must have **Stripe Connect onboarded**,
    like any provider, so payment intents and payouts work.
 
+   **Keeping it out of public search:** the delivery listing stays `published`
+   (so checkout can transact against it) but must not appear in browse/search.
+   This is handled by `enforceValidListingType = true` in `configListing.js` —
+   search only returns listings whose `pub_listingType` is a configured type, so
+   `listingType: 'delivery'` is excluded. This takes effect on **deploy**. To
+   hide it on an already-deployed site before that deploy, close the listing
+   (operator/Console or `sdk.listings.close`), then **re-open it at deploy**
+   (closed listings can't transact):
+   ```
+   node scripts/create-delivery-listing.js --open   # uses REACT_APP_DELIVERY_LISTING_ID
+   ```
+
 3. **Set the env var** so checkout knows which listing to use:
    ```
    REACT_APP_DELIVERY_LISTING_ID=<the-delivery-listing-uuid>

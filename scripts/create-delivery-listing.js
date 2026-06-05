@@ -58,6 +58,23 @@ const listOperators = async sdk => {
     return;
   }
 
+  // Re-open an existing delivery listing (it must be published/open for
+  // checkout to create delivery transactions against it). Run this at deploy
+  // time if the listing was closed to hide it from search pre-deploy:
+  //   node scripts/create-delivery-listing.js --open
+  if (process.argv.includes('--open')) {
+    const id =
+      process.env.REACT_APP_DELIVERY_LISTING_ID ||
+      process.argv[process.argv.indexOf('--open') + 1];
+    if (!id) {
+      console.error('Provide the listing id via REACT_APP_DELIVERY_LISTING_ID or --open <id>');
+      process.exit(1);
+    }
+    const r = await sdk.listings.open({ id: new integrationSdkModule.types.UUID(id) }, { expand: true });
+    console.log('Delivery listing re-opened. state:', r.data.data.attributes.state);
+    return;
+  }
+
   const authorId = process.env.HUB_AUTHOR_ID || process.argv[2];
   if (!authorId) {
     console.error(
