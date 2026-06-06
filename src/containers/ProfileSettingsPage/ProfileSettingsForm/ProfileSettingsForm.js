@@ -502,18 +502,18 @@ class ProfileSettingsFormComponent extends Component {
               {userTypeConfig?.userType === 'Farmer' ? (
                 <div className={css.sectionContainer}>
                   <H4 as="h2" className={css.sectionTitle}>
-                    <FormattedMessage id="ProfileSettingsForm.pickupHeading" />
+                    <FormattedMessage id="ProfileSettingsForm.mapLocationHeading" />
                   </H4>
                   <FieldBoolean
-                    id="offersPickup"
-                    name="offersPickup"
-                    label={intl.formatMessage({ id: 'ProfileSettingsForm.offersPickupLabel' })}
+                    id="showLocationOnMap"
+                    name="showLocationOnMap"
+                    label={intl.formatMessage({ id: 'ProfileSettingsForm.showLocationLabel' })}
                     placeholder={intl.formatMessage({
-                      id: 'ProfileSettingsForm.offersPickupPlaceholder',
+                      id: 'ProfileSettingsForm.showLocationPlaceholder',
                     })}
                   />
                   <p className={css.pickupInfo}>
-                    <FormattedMessage id="ProfileSettingsForm.offersPickupInfo" />
+                    <FormattedMessage id="ProfileSettingsForm.showLocationInfo" />
                   </p>
                 </div>
               ) : null}

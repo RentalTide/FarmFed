@@ -92,14 +92,15 @@ export const ProfileSettingsPageComponent = props => {
       firstName, lastName, displayName, bio: rawBio,
       addressStreet, addressCity, addressState, addressZip, addressCountry,
       addressLat, addressLng,
-      offersPickup,
+      showLocationOnMap,
       ...rest
     } = values;
 
-    // Per-vendor pickup flag (Farmer userType only). Defaults to offering pickup
-    // when unset. Drives the checkout pickup option and map-location visibility.
-    const offersPickupMaybe =
-      userType === 'Farmer' ? { offersPickup: offersPickup !== false } : {};
+    // Per-vendor map-location visibility (Farmer userType only). Defaults to
+    // shown. When off, the vendor's address is hidden from the listing-page and
+    // search maps. Pickup is unaffected (coordinated with the customer directly).
+    const showLocationOnMapMaybe =
+      userType === 'Farmer' ? { showLocationOnMap: showLocationOnMap !== false } : {};
 
     const displayNameMaybe = displayName
       ? { displayName: displayName.trim() }
@@ -127,7 +128,7 @@ export const ProfileSettingsPageComponent = props => {
       bio,
       publicData: {
         ...pickUserFieldsData(rest, 'public', userType, userFields),
-        ...offersPickupMaybe,
+        ...showLocationOnMapMaybe,
       },
       protectedData: {
         address: hasAddress ? address : null,
@@ -175,8 +176,8 @@ export const ProfileSettingsPageComponent = props => {
         addressLat: savedAddress.lat || null,
         addressLng: savedAddress.lng || null,
         profileImage: user.profileImage,
-        // Default to offering pickup (true) when the vendor hasn't set it yet.
-        offersPickup: publicData?.offersPickup !== false,
+        // Default to showing the location (true) when the vendor hasn't set it.
+        showLocationOnMap: publicData?.showLocationOnMap !== false,
         ...initialValuesForUserFields(publicData, 'public', userType, userFields),
       }}
       profileImage={profileImage}

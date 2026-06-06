@@ -408,7 +408,7 @@ export const ListingPageComponent = props => {
               intl={intl}
             />
 
-            {ensuredAuthor?.attributes?.profile?.publicData?.offersPickup !== false ? (
+            {ensuredAuthor?.attributes?.profile?.publicData?.showLocationOnMap !== false ? (
               <SectionMapMaybe
                 geolocation={geolocation}
                 publicData={publicData}

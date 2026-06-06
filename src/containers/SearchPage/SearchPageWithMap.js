@@ -703,7 +703,7 @@ export class SearchPageComponent extends Component {
                   location={location}
                   listings={(listings || []).filter(
                     l =>
-                      l?.author?.attributes?.profile?.publicData?.offersPickup !== false
+                      l?.author?.attributes?.profile?.publicData?.showLocationOnMap !== false
                   )}
                   onMapMoveEnd={this.onMapMoveEnd}
                   onCloseAsModal={() => {
