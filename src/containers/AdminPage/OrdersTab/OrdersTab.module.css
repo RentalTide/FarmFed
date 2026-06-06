@@ -1,0 +1,136 @@
+@import '../../../styles/customMediaQueries.css';
+
+.root {
+  padding-top: 4px;
+}
+
+.loading,
+.error {
+  font-size: 14px;
+  padding: 16px 0;
+}
+
+.error {
+  color: var(--colorFail);
+}
+
+.intro {
+  font-size: 13px;
+  color: var(--colorGrey600);
+  margin: 0 0 20px;
+}
+
+.section {
+  margin-bottom: 32px;
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: var(--fontWeightBold);
+  color: var(--colorGrey900);
+  margin: 0 0 12px;
+}
+
+.count {
+  font-weight: var(--fontWeightRegular);
+  color: var(--colorGrey500);
+  margin-left: 8px;
+  font-size: 16px;
+}
+
+.emptyState {
+  font-size: 14px;
+  color: var(--colorGrey500);
+  padding: 12px 0;
+}
+
+.orderList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.orderRow {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--colorGrey100);
+
+  @media (--viewportMedium) {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+.orderRow:last-child {
+  border-bottom: none;
+}
+
+.orderInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.orderTitle {
+  font-size: 15px;
+  font-weight: var(--fontWeightMedium);
+  color: var(--colorGrey900);
+}
+
+.orderMeta {
+  font-size: 13px;
+  color: var(--colorGrey700);
+}
+
+.orderSub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.methodBadge {
+  font-size: 11px;
+  font-weight: var(--fontWeightMedium);
+  color: var(--colorGrey600);
+  background-color: var(--colorGrey50);
+  border: 1px solid var(--colorGrey200);
+  border-radius: 3px;
+  padding: 1px 6px;
+}
+
+.orderDate {
+  font-size: 12px;
+  color: var(--colorGrey400);
+}
+
+.orderActions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.markButton {
+  padding: 6px 16px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: var(--fontWeightMedium);
+  cursor: pointer;
+  border: 1px solid var(--marketplaceColor);
+  background-color: var(--marketplaceColor);
+  color: var(--colorWhite);
+  transition: opacity 0.15s ease;
+}
+
+.markButton:hover {
+  opacity: 0.9;
+}
+
+.markButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

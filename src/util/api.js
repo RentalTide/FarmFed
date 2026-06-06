@@ -248,6 +248,23 @@ export const setVendorTaxExempt = ({ userId, taxExempt }) => {
   });
 };
 
+// List orders awaiting FarmFed delivery (purchased state) — admin only.
+export const fetchOrdersAwaitingDelivery = () => {
+  return request('/api/admin/orders-awaiting-delivery', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
+// Operator-mark an order delivered — admin only.
+export const adminMarkDelivered = ({ transactionId }) => {
+  return request('/api/admin/mark-delivered', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ transactionId }),
+  });
+};
+
 // Create an OnFleet delivery task for a shipping transaction.
 export const createOnfleetTask = ({ transactionId }) => {
   return request('/api/create-onfleet-task', {

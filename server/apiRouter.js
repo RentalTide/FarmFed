@@ -41,6 +41,8 @@ const adminApproveUser = require('./api/admin/approve-user');
 const adminRejectUser = require('./api/admin/reject-user');
 const adminListVendors = require('./api/admin/list-vendors');
 const adminSetVendorTaxExempt = require('./api/admin/set-vendor-tax-exempt');
+const adminOrdersAwaitingDelivery = require('./api/admin/orders-awaiting-delivery');
+const adminMarkDelivered = require('./api/admin/mark-delivered');
 
 const createOnfleetTask = require('./api/create-onfleet-task');
 const onfleetWebhook = require('./api/onfleet-webhook');
@@ -167,6 +169,8 @@ router.post('/admin/approve-user', adminApproveUser);
 router.post('/admin/reject-user', adminRejectUser);
 router.get('/admin/vendors', adminListVendors);
 router.post('/admin/set-vendor-tax-exempt', adminSetVendorTaxExempt);
+router.get('/admin/orders-awaiting-delivery', adminOrdersAwaitingDelivery);
+router.post('/admin/mark-delivered', adminMarkDelivered);
 
 // OnFleet delivery integration endpoints
 router.post('/create-onfleet-task', createOnfleetTask);

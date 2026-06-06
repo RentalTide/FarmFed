@@ -15,6 +15,8 @@ import {
   updateBulletins as updateBulletinsAPI,
   fetchVendors as fetchVendorsAPI,
   setVendorTaxExempt as setVendorTaxExemptAPI,
+  fetchOrdersAwaitingDelivery as fetchOrdersAwaitingDeliveryAPI,
+  adminMarkDelivered as adminMarkDeliveredAPI,
 } from '../../util/api';
 import { storableError } from '../../util/errors';
 
@@ -91,6 +93,29 @@ export const rejectUserThunk = createAsyncThunk(
   async ({ userId }, { rejectWithValue }) => {
     try {
       return await rejectUserAPI({ userId });
+    } catch (e) {
+      return rejectWithValue(storableError(e));
+    }
+  }
+);
+
+// Orders awaiting delivery (operator marks delivered)
+export const fetchOrdersAwaitingDeliveryThunk = createAsyncThunk(
+  'AdminPage/fetchOrdersAwaitingDelivery',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await fetchOrdersAwaitingDeliveryAPI();
+    } catch (e) {
+      return rejectWithValue(storableError(e));
+    }
+  }
+);
+
+export const markDeliveredThunk = createAsyncThunk(
+  'AdminPage/markDelivered',
+  async ({ transactionId }, { rejectWithValue }) => {
+    try {
+      return await adminMarkDeliveredAPI({ transactionId });
     } catch (e) {
       return rejectWithValue(storableError(e));
     }
@@ -213,6 +238,12 @@ const initialState = {
   pendingUsersFetchError: null,
   userActionInProgress: null,
   userActionError: null,
+  // Orders awaiting delivery (operator marks delivered)
+  ordersAwaitingDelivery: [],
+  ordersFetchInProgress: false,
+  ordersFetchError: null,
+  markDeliveredInProgress: null,
+  markDeliveredError: null,
   // Pickup Schedule
   pickupSettings: null,
   pickupFetchInProgress: false,
@@ -445,6 +476,34 @@ const adminPageSlice = createSlice({
         state.bulletinsUpdateInProgress = false;
         state.bulletinsError = action.payload;
       })
+      // Orders awaiting delivery
+      .addCase(fetchOrdersAwaitingDeliveryThunk.pending, state => {
+        state.ordersFetchInProgress = true;
+        state.ordersFetchError = null;
+      })
+      .addCase(fetchOrdersAwaitingDeliveryThunk.fulfilled, (state, action) => {
+        state.ordersFetchInProgress = false;
+        state.ordersAwaitingDelivery = action.payload.orders || [];
+      })
+      .addCase(fetchOrdersAwaitingDeliveryThunk.rejected, (state, action) => {
+        state.ordersFetchInProgress = false;
+        state.ordersFetchError = action.payload;
+      })
+      .addCase(markDeliveredThunk.pending, (state, action) => {
+        state.markDeliveredInProgress = action.meta.arg.transactionId;
+        state.markDeliveredError = null;
+      })
+      .addCase(markDeliveredThunk.fulfilled, (state, action) => {
+        state.markDeliveredInProgress = null;
+        const { transactionId } = action.payload;
+        state.ordersAwaitingDelivery = state.ordersAwaitingDelivery.filter(
+          o => o.id !== transactionId
+        );
+      })
+      .addCase(markDeliveredThunk.rejected, (state, action) => {
+        state.markDeliveredInProgress = null;
+        state.markDeliveredError = action.payload;
+      })
       // Vendors
       .addCase(fetchVendorsThunk.pending, state => {
         state.vendorsFetchInProgress = true;
@@ -514,6 +573,14 @@ export const rejectUser = params => dispatch => {
   return dispatch(rejectUserThunk(params)).unwrap();
 };
 
+export const fetchOrdersAwaitingDelivery = () => dispatch => {
+  return dispatch(fetchOrdersAwaitingDeliveryThunk()).unwrap();
+};
+
+export const markOrderDelivered = params => dispatch => {
+  return dispatch(markDeliveredThunk(params)).unwrap();
+};
+
 export const fetchPickupSettings = () => dispatch => {
   return dispatch(fetchPickupSettingsThunk()).unwrap();
 };
@@ -553,6 +620,7 @@ export const loadData = () => dispatch => {
     dispatch(fetchDeliverySettings()),
     dispatch(fetchGeofenceSettings()),
     dispatch(fetchPendingUsers()),
+    dispatch(fetchOrdersAwaitingDelivery()),
     dispatch(fetchPickupSettings()),
     dispatch(fetchTaxSettings()),
     dispatch(fetchBulletins()),
