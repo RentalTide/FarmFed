@@ -701,7 +701,10 @@ export class SearchPageComponent extends Component {
                   center={origin}
                   isSearchMapOpenOnMobile={this.state.isSearchMapOpenOnMobile}
                   location={location}
-                  listings={listings || []}
+                  listings={(listings || []).filter(
+                    l =>
+                      l?.author?.attributes?.profile?.publicData?.offersPickup !== false
+                  )}
                   onMapMoveEnd={this.onMapMoveEnd}
                   onCloseAsModal={() => {
                     onManageDisableScrolling('SearchPage_map', false);

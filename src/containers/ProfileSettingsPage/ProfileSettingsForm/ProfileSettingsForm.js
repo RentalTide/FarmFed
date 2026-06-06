@@ -19,6 +19,7 @@ import {
   ImageFromFile,
   IconSpinner,
   FieldTextInput,
+  FieldBoolean,
   LocationAutocompleteInput,
   H4,
   CustomExtendedDataField,
@@ -497,6 +498,25 @@ class ProfileSettingsFormComponent extends Component {
                   />
                 </div>
               </div>
+
+              {userTypeConfig?.userType === 'Farmer' ? (
+                <div className={css.sectionContainer}>
+                  <H4 as="h2" className={css.sectionTitle}>
+                    <FormattedMessage id="ProfileSettingsForm.pickupHeading" />
+                  </H4>
+                  <FieldBoolean
+                    id="offersPickup"
+                    name="offersPickup"
+                    label={intl.formatMessage({ id: 'ProfileSettingsForm.offersPickupLabel' })}
+                    placeholder={intl.formatMessage({
+                      id: 'ProfileSettingsForm.offersPickupPlaceholder',
+                    })}
+                  />
+                  <p className={css.pickupInfo}>
+                    <FormattedMessage id="ProfileSettingsForm.offersPickupInfo" />
+                  </p>
+                </div>
+              ) : null}
 
               <div className={classNames(css.sectionContainer, css.lastSection)}>
                 {userFieldProps.map(({ key, ...fieldProps }) => (
