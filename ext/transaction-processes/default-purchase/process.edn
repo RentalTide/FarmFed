@@ -73,11 +73,10 @@
    :actions [{:name :action/stripe-create-payout}],
    :from :state/purchased,
    :to :state/received}
-  {:name :transition/mark-delivered,
-   :actor :actor.role/provider,
-   :actions [],
-   :from :state/purchased,
-   :to :state/delivered}
+  ;; NOTE: the provider (vendor) mark-delivered transition was removed on
+  ;; purpose. FarmFed performs the actual delivery after the vendor drops items
+  ;; off at the hub, so only the operator may move an order to "delivered"
+  ;; (via operator-mark-delivered below, manually or from the OnFleet webhook).
   {:name :transition/operator-mark-delivered,
    :actor :actor.role/operator,
    :actions [],
@@ -257,10 +256,6 @@
      {:fn/period ["P3D"]}]},
    :to :actor.role/provider,
    :template :purchase-shipping-reminder}
-  {:name :notification/order-marked-as-delivered,
-   :on :transition/mark-delivered,
-   :to :actor.role/customer,
-   :template :purchase-order-marked-as-delivered}
   {:name
    :notification/purchase-order-operator-marked-as-delivered-to-customer,
    :on :transition/operator-mark-delivered,
@@ -272,7 +267,7 @@
    :to :actor.role/provider,
    :template :purchase-order-operator-marked-as-delivered}
   {:name :notification/purchase-mark-order-received-reminder,
-   :on :transition/mark-delivered,
+   :on :transition/operator-mark-delivered,
    :at
    {:fn/plus
     [{:fn/timepoint [:time/first-entered-state :state/delivered]}
