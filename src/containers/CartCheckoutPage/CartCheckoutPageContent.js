@@ -101,7 +101,8 @@ const CartCheckoutPageContent = props => {
   const [estimatedDelivery, setEstimatedDelivery] = useState(null);
   const [estimatedFee, setEstimatedFee] = useState(null);
   const [estimatingBreakdown, setEstimatingBreakdown] = useState(false);
-  const [selectedDeliveryMethod, setSelectedDeliveryMethod] = useState(null);
+  // Per-item delivery method, keyed by listingId: 'pickup' | 'shipping'.
+  const [itemMethods, setItemMethods] = useState({});
   const [deliveryRateCents, setDeliveryRateCents] = useState(null);
   const [deliveryDistanceMiles, setDeliveryDistanceMiles] = useState(null);
   const [deliveryEstimateError, setDeliveryEstimateError] = useState(null);
@@ -153,18 +154,34 @@ const CartCheckoutPageContent = props => {
     }
   }, [completedResults]);
 
-  // Check if any cart items support delivery/shipping (from listing publicData)
-  const shippingAvailable = cartItems.some(
-    item => item.listing?.attributes?.publicData?.shippingEnabled
-  );
-  // Self pickup is always offered: buyers can collect directly from the vendor
-  // (coordinated via in-app messaging) regardless of listing settings.
-  const pickupAvailable = true;
+  // Per-item delivery method. Each cart item can be picked up only if its vendor
+  // offers pickup, and delivered only if the listing supports shipping.
+  const canItemPickup = item =>
+    item.listing?.author?.attributes?.profile?.publicData?.offersPickup !== false;
+  const canItemShip = item => !!item.listing?.attributes?.publicData?.shippingEnabled;
 
-  // The buyer must consciously choose a delivery method at checkout — we do not
-  // auto-select one, so no one forgets to pick delivery vs. self pickup.
+  // Preselect the only option for items that have just one, so the buyer only
+  // has to choose where there's an actual choice.
+  useEffect(() => {
+    setItemMethods(prev => {
+      const next = { ...prev };
+      cartItems.forEach(item => {
+        if (next[item.listingId]) return;
+        const pickup = canItemPickup(item);
+        const ship = canItemShip(item);
+        if (pickup && !ship) next[item.listingId] = 'pickup';
+        else if (ship && !pickup) next[item.listingId] = 'shipping';
+      });
+      return next;
+    });
+  }, [cartItems]);
 
-  const hasShippingItems = selectedDeliveryMethod === 'shipping' && shippingAvailable;
+  const setItemMethod = (listingId, method) =>
+    setItemMethods(prev => ({ ...prev, [listingId]: method }));
+
+  const shippingItems = cartItems.filter(item => itemMethods[item.listingId] === 'shipping');
+  const hasShippingItems = shippingItems.length > 0;
+  const allItemsHaveMethod = cartItems.every(item => !!itemMethods[item.listingId]);
 
   // Initialize Stripe instance on mount
   useEffect(() => {
@@ -233,9 +250,10 @@ const CartCheckoutPageContent = props => {
     };
   }, [cartSubtotalCents]);
 
-  // Fetch route-based delivery estimate (supplier → supplier → buyer)
+  // Fetch route-based delivery estimate for the items set to be delivered.
+  const shippingListingIdsKey = shippingItems.map(it => it.listingId).join(',');
   useEffect(() => {
-    if (selectedDeliveryMethod !== 'shipping' || !cartItems.length) {
+    if (!hasShippingItems) {
       setEstimatedDelivery(null);
       setDeliveryDistanceMiles(null);
       return;
@@ -257,7 +275,7 @@ const CartCheckoutPageContent = props => {
     setDeliveryEstimateError(null);
 
     deliveryTimerRef.current = setTimeout(() => {
-      const listingIds = cartItems.map(item => item.listingId);
+      const listingIds = shippingItems.map(item => item.listingId);
       const address = {
         line1: addressLine1,
         city,
@@ -294,8 +312,8 @@ const CartCheckoutPageContent = props => {
     shippingAddress.postalCode,
     shippingAddress.country,
     shippingAddress.state,
-    selectedDeliveryMethod,
-    cartItems,
+    hasShippingItems,
+    shippingListingIdsKey,
   ]);
 
   const handleShippingChange = e => {
@@ -321,19 +339,12 @@ const CartCheckoutPageContent = props => {
           }
         : undefined;
 
-      // Apply the customer's selected delivery method to every cart item.
-      // Self pickup is offered for every order, so it always propagates — the
-      // buyer coordinates collection with each vendor via in-app messaging.
-      // Delivery (shipping) propagates only to listings that support it so the
-      // backend generates the shipping-fee line item and charges for delivery
-      // (the common case after the May bulk-enable: shippingEnabled=true).
+      // Apply each item's own chosen delivery method. The backend creates one
+      // transaction per item with its deliveryMethod, and the standalone
+      // delivery transaction covers only the items set to be delivered.
       const itemsWithDelivery = cartItems.map(item => {
-        if (!selectedDeliveryMethod) return item;
-        if (selectedDeliveryMethod === 'pickup') {
-          return { ...item, deliveryMethod: 'pickup' };
-        }
-        const shippingEnabled = item.listing?.attributes?.publicData?.shippingEnabled;
-        return shippingEnabled ? { ...item, deliveryMethod: 'shipping' } : item;
+        const method = itemMethods[item.listingId];
+        return method ? { ...item, deliveryMethod: method } : item;
       });
 
       const savedPaymentMethodId = paymentChoice === 'saved' && defaultPaymentMethod?.attributes?.stripePaymentMethodId
@@ -364,7 +375,7 @@ const CartCheckoutPageContent = props => {
         ...orderGroupMaybe,
       });
     },
-    [cartItems, shippingAddress, hasShippingItems, selectedDeliveryMethod, onProcessCheckout, paymentChoice, defaultPaymentMethod, stripeCustomer, estimatedFee, addToExistingOrder, activeOrderGroup, activeDeliveryTxId]
+    [cartItems, shippingAddress, hasShippingItems, itemMethods, onProcessCheckout, paymentChoice, defaultPaymentMethod, stripeCustomer, estimatedFee, addToExistingOrder, activeOrderGroup, activeDeliveryTxId]
   );
 
   // Success/Results view
@@ -519,60 +530,66 @@ const CartCheckoutPageContent = props => {
           </div>
         ) : null}
 
-        {shippingAvailable || pickupAvailable ? (
-          <div className={css.deliveryMethodSection}>
-            <h3 className={css.sectionTitle}>
-              <FormattedMessage id="CartCheckoutPage.deliveryMethodTitle" />
-            </h3>
-            <div className={css.deliveryOptions}>
-              {pickupAvailable ? (
-                <label className={css.deliveryOption}>
-                  <input
-                    type="radio"
-                    name="deliveryMethod"
-                    value="pickup"
-                    checked={selectedDeliveryMethod === 'pickup'}
-                    onChange={() => {
-                      setSelectedDeliveryMethod('pickup');
-                      setEstimatedDelivery(null);
-                    }}
-                    className={css.radioInput}
-                  />
-                  <span className={css.radioLabel}>
-                    <FormattedMessage id="CartCheckoutPage.pickupOption" />
-                  </span>
-                </label>
-              ) : null}
-              {shippingAvailable ? (
-                <label className={css.deliveryOption}>
-                  <input
-                    type="radio"
-                    name="deliveryMethod"
-                    value="shipping"
-                    checked={selectedDeliveryMethod === 'shipping'}
-                    onChange={() => setSelectedDeliveryMethod('shipping')}
-                    className={css.radioInput}
-                  />
-                  <span className={css.radioLabel}>
-                    <FormattedMessage id="CartCheckoutPage.shippingOption" />
-                  </span>
-                </label>
-              ) : null}
-            </div>
-            {selectedDeliveryMethod === 'shipping' && estimatedDelivery == null && !estimatingBreakdown ? (
-              <p className={css.deliveryHint}>
-                <FormattedMessage id="CartCheckoutPage.deliveryFeeHint" />
-              </p>
-            ) : null}
-            {selectedDeliveryMethod === 'pickup' ? (
-              <p className={css.pickupNote}>
-                <FormattedMessage id="CartCheckoutPage.selfPickupNote" />
-              </p>
-            ) : null}
-          </div>
-        ) : null}
+        <div className={css.deliveryMethodSection}>
+          <h3 className={css.sectionTitle}>
+            <FormattedMessage id="CartCheckoutPage.deliveryMethodTitle" />
+          </h3>
+          {cartItems.map(item => {
+            const pickup = canItemPickup(item);
+            const ship = canItemShip(item);
+            const method = itemMethods[item.listingId];
+            const title = item.listing?.attributes?.title || '';
+            return (
+              <div key={item.listingId} className={css.itemDeliveryRow}>
+                <span className={css.itemDeliveryTitle}>{title}</span>
+                <div className={css.deliveryOptions}>
+                  {pickup ? (
+                    <label className={css.deliveryOption}>
+                      <input
+                        type="radio"
+                        name={`deliveryMethod_${item.listingId}`}
+                        value="pickup"
+                        checked={method === 'pickup'}
+                        onChange={() => setItemMethod(item.listingId, 'pickup')}
+                        className={css.radioInput}
+                      />
+                      <span className={css.radioLabel}>
+                        <FormattedMessage id="CartCheckoutPage.pickupOption" />
+                      </span>
+                    </label>
+                  ) : null}
+                  {ship ? (
+                    <label className={css.deliveryOption}>
+                      <input
+                        type="radio"
+                        name={`deliveryMethod_${item.listingId}`}
+                        value="shipping"
+                        checked={method === 'shipping'}
+                        onChange={() => setItemMethod(item.listingId, 'shipping')}
+                        className={css.radioInput}
+                      />
+                      <span className={css.radioLabel}>
+                        <FormattedMessage id="CartCheckoutPage.shippingOption" />
+                      </span>
+                    </label>
+                  ) : null}
+                  {!pickup && !ship ? (
+                    <span className={css.deliveryUnavailable}>
+                      <FormattedMessage id="CartCheckoutPage.noDeliveryOption" />
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
+          {hasShippingItems && estimatedDelivery == null && !estimatingBreakdown ? (
+            <p className={css.deliveryHint}>
+              <FormattedMessage id="CartCheckoutPage.deliveryFeeHint" />
+            </p>
+          ) : null}
+        </div>
 
-        {appSettings.featureFlags.pickupSchedule && nextPickupDate && selectedDeliveryMethod === 'shipping' ? (
+        {appSettings.featureFlags.pickupSchedule && nextPickupDate && hasShippingItems ? (
           <div className={css.pickupDateInfo}>
             <FormattedMessage
               id="CartCheckoutPage.nextDeliveryDate"
@@ -772,7 +789,7 @@ const CartCheckoutPageContent = props => {
           disabled={
             (paymentChoice === 'new' && !cardReady) ||
             checkoutInProgress ||
-            ((shippingAvailable || pickupAvailable) && !selectedDeliveryMethod)
+            !allItemsHaveMethod
           }
         >
           {checkoutInProgress ? (

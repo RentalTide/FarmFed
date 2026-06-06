@@ -198,6 +198,34 @@
   }
 }
 
+.itemDeliveryRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--colorGrey100);
+
+  @media (--viewportMedium) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.itemDeliveryRow:last-of-type {
+  border-bottom: none;
+}
+
+.itemDeliveryTitle {
+  font-weight: var(--fontWeightMedium);
+  color: var(--colorGrey900);
+}
+
+.deliveryUnavailable {
+  font-size: 13px;
+  color: var(--colorFail);
+}
+
 .deliveryOptions {
   display: flex;
   gap: 16px;

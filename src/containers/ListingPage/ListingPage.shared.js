@@ -286,7 +286,16 @@ export const handleSubmit = parameters => values => {
       author: listing.author
         ? {
             id: listing.author.id,
-            attributes: { profile: { displayName: listing.author.attributes?.profile?.displayName } },
+            attributes: {
+              profile: {
+                displayName: listing.author.attributes?.profile?.displayName,
+                // Carry the vendor's pickup setting so checkout knows whether to
+                // offer pickup for this item (undefined => pickup available).
+                publicData: {
+                  offersPickup: listing.author.attributes?.profile?.publicData?.offersPickup,
+                },
+              },
+            },
           }
         : null,
     };

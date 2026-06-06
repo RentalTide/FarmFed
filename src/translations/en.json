@@ -124,6 +124,7 @@
   "CartCheckoutPage.newCard": "Use a new card",
   "CartCheckoutPage.processingItem": "Processing {current} of {total}...",
   "CartCheckoutPage.deliveryMethodTitle": "Delivery method",
+  "CartCheckoutPage.noDeliveryOption": "Not available for pickup or delivery — please remove this item.",
   "CartCheckoutPage.pickupOption": "Self Pickup",
   "CartCheckoutPage.selfPickupNote": "With self pickup you'll collect your order directly from each vendor. After checkout, coordinate the pickup time and location with them through in-app messaging.",
   "CartCheckoutPage.shippingOption": "Delivery",
