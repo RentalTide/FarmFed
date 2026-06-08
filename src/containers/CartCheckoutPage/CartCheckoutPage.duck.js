@@ -1,9 +1,31 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { initiatePrivileged, estimateCartDelivery, createOnfleetTask, notifyTransition } from '../../util/api';
+import {
+  initiatePrivileged,
+  estimateCartDelivery,
+  createOnfleetTask,
+  notifyTransition,
+  linkDeliveryItems,
+} from '../../util/api';
 import { storableError } from '../../util/errors';
 import * as log from '../../util/log';
 import { clearCart, removeItems } from '../../ducks/cart.duck';
 import { setCurrentUserHasOrders } from '../../ducks/user.duck';
+
+// The operator/hub-owned "Delivery" listing that standalone delivery
+// transactions are created against (default-delivery process). Configured via
+// env so the marketplace can point at its delivery listing. When unset, the
+// flow gracefully falls back to the legacy per-item shipping fee.
+const DELIVERY_LISTING_ID = process.env.REACT_APP_DELIVERY_LISTING_ID;
+const DELIVERY_PROCESS_ALIAS = 'default-delivery/release-1';
+
+// Generate a unique order-group id so all transactions in one cart checkout
+// (the items plus the standalone delivery) can be reconciled together.
+const generateOrderGroupId = () => {
+  if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+  return `group-${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+};
 
 // ================ Async thunks ================ //
 
@@ -12,7 +34,7 @@ import { setCurrentUserHasOrders } from '../../ducks/user.duck';
  * For new cards, sets up a reusable PaymentMethod via SetupIntent before processing.
  */
 const processCartCheckoutPayloadCreator = async (
-  { cartItems, stripe, card, billingDetails, shippingDetails, processAlias, savedPaymentMethodId, stripeCustomer, orderGroupId, customShippingFeeCents, cartFeeCents },
+  { cartItems, stripe, card, billingDetails, shippingDetails, processAlias, savedPaymentMethodId, stripeCustomer, orderGroupId, deliveryTransactionId, customShippingFeeCents, cartFeeCents },
   { dispatch, extra: sdk, rejectWithValue }
 ) => {
   const results = [];
@@ -96,6 +118,18 @@ const processCartCheckoutPayloadCreator = async (
     }
   }
 
+  // Decide whether to create a STANDALONE delivery transaction for this order.
+  // When enabled, the whole route fee lives on its own delivery transaction
+  // (created after the items, below) and every item carries $0 shipping. A
+  // single declined item then never claws back delivery. If the delivery
+  // listing isn't configured, or we're adding to an existing order, or there's
+  // no shipping, we fall back to the legacy first-item shipping behavior.
+  const canStandaloneDelivery =
+    !!DELIVERY_LISTING_ID && hasShippingItems && routeShippingFeeCents > 0 && !orderGroupId;
+  // All transactions from this checkout share one order-group id so they can be
+  // reconciled (and added to) together.
+  const effectiveGroupId = orderGroupId || (canStandaloneDelivery ? generateOrderGroupId() : null);
+
   let shippingFeeAssigned = false;
   // Charge the platform fee once per cart, but split it proportionally across
   // every transaction so that one vendor declining doesn't refund the whole
@@ -145,19 +179,28 @@ const processCartCheckoutPayloadCreator = async (
             }
           : {};
 
-      // Assign route-based shipping: full fee on first shipping item, $0 on rest
-      // If orderGroupId is set (adding to existing order), zero out shipping
-      const customShippingMaybe = orderGroupId
-        ? { customShippingFeeCents: 0 }
-        : deliveryMethod === 'shipping' && routeShippingFeeCents != null
-          ? { customShippingFeeCents: shippingFeeAssigned ? 0 : routeShippingFeeCents }
-          : {};
+      // Shipping fee assignment:
+      // - Standalone delivery enabled, or adding to an existing order:
+      //   items carry $0 shipping (delivery is its own transaction).
+      // - Legacy fallback: full route fee on the first shipping item, $0 rest.
+      const customShippingMaybe =
+        canStandaloneDelivery || orderGroupId
+          ? { customShippingFeeCents: 0 }
+          : deliveryMethod === 'shipping' && routeShippingFeeCents != null
+            ? { customShippingFeeCents: shippingFeeAssigned ? 0 : routeShippingFeeCents }
+            : {};
 
-      if (deliveryMethod === 'shipping' && routeShippingFeeCents != null && !shippingFeeAssigned) {
+      if (
+        !canStandaloneDelivery &&
+        !orderGroupId &&
+        deliveryMethod === 'shipping' &&
+        routeShippingFeeCents != null &&
+        !shippingFeeAssigned
+      ) {
         shippingFeeAssigned = true;
       }
 
-      const orderGroupMaybe = orderGroupId ? { orderGroupId } : {};
+      const orderGroupMaybe = effectiveGroupId ? { orderGroupId: effectiveGroupId } : {};
 
       // Assign this item's share of the platform fee (pre-computed above).
       const customCartFeeMaybe = orderGroupId
@@ -275,8 +318,121 @@ const processCartCheckoutPayloadCreator = async (
     }
   }
 
+  // Standalone delivery: now that the item transactions exist, charge the
+  // whole route delivery fee ONCE on a dedicated delivery transaction and link
+  // the successful items to it. Reconciliation (server-side) refunds this
+  // delivery transaction only if every linked item is later denied; a single
+  // declined item leaves delivery intact.
+  //
+  // Only SHIPPING items matter for delivery: link (and gate creation on) the
+  // successful shipping items. Pickup items don't need delivery, so a pickup
+  // item being accepted must not capture (or keep) a delivery charge, and an
+  // order with no surviving shipping item must not create a delivery at all.
+  const shippingListingIds = new Set(
+    cartItems.filter(it => it.deliveryMethod === 'shipping').map(it => it.listingId)
+  );
+  const successfulShippingItemIds = results
+    .filter(r => r.success && r.listingId && shippingListingIds.has(r.listingId))
+    .map(r => r.orderId);
+  if (canStandaloneDelivery && successfulShippingItemIds.length > 0) {
+    try {
+      const deliveryShippingAddressMaybe = shippingAddr
+        ? {
+            shippingAddress: {
+              line1: shippingAddr.addressLine1,
+              city: shippingAddr.city,
+              state: shippingAddr.state,
+              postalCode: shippingAddr.postalCode,
+              country: shippingAddr.country,
+            },
+          }
+        : {};
+
+      const deliveryCurrency =
+        cartItems.find(it => it.listing?.attributes?.price?.currency)?.listing?.attributes?.price
+          ?.currency;
+
+      const deliveryOrderData = {
+        isDeliveryOrder: true,
+        // Cents must be a positive integer (server rejects otherwise).
+        deliveryFeeCents: Math.round(routeShippingFeeCents),
+        deliveryMethod: 'shipping',
+        orderGroupId: effectiveGroupId,
+        ...(deliveryCurrency ? { currency: deliveryCurrency } : {}),
+        ...deliveryShippingAddressMaybe,
+      };
+
+      const deliveryBody = {
+        processAlias: DELIVERY_PROCESS_ALIAS,
+        transition: 'transition/request-payment',
+        params: {
+          listingId: { _sdkType: 'UUID', uuid: DELIVERY_LISTING_ID },
+          ...(shippingDetails || {}),
+          cardToken: 'CartCheckoutPage_card_token',
+        },
+      };
+
+      const deliveryResponse = await initiatePrivileged({
+        isSpeculative: false,
+        orderData: deliveryOrderData,
+        bodyParams: deliveryBody,
+        queryParams: { expand: true },
+      });
+
+      const deliveryTx = deliveryResponse.data.data;
+      const deliveryTxId = deliveryTx.id;
+      const deliveryPaymentIntents = deliveryTx.attributes.protectedData?.stripePaymentIntents;
+      if (!deliveryPaymentIntents) {
+        throw new Error('Missing stripePaymentIntents in delivery transaction');
+      }
+
+      const deliveryStripeResult = await stripe.confirmCardPayment(
+        deliveryPaymentIntents.default.stripePaymentIntentClientSecret,
+        { payment_method: paymentMethodId }
+      );
+      if (deliveryStripeResult.error) {
+        throw new Error(deliveryStripeResult.error.message || 'Delivery payment failed');
+      }
+
+      await sdk.transactions.transition(
+        { id: deliveryTxId, transition: 'transition/confirm-payment', params: {} },
+        { expand: true }
+      );
+
+      // Link the successful shipping item transactions so reconciliation can
+      // find them and decide refund-vs-capture for the whole order.
+      await linkDeliveryItems({
+        deliveryTransactionId: deliveryTxId.uuid,
+        itemTransactionIds: successfulShippingItemIds,
+      });
+
+      results.push({
+        orderId: deliveryTxId.uuid,
+        isDelivery: true,
+        success: true,
+        feeCents: Math.round(routeShippingFeeCents),
+        currency: deliveryCurrency || 'USD',
+        orderGroupId: effectiveGroupId,
+      });
+    } catch (e) {
+      log.error(e, 'cart-checkout-delivery-failed', { orderGroupId: effectiveGroupId });
+      // Items already succeeded — surface a non-fatal delivery error rather
+      // than failing the whole checkout.
+      results.push({ isDelivery: true, success: false, error: e.message || 'Delivery charge failed' });
+    }
+  } else if (orderGroupId && deliveryTransactionId && successfulShippingItemIds.length > 0) {
+    // Add-to-existing-order: attach the newly ordered shipping items to the
+    // existing standalone delivery transaction so reconciliation treats the
+    // whole group as one order. No new delivery fee is charged (items carry
+    // $0 shipping).
+    await linkDeliveryItems({
+      deliveryTransactionId,
+      itemTransactionIds: successfulShippingItemIds,
+    });
+  }
+
   // Clear successful items from cart
-  const successfulIds = results.filter(r => r.success).map(r => r.listingId);
+  const successfulIds = results.filter(r => r.success && !r.isDelivery).map(r => r.listingId);
   if (successfulIds.length > 0) {
     dispatch(removeItems(successfulIds));
   }

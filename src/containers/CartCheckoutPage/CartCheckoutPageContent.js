@@ -125,6 +125,7 @@ const CartCheckoutPageContent = props => {
 
   // Feature 6: Add to existing order group
   const [activeOrderGroup, setActiveOrderGroup] = useState(null);
+  const [activeDeliveryTxId, setActiveDeliveryTxId] = useState(null);
   const [addToExistingOrder, setAddToExistingOrder] = useState(false);
   useEffect(() => {
     if (!appSettings.featureFlags.addToExistingOrder) return;
@@ -132,6 +133,7 @@ const CartCheckoutPageContent = props => {
       .then(data => {
         if (data.canAddToOrder && data.orderGroupId) {
           setActiveOrderGroup(data.orderGroupId);
+          setActiveDeliveryTxId(data.deliveryTransactionId || null);
         }
       })
       .catch(() => {});
@@ -338,9 +340,15 @@ const CartCheckoutPageContent = props => {
         ? defaultPaymentMethod.attributes.stripePaymentMethodId
         : null;
 
-      // Feature 6: If adding to existing order, include orderGroupId and zero out delivery
+      // Feature 6: If adding to existing order, include orderGroupId (and the
+      // existing delivery transaction id so new items attach to the SAME
+      // standalone delivery instead of re-charging it) and zero out delivery.
       const orderGroupMaybe = addToExistingOrder && activeOrderGroup
-        ? { orderGroupId: activeOrderGroup, customShippingFeeCents: 0 }
+        ? {
+            orderGroupId: activeOrderGroup,
+            customShippingFeeCents: 0,
+            ...(activeDeliveryTxId ? { deliveryTransactionId: activeDeliveryTxId } : {}),
+          }
         : {};
 
       onProcessCheckout({
@@ -356,7 +364,7 @@ const CartCheckoutPageContent = props => {
         ...orderGroupMaybe,
       });
     },
-    [cartItems, shippingAddress, hasShippingItems, selectedDeliveryMethod, onProcessCheckout, paymentChoice, defaultPaymentMethod, stripeCustomer, estimatedFee]
+    [cartItems, shippingAddress, hasShippingItems, selectedDeliveryMethod, onProcessCheckout, paymentChoice, defaultPaymentMethod, stripeCustomer, estimatedFee, addToExistingOrder, activeOrderGroup, activeDeliveryTxId]
   );
 
   // Success/Results view
@@ -381,18 +389,33 @@ const CartCheckoutPageContent = props => {
               <h3 className={css.resultsSubtitle}>
                 <FormattedMessage id="CartCheckoutPage.completedOrders" />
               </h3>
-              {successResults.map(result => (
-                <div key={result.orderId} className={css.resultItem}>
-                  <span className={css.resultTitle}>{result.title}</span>
-                  <NamedLink
-                    name="OrderDetailsPage"
-                    params={{ id: result.orderId }}
-                    className={css.orderLink}
-                  >
-                    <FormattedMessage id="CartCheckoutPage.viewOrder" />
-                  </NamedLink>
-                </div>
-              ))}
+              {successResults.map(result =>
+                result.isDelivery ? (
+                  // Delivery is an operator-managed order with no buyer-facing
+                  // transaction page; show the charged fee instead of a link.
+                  <div key={result.orderId} className={css.resultItem}>
+                    <span className={css.resultTitle}>
+                      <FormattedMessage id="CartCheckoutPage.deliveryOrderLabel" />
+                    </span>
+                    {typeof result.feeCents === 'number' ? (
+                      <span className={css.resultTitle}>
+                        {formatMoney(intl, new Money(result.feeCents, result.currency || 'USD'))}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : (
+                  <div key={result.orderId} className={css.resultItem}>
+                    <span className={css.resultTitle}>{result.title}</span>
+                    <NamedLink
+                      name="OrderDetailsPage"
+                      params={{ id: result.orderId }}
+                      className={css.orderLink}
+                    >
+                      <FormattedMessage id="CartCheckoutPage.viewOrder" />
+                    </NamedLink>
+                  </div>
+                )
+              )}
             </div>
           ) : null}
 
@@ -401,9 +424,15 @@ const CartCheckoutPageContent = props => {
               <h3 className={css.resultsSubtitleError}>
                 <FormattedMessage id="CartCheckoutPage.failedOrders" />
               </h3>
-              {failedResults.map(result => (
-                <div key={result.listingId} className={css.resultItemError}>
-                  <span className={css.resultTitle}>{result.title}</span>
+              {failedResults.map((result, i) => (
+                <div key={result.listingId || (result.isDelivery ? 'delivery' : `failed-${i}`)} className={css.resultItemError}>
+                  <span className={css.resultTitle}>
+                    {result.isDelivery ? (
+                      <FormattedMessage id="CartCheckoutPage.deliveryOrderLabel" />
+                    ) : (
+                      result.title
+                    )}
+                  </span>
                   <span className={css.resultError}>{result.error}</span>
                 </div>
               ))}

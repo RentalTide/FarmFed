@@ -19,6 +19,7 @@ import {
   ImageFromFile,
   IconSpinner,
   FieldTextInput,
+  FieldBoolean,
   LocationAutocompleteInput,
   H4,
   CustomExtendedDataField,
@@ -497,6 +498,25 @@ class ProfileSettingsFormComponent extends Component {
                   />
                 </div>
               </div>
+
+              {userTypeConfig?.userType === 'Farmer' ? (
+                <div className={css.sectionContainer}>
+                  <H4 as="h2" className={css.sectionTitle}>
+                    <FormattedMessage id="ProfileSettingsForm.mapLocationHeading" />
+                  </H4>
+                  <FieldBoolean
+                    id="showLocationOnMap"
+                    name="showLocationOnMap"
+                    label={intl.formatMessage({ id: 'ProfileSettingsForm.showLocationLabel' })}
+                    placeholder={intl.formatMessage({
+                      id: 'ProfileSettingsForm.showLocationPlaceholder',
+                    })}
+                  />
+                  <p className={css.pickupInfo}>
+                    <FormattedMessage id="ProfileSettingsForm.showLocationInfo" />
+                  </p>
+                </div>
+              ) : null}
 
               <div className={classNames(css.sectionContainer, css.lastSection)}>
                 {userFieldProps.map(({ key, ...fieldProps }) => (

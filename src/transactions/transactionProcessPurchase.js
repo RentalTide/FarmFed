@@ -206,8 +206,9 @@ export const graph = {
     [states.COMPLETED]: {
       on: {
         [transitions.EXPIRE_REVIEW_PERIOD]: states.REVIEWED,
-        [transitions.REVIEW_1_BY_CUSTOMER]: states.REVIEWED_BY_CUSTOMER,
-        [transitions.REVIEW_1_BY_PROVIDER]: states.REVIEWED_BY_PROVIDER,
+        // Customer review publishes immediately and completes the transaction.
+        // Vendors no longer review customers, so there's no provider path here.
+        [transitions.REVIEW_1_BY_CUSTOMER]: states.REVIEWED,
       },
     },
 

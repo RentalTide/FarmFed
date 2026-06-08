@@ -345,7 +345,15 @@ if (cspEnabled) {
 }
 
 settingsStore
-  .init(['delivery-settings', 'tax-settings', 'pickup-settings', 'geofence-settings', 'bulletin-settings'])
+  .init([
+    'delivery-settings',
+    'tax-settings',
+    'pickup-settings',
+    'geofence-settings',
+    'bulletin-settings',
+    'device-tokens',
+    'announcements',
+  ])
   .catch(e => console.error('[settingsStore] init failed:', e.message));
 
 const server = app.listen(PORT, () => {

@@ -1,0 +1,59 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  background-color: var(--marketplaceColor);
+  border-radius: 8px;
+  color: var(--colorWhite);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  color: var(--colorWhite);
+  text-decoration: none;
+}
+
+a.content:hover {
+  text-decoration: none;
+  opacity: 0.95;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: var(--fontWeightBold);
+}
+
+.body {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.dismiss {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: var(--colorWhite);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+  opacity: 0.8;
+}
+
+.dismiss:hover {
+  opacity: 1;
+}

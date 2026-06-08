@@ -15,6 +15,11 @@ import {
   updateBulletins as updateBulletinsAPI,
   fetchVendors as fetchVendorsAPI,
   setVendorTaxExempt as setVendorTaxExemptAPI,
+  fetchOrdersAwaitingDelivery as fetchOrdersAwaitingDeliveryAPI,
+  adminMarkDelivered as adminMarkDeliveredAPI,
+  sendPushBroadcast as sendPushBroadcastAPI,
+  fetchAllAnnouncements as fetchAllAnnouncementsAPI,
+  setAnnouncementActive as setAnnouncementActiveAPI,
 } from '../../util/api';
 import { storableError } from '../../util/errors';
 
@@ -91,6 +96,64 @@ export const rejectUserThunk = createAsyncThunk(
   async ({ userId }, { rejectWithValue }) => {
     try {
       return await rejectUserAPI({ userId });
+    } catch (e) {
+      return rejectWithValue(storableError(e));
+    }
+  }
+);
+
+// Orders awaiting delivery (operator marks delivered)
+export const fetchOrdersAwaitingDeliveryThunk = createAsyncThunk(
+  'AdminPage/fetchOrdersAwaitingDelivery',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await fetchOrdersAwaitingDeliveryAPI();
+    } catch (e) {
+      return rejectWithValue(storableError(e));
+    }
+  }
+);
+
+export const markDeliveredThunk = createAsyncThunk(
+  'AdminPage/markDelivered',
+  async ({ transactionId }, { rejectWithValue }) => {
+    try {
+      return await adminMarkDeliveredAPI({ transactionId });
+    } catch (e) {
+      return rejectWithValue(storableError(e));
+    }
+  }
+);
+
+// Push Notification Center thunks
+export const fetchAnnouncementsThunk = createAsyncThunk(
+  'AdminPage/fetchAnnouncements',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await fetchAllAnnouncementsAPI();
+    } catch (e) {
+      return rejectWithValue(storableError(e));
+    }
+  }
+);
+
+export const sendPushBroadcastThunk = createAsyncThunk(
+  'AdminPage/sendPushBroadcast',
+  async ({ title, body, link }, { rejectWithValue }) => {
+    try {
+      return await sendPushBroadcastAPI({ title, body, link });
+    } catch (e) {
+      return rejectWithValue(storableError(e));
+    }
+  }
+);
+
+export const setAnnouncementActiveThunk = createAsyncThunk(
+  'AdminPage/setAnnouncementActive',
+  async ({ id, active }, { rejectWithValue }) => {
+    try {
+      await setAnnouncementActiveAPI({ id, active });
+      return { id, active };
     } catch (e) {
       return rejectWithValue(storableError(e));
     }
@@ -213,6 +276,19 @@ const initialState = {
   pendingUsersFetchError: null,
   userActionInProgress: null,
   userActionError: null,
+  // Orders awaiting delivery (operator marks delivered)
+  ordersAwaitingDelivery: [],
+  ordersFetchInProgress: false,
+  ordersFetchError: null,
+  markDeliveredInProgress: null,
+  markDeliveredError: null,
+  // Push Notification Center
+  announcements: [],
+  announcementsFetchInProgress: false,
+  announcementsError: null,
+  sendPushInProgress: false,
+  sendPushSuccess: false,
+  sendPushError: null,
   // Pickup Schedule
   pickupSettings: null,
   pickupFetchInProgress: false,
@@ -257,6 +333,10 @@ const adminPageSlice = createSlice({
     },
     clearBulletinsUpdateSuccess(state) {
       state.bulletinsUpdateSuccess = false;
+    },
+    clearSendPushSuccess(state) {
+      state.sendPushSuccess = false;
+      state.sendPushError = null;
     },
   },
   extraReducers: builder => {
@@ -445,6 +525,69 @@ const adminPageSlice = createSlice({
         state.bulletinsUpdateInProgress = false;
         state.bulletinsError = action.payload;
       })
+      // Orders awaiting delivery
+      .addCase(fetchOrdersAwaitingDeliveryThunk.pending, state => {
+        state.ordersFetchInProgress = true;
+        state.ordersFetchError = null;
+      })
+      .addCase(fetchOrdersAwaitingDeliveryThunk.fulfilled, (state, action) => {
+        state.ordersFetchInProgress = false;
+        state.ordersAwaitingDelivery = action.payload.orders || [];
+      })
+      .addCase(fetchOrdersAwaitingDeliveryThunk.rejected, (state, action) => {
+        state.ordersFetchInProgress = false;
+        state.ordersFetchError = action.payload;
+      })
+      .addCase(markDeliveredThunk.pending, (state, action) => {
+        state.markDeliveredInProgress = action.meta.arg.transactionId;
+        state.markDeliveredError = null;
+      })
+      .addCase(markDeliveredThunk.fulfilled, (state, action) => {
+        state.markDeliveredInProgress = null;
+        const { transactionId } = action.payload;
+        state.ordersAwaitingDelivery = state.ordersAwaitingDelivery.filter(
+          o => o.id !== transactionId
+        );
+      })
+      .addCase(markDeliveredThunk.rejected, (state, action) => {
+        state.markDeliveredInProgress = null;
+        state.markDeliveredError = action.payload;
+      })
+      // Push Notification Center
+      .addCase(fetchAnnouncementsThunk.pending, state => {
+        state.announcementsFetchInProgress = true;
+        state.announcementsError = null;
+      })
+      .addCase(fetchAnnouncementsThunk.fulfilled, (state, action) => {
+        state.announcementsFetchInProgress = false;
+        state.announcements = action.payload.announcements || [];
+      })
+      .addCase(fetchAnnouncementsThunk.rejected, (state, action) => {
+        state.announcementsFetchInProgress = false;
+        state.announcementsError = action.payload;
+      })
+      .addCase(sendPushBroadcastThunk.pending, state => {
+        state.sendPushInProgress = true;
+        state.sendPushSuccess = false;
+        state.sendPushError = null;
+      })
+      .addCase(sendPushBroadcastThunk.fulfilled, (state, action) => {
+        state.sendPushInProgress = false;
+        state.sendPushSuccess = true;
+        if (action.payload?.announcement) {
+          state.announcements = [action.payload.announcement, ...state.announcements];
+        }
+      })
+      .addCase(sendPushBroadcastThunk.rejected, (state, action) => {
+        state.sendPushInProgress = false;
+        state.sendPushError = action.payload;
+      })
+      .addCase(setAnnouncementActiveThunk.fulfilled, (state, action) => {
+        const { id, active } = action.payload;
+        state.announcements = state.announcements.map(a =>
+          a.id === id ? { ...a, active } : a
+        );
+      })
       // Vendors
       .addCase(fetchVendorsThunk.pending, state => {
         state.vendorsFetchInProgress = true;
@@ -482,6 +625,7 @@ export const {
   clearPickupUpdateSuccess,
   clearTaxUpdateSuccess,
   clearBulletinsUpdateSuccess,
+  clearSendPushSuccess,
 } = adminPageSlice.actions;
 
 // ================ Backward-compatible wrappers ================ //
@@ -512,6 +656,26 @@ export const approveUser = params => dispatch => {
 
 export const rejectUser = params => dispatch => {
   return dispatch(rejectUserThunk(params)).unwrap();
+};
+
+export const fetchOrdersAwaitingDelivery = () => dispatch => {
+  return dispatch(fetchOrdersAwaitingDeliveryThunk()).unwrap();
+};
+
+export const fetchAnnouncements = () => dispatch => {
+  return dispatch(fetchAnnouncementsThunk()).unwrap();
+};
+
+export const sendPushBroadcast = params => dispatch => {
+  return dispatch(sendPushBroadcastThunk(params)).unwrap();
+};
+
+export const setAnnouncementActive = params => dispatch => {
+  return dispatch(setAnnouncementActiveThunk(params)).unwrap();
+};
+
+export const markOrderDelivered = params => dispatch => {
+  return dispatch(markDeliveredThunk(params)).unwrap();
 };
 
 export const fetchPickupSettings = () => dispatch => {
@@ -553,6 +717,8 @@ export const loadData = () => dispatch => {
     dispatch(fetchDeliverySettings()),
     dispatch(fetchGeofenceSettings()),
     dispatch(fetchPendingUsers()),
+    dispatch(fetchOrdersAwaitingDelivery()),
+    dispatch(fetchAnnouncements()),
     dispatch(fetchPickupSettings()),
     dispatch(fetchTaxSettings()),
     dispatch(fetchBulletins()),

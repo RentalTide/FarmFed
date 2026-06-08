@@ -119,6 +119,36 @@
   hyphens: auto;
 }
 
+.quickAddButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background-color: var(--marketplaceColor);
+  color: var(--colorWhite);
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.quickAddButton:hover {
+  transform: scale(1.08);
+  opacity: 0.95;
+}
+
+.quickAddButton:active {
+  transform: scale(0.96);
+}
+
 .soldOutBadge {
   display: inline-block;
   padding: 4px 10px;
@@ -132,6 +162,9 @@
 
 .imageOverlay {
   position: relative;
+  /* Contain the absolutely-positioned badge/quick-add button in their own
+     stacking context so they can't paint over the sticky topbar on mobile. */
+  isolation: isolate;
 }
 
 .soldOutOverlay {

@@ -17,7 +17,7 @@ const registerHandler = async (req, res) => {
     const response = await sdk.currentUser.show({ include: [] });
     const userId = response.data.data.id.uuid;
 
-    registerToken({ userId, token, platform });
+    await registerToken({ userId, token, platform });
 
     res.status(200).json({ success: true });
   } catch (e) {
@@ -41,7 +41,7 @@ const unregisterHandler = async (req, res) => {
     const response = await sdk.currentUser.show({ include: [] });
     const userId = response.data.data.id.uuid;
 
-    unregisterToken({ userId, token });
+    await unregisterToken({ userId, token });
 
     res.status(200).json({ success: true });
   } catch (e) {

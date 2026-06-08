@@ -1,27 +1,23 @@
-const fs = require('fs');
-const path = require('path');
+const settingsStore = require('./settingsStore');
 
-const DATA_PATH = path.resolve(__dirname, '../data/device-tokens.json');
+// Device push tokens are stored in the Redis-backed settingsStore (with JSON
+// file fallback for local dev) so the push audience survives Heroku deploys —
+// the previous file-only storage was wiped on every dyno restart.
+const NAMESPACE = 'device-tokens';
 
 const getTokens = () => {
-  try {
-    const data = JSON.parse(fs.readFileSync(DATA_PATH, 'utf8'));
-    return Array.isArray(data.tokens) ? data.tokens : [];
-  } catch (e) {
-    return [];
-  }
+  const data = settingsStore.get(NAMESPACE) || {};
+  return Array.isArray(data.tokens) ? data.tokens : [];
 };
 
-const setTokens = tokens => {
-  fs.writeFileSync(DATA_PATH, JSON.stringify({ tokens: tokens || [] }, null, 2), 'utf8');
-};
+const setTokens = tokens => settingsStore.set(NAMESPACE, { tokens: tokens || [] });
 
 /**
  * Register a push token for a user.
  * Each entry: { userId, token, platform, createdAt }
  * Prevents duplicates (same userId + token).
  */
-const registerToken = ({ userId, token, platform }) => {
+const registerToken = async ({ userId, token, platform }) => {
   const tokens = getTokens();
   const exists = tokens.some(t => t.userId === userId && t.token === token);
   if (!exists) {
@@ -31,17 +27,17 @@ const registerToken = ({ userId, token, platform }) => {
       platform: platform || 'ios',
       createdAt: new Date().toISOString(),
     });
-    setTokens(tokens);
+    await setTokens(tokens);
   }
 };
 
 /**
  * Remove a push token (e.g. on logout).
  */
-const unregisterToken = ({ userId, token }) => {
+const unregisterToken = async ({ userId, token }) => {
   const tokens = getTokens();
   const filtered = tokens.filter(t => !(t.userId === userId && t.token === token));
-  setTokens(filtered);
+  await setTokens(filtered);
 };
 
 /**

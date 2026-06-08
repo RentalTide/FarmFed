@@ -28,6 +28,8 @@ const { getHandler: getTaxSettings, putHandler: putTaxSettings } = require('./ap
 const { getHandler: getBulletins, putHandler: putBulletins, getAllHandler: getAllBulletins } = require('./api/bulletin-settings');
 const { followHandler, unfollowHandler, getFollowedHandler } = require('./api/follow-vendor');
 const activeOrderGroup = require('./api/active-order-group');
+const linkDeliveryItems = require('./api/link-delivery-items');
+const reconcileDelivery = require('./api/reconcile-delivery');
 const reportDeliveryProblem = require('./api/report-delivery-problem');
 const dailyOrderCount = require('./api/daily-order-count');
 const { getNotificationsHandler, notifyFollowersHandler, markReadHandler } = require('./api/notifications');
@@ -39,6 +41,14 @@ const adminApproveUser = require('./api/admin/approve-user');
 const adminRejectUser = require('./api/admin/reject-user');
 const adminListVendors = require('./api/admin/list-vendors');
 const adminSetVendorTaxExempt = require('./api/admin/set-vendor-tax-exempt');
+const adminOrdersAwaitingDelivery = require('./api/admin/orders-awaiting-delivery');
+const adminMarkDelivered = require('./api/admin/mark-delivered');
+const adminSendPush = require('./api/admin/send-push');
+const {
+  getHandler: getAnnouncements,
+  getAllHandler: getAllAnnouncements,
+  setActiveHandler: setAnnouncementActive,
+} = require('./api/announcements');
 
 const createOnfleetTask = require('./api/create-onfleet-task');
 const onfleetWebhook = require('./api/onfleet-webhook');
@@ -88,9 +98,12 @@ router.use('/tax-settings', bodyParser.json());
 router.use('/bulletin-settings', bodyParser.json());
 router.use('/follow-vendor', bodyParser.json());
 router.use('/active-order-group', bodyParser.json());
+router.use('/link-delivery-items', bodyParser.json());
+router.use('/reconcile-delivery', bodyParser.json());
 router.use('/report-delivery-problem', bodyParser.json());
 router.use('/daily-order-count', bodyParser.json());
 router.use('/notifications', bodyParser.json());
+router.use('/announcements', bodyParser.json());
 router.use('/notify-followers', bodyParser.json());
 router.use('/device-tokens', bodyParser.json());
 router.use('/push/transition', bodyParser.json());
@@ -136,6 +149,11 @@ router.get('/follow-vendor', getFollowedHandler);
 // Order group endpoint (for add-to-existing-order feature)
 router.get('/active-order-group', activeOrderGroup);
 
+// Standalone delivery: link item transactions to a delivery order, and
+// reconcile delivery orders (refund-on-full-denial / capture-on-accept).
+router.post('/link-delivery-items', linkDeliveryItems);
+router.post('/reconcile-delivery', reconcileDelivery);
+
 // Delivery problem reporting
 router.post('/report-delivery-problem', reportDeliveryProblem);
 
@@ -158,6 +176,14 @@ router.post('/admin/approve-user', adminApproveUser);
 router.post('/admin/reject-user', adminRejectUser);
 router.get('/admin/vendors', adminListVendors);
 router.post('/admin/set-vendor-tax-exempt', adminSetVendorTaxExempt);
+router.get('/admin/orders-awaiting-delivery', adminOrdersAwaitingDelivery);
+router.post('/admin/mark-delivered', adminMarkDelivered);
+
+// Admin Push Notification Center: broadcast a push + in-app announcement.
+router.post('/admin/send-push', adminSendPush);
+router.get('/announcements', getAnnouncements);
+router.get('/announcements/all', getAllAnnouncements);
+router.put('/announcements/active', setAnnouncementActive);
 
 // OnFleet delivery integration endpoints
 router.post('/create-onfleet-task', createOnfleetTask);

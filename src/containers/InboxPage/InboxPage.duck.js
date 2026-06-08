@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { storableError } from '../../util/errors';
 import { parse, getValidInboxSort } from '../../util/urlHelpers';
-import { getSupportedProcessesInfo } from '../../transactions/transaction';
+import { getSupportedProcessesInfo, DELIVERY_PROCESS_NAME } from '../../transactions/transaction';
 import { addMarketplaceEntities } from '../../ducks/marketplaceData.duck';
 import appSettings from '../../config/settings';
 
@@ -100,7 +100,12 @@ const loadDataPayloadCreator = ({ params, search }, { dispatch, rejectWithValue,
   }
 
   const { page = 1, sort } = parse(search);
-  const processNames = getSupportedProcessesInfo().map(p => p.name);
+  // Exclude the standalone delivery process: delivery transactions are
+  // operator-managed (the buyer takes no action on them) and have no inbox
+  // stateData/microcopy, so they must not surface as broken rows in the inbox.
+  const processNames = getSupportedProcessesInfo()
+    .map(p => p.name)
+    .filter(name => name !== DELIVERY_PROCESS_NAME);
 
   const apiQueryParams = {
     only: onlyFilter,

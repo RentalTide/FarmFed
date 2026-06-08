@@ -238,6 +238,31 @@ exports.transactionLineItems = async (listing, orderData, providerCommission, cu
   const priceAttribute = listing.attributes.price;
   const currency = priceAttribute?.currency || orderData.currency;
 
+  // Standalone delivery order (default-delivery process): the whole order's
+  // route delivery fee is the single line item, billed to the customer and
+  // paid out to the hub (the delivery listing's provider). No commissions or
+  // tax are applied — delivery is the hub's own revenue.
+  if (unitType === 'delivery') {
+    const deliveryFeeCents = orderData && orderData.deliveryFeeCents;
+    if (!Number.isInteger(deliveryFeeCents) || deliveryFeeCents <= 0) {
+      const error = new Error(
+        'default-delivery order requires a positive integer orderData.deliveryFeeCents'
+      );
+      error.status = 400;
+      error.statusText = error.message;
+      error.data = {};
+      throw error;
+    }
+    return [
+      {
+        code: 'line-item/delivery',
+        unitPrice: new Money(deliveryFeeCents, currency),
+        quantity: 1,
+        includeFor: ['customer', 'provider'],
+      },
+    ];
+  }
+
   const { priceVariantName, offer } = orderData || {};
   const priceVariantConfig = priceVariants
     ? priceVariants.find(pv => pv.name === priceVariantName)

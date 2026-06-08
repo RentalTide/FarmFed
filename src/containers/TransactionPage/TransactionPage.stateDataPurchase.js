@@ -78,18 +78,14 @@ export const getStateDataForPurchaseProcess = (txInfo, processInfo) => {
       };
     })
     .cond([states.PURCHASED, PROVIDER], () => {
-      const actionButtonTranslationId = isShippable
-        ? `TransactionPage.${processName}.${PROVIDER}.transition-mark-delivered.actionButtonShipped`
-        : `TransactionPage.${processName}.${PROVIDER}.transition-mark-delivered.actionButton`;
-
+      // FarmFed (the operator) performs delivery after the vendor drops items
+      // off at the hub, so vendors no longer mark orders delivered — that's done
+      // via operator-mark-delivered (manually or by the OnFleet webhook). The
+      // vendor just sees the order status here, with no "mark delivered" button.
       return {
         processName,
         processState,
         showDetailCardHeadings: true,
-        showActionButtons: true,
-        primaryButtonProps: actionButtonProps(transitions.MARK_DELIVERED, PROVIDER, {
-          actionButtonTranslationId,
-        }),
       };
     })
     .cond([states.DELIVERED, CUSTOMER], () => {
@@ -102,7 +98,9 @@ export const getStateDataForPurchaseProcess = (txInfo, processInfo) => {
         primaryButtonProps: actionButtonProps(transitions.MARK_RECEIVED, CUSTOMER),
       };
     })
-    .cond([states.COMPLETED, _], () => {
+    // Only the customer reviews the vendor now (vendors don't review customers),
+    // and the review publishes immediately. The provider sees no review button.
+    .cond([states.COMPLETED, CUSTOMER], () => {
       return {
         processName,
         processState,

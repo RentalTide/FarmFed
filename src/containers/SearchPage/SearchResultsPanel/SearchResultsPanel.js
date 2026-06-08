@@ -63,7 +63,7 @@ const SearchResultsPanel = props => {
       const panelMediumWidth = 50;
       const panelLargeWidth = 62.5;
       return [
-        '(max-width: 549px) 100vw',
+        '(max-width: 549px) 50vw',
         '(max-width: 767px) 50vw',
         `(max-width: 1439px) 26vw`,
         `(max-width: 1920px) 18vw`,
@@ -82,6 +82,7 @@ const SearchResultsPanel = props => {
               listing={l}
               renderSizes={cardRenderSizes(isMapVariant)}
               setActiveListing={setActiveListing}
+              showAddToCart={!isMapVariant}
             />
           </li>
         ))}

@@ -248,6 +248,59 @@ export const setVendorTaxExempt = ({ userId, taxExempt }) => {
   });
 };
 
+// List orders awaiting FarmFed delivery (purchased state) — admin only.
+export const fetchOrdersAwaitingDelivery = () => {
+  return request('/api/admin/orders-awaiting-delivery', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
+// Operator-mark an order delivered — admin only.
+export const adminMarkDelivered = ({ transactionId }) => {
+  return request('/api/admin/mark-delivered', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ transactionId }),
+  });
+};
+
+// ====== Push Notification Center ====== //
+
+// Broadcast a push notification + in-app announcement to all app users (admin).
+export const sendPushBroadcast = ({ title, body, link }) => {
+  return request('/api/admin/send-push', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, body, link }),
+  });
+};
+
+// Full announcement history (admin).
+export const fetchAllAnnouncements = () => {
+  return request('/api/announcements/all', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
+// Active announcements for the in-app home banner (public).
+export const fetchAnnouncements = () => {
+  return request('/api/announcements', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
+// Toggle an announcement on/off (admin).
+export const setAnnouncementActive = ({ id, active }) => {
+  return request('/api/announcements/active', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, active }),
+  });
+};
+
 // Create an OnFleet delivery task for a shipping transaction.
 export const createOnfleetTask = ({ transactionId }) => {
   return request('/api/create-onfleet-task', {
@@ -356,6 +409,26 @@ export const fetchActiveOrderGroup = () => {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
+};
+
+// Link item transactions to a standalone delivery transaction's order group
+// so reconciliation can decide whether the whole order was denied.
+export const linkDeliveryItems = ({ deliveryTransactionId, itemTransactionIds }) => {
+  return request('/api/link-delivery-items', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ deliveryTransactionId, itemTransactionIds }),
+  }).catch(() => null);
+};
+
+// Reconcile a delivery transaction (refund if all items denied, capture if any
+// accepted). Best-effort fast path; the cron job is the robust backstop.
+export const reconcileDeliveryOrder = ({ deliveryTransactionId }) => {
+  return request('/api/reconcile-delivery', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ deliveryTransactionId }),
+  }).catch(() => null);
 };
 
 // ====== Delivery Problem Report ====== //

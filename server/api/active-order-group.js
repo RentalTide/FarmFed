@@ -30,10 +30,10 @@ const handler = async (req, res) => {
       only: 'order',
       lastTransitions: [
         'transition/confirm-payment',
-        'transition/accept',
+        'transition/accept-order',
       ],
       page: 1,
-      perPage: 10,
+      perPage: 20,
     });
 
     const transactions = response.data.data;
@@ -46,10 +46,17 @@ const handler = async (req, res) => {
 
     if (withGroup) {
       const orderGroupId = withGroup.attributes.protectedData.orderGroupId;
-      return res.status(200).json({ orderGroupId, canAddToOrder: true });
+      // Find the standalone delivery transaction for this group (if any) so new
+      // items can be attached to the SAME delivery rather than re-charging it.
+      const deliveryTx = transactions.find(tx => {
+        const pd = tx.attributes.protectedData || {};
+        return pd.isDeliveryOrder === true && pd.orderGroupId === orderGroupId;
+      });
+      const deliveryTransactionId = deliveryTx?.id?.uuid || null;
+      return res.status(200).json({ orderGroupId, deliveryTransactionId, canAddToOrder: true });
     }
 
-    res.status(200).json({ orderGroupId: null, canAddToOrder: false });
+    res.status(200).json({ orderGroupId: null, deliveryTransactionId: null, canAddToOrder: false });
   } catch (e) {
     handleError(res, e);
   }

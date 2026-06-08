@@ -344,4 +344,10 @@ export const listingTypes = [
 //
 // Read More:
 // https://www.sharetribe.com/docs/how-to/manage-search-schemas-with-flex-cli/#adding-listing-search-schemas
-export const enforceValidListingType = false;
+// Enabled so search only returns listings whose pub_listingType matches a
+// configured listing type. This keeps the operator-owned "Delivery" listing
+// (listingType 'delivery', used by the standalone-delivery process) out of
+// public search results while it stays published/transactable. The
+// listingType enum search schema exists in Console, and all real listings use
+// the configured 'sell-new-products' type, so nothing legitimate is hidden.
+export const enforceValidListingType = true;
