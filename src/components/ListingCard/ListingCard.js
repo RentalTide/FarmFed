@@ -278,6 +278,17 @@ export const ListingCard = props => {
           style={cardStyle}
           showListingImage={showListingImage}
         />
+        {canQuickAdd ? (
+          <button
+            type="button"
+            className={css.quickAddButton}
+            onClick={handleQuickAdd}
+            aria-label={intl.formatMessage({ id: 'ListingCard.addToCart' })}
+            title={intl.formatMessage({ id: 'ListingCard.addToCart' })}
+          >
+            +
+          </button>
+        ) : null}
       </div>
       <div className={css.info}>
         <PriceMaybe
@@ -302,11 +313,6 @@ export const ListingCard = props => {
             </div>
           ) : null}
         </div>
-        {canQuickAdd ? (
-          <button type="button" className={css.quickAddButton} onClick={handleQuickAdd}>
-            <FormattedMessage id="ListingCard.addToCart" />
-          </button>
-        ) : null}
       </div>
     </NamedLink>
   );
