@@ -161,29 +161,15 @@
    :actions [],
    :from :state/received,
    :to :state/completed}
-  {:name :transition/review-1-by-provider,
-   :actor :actor.role/provider,
-   :actions [{:name :action/post-review-by-provider}],
-   :from :state/completed,
-   :to :state/reviewed-by-provider}
-  {:name :transition/review-2-by-provider,
-   :actor :actor.role/provider,
-   :actions
-   [{:name :action/post-review-by-provider}
-    {:name :action/publish-reviews}],
-   :from :state/reviewed-by-customer,
-   :to :state/reviewed}
+  ;; Reviews: only the customer reviews the vendor (vendors no longer review
+  ;; customers), and the review is published immediately — no double-blind hold
+  ;; or approval step.
   {:name :transition/review-1-by-customer,
-   :actor :actor.role/customer,
-   :actions [{:name :action/post-review-by-customer}],
-   :from :state/completed,
-   :to :state/reviewed-by-customer}
-  {:name :transition/review-2-by-customer,
    :actor :actor.role/customer,
    :actions
    [{:name :action/post-review-by-customer}
     {:name :action/publish-reviews}],
-   :from :state/reviewed-by-provider,
+   :from :state/completed,
    :to :state/reviewed}
   {:name :transition/expire-review-period,
    :at
@@ -192,22 +178,6 @@
      {:fn/period ["P7D"]}]},
    :actions [],
    :from :state/completed,
-   :to :state/reviewed}
-  {:name :transition/expire-provider-review-period,
-   :at
-   {:fn/plus
-    [{:fn/timepoint [:time/first-entered-state :state/received]}
-     {:fn/period ["P7D"]}]},
-   :actions [{:name :action/publish-reviews}],
-   :from :state/reviewed-by-customer,
-   :to :state/reviewed}
-  {:name :transition/expire-customer-review-period,
-   :at
-   {:fn/plus
-    [{:fn/timepoint [:time/first-entered-state :state/received]}
-     {:fn/period ["P7D"]}]},
-   :actions [{:name :action/publish-reviews}],
-   :from :state/reviewed-by-provider,
    :to :state/reviewed}],
  :notifications
  [{:name :notification/order-receipt,
@@ -342,27 +312,13 @@
    :on :transition/auto-cancel-from-disputed,
    :to :actor.role/provider,
    :template :purchase-order-auto-canceled-from-disputed-provider}
-  {:name :notification/review-period-start-provider,
-   :on :transition/auto-complete,
-   :to :actor.role/provider,
-   :template :purchase-order-review-by-provider-wanted}
+  ;; Only the customer is prompted to review, and their review publishes
+  ;; immediately, so the provider is notified of a published review.
   {:name :notification/review-period-start-customer,
    :on :transition/auto-complete,
    :to :actor.role/customer,
    :template :purchase-order-review-by-customer-wanted}
-  {:name :notification/review-by-provider-first,
-   :on :transition/review-1-by-provider,
-   :to :actor.role/customer,
-   :template :purchase-review-by-other-party-unpublished}
   {:name :notification/review-by-customer-first,
    :on :transition/review-1-by-customer,
-   :to :actor.role/provider,
-   :template :purchase-review-by-other-party-unpublished}
-  {:name :notification/review-by-provider-second,
-   :on :transition/review-2-by-provider,
-   :to :actor.role/customer,
-   :template :purchase-review-by-other-party-published}
-  {:name :notification/review-by-customer-second,
-   :on :transition/review-2-by-customer,
    :to :actor.role/provider,
    :template :purchase-review-by-other-party-published}]}

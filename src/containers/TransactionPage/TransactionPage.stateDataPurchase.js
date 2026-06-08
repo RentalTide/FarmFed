@@ -98,7 +98,9 @@ export const getStateDataForPurchaseProcess = (txInfo, processInfo) => {
         primaryButtonProps: actionButtonProps(transitions.MARK_RECEIVED, CUSTOMER),
       };
     })
-    .cond([states.COMPLETED, _], () => {
+    // Only the customer reviews the vendor now (vendors don't review customers),
+    // and the review publishes immediately. The provider sees no review button.
+    .cond([states.COMPLETED, CUSTOMER], () => {
       return {
         processName,
         processState,
