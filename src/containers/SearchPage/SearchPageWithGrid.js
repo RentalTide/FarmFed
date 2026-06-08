@@ -41,7 +41,7 @@ import {
 import { getListingsById } from '../../ducks/marketplaceData.duck';
 import { manageDisableScrolling, isScrollingDisabled } from '../../ducks/ui.duck';
 
-import { H3, H5, NamedRedirect, Page, VendorBulletin } from '../../components';
+import { H3, H5, NamedRedirect, Page, VendorBulletin, AnnouncementBanner } from '../../components';
 import { fetchBulletins } from '../../util/api';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
@@ -482,6 +482,7 @@ export class SearchPageComponent extends Component {
                 searchListingsError={searchListingsError}
                 noResultsInfo={noResultsInfo}
               />
+              <AnnouncementBanner />
               <VendorBulletin bulletins={bulletins} />
               <div
                 className={classNames(css.listingsForGridVariant, {

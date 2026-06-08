@@ -42,7 +42,7 @@ import {
 import { getListingsById } from '../../ducks/marketplaceData.duck';
 import { manageDisableScrolling, isScrollingDisabled } from '../../ducks/ui.duck';
 
-import { H3, H5, ModalInMobile, NamedRedirect, Page, VendorBulletin } from '../../components';
+import { H3, H5, ModalInMobile, NamedRedirect, Page, VendorBulletin, AnnouncementBanner } from '../../components';
 import { fetchBulletins } from '../../util/api';
 import TopbarContainer from '../../containers/TopbarContainer/TopbarContainer';
 
@@ -620,6 +620,7 @@ export class SearchPageComponent extends Component {
                 })}
               </SearchFiltersPrimary>
             </MainPanelHeader>
+            <AnnouncementBanner />
             <VendorBulletin bulletins={bulletins} />
             {isSecondaryFiltersOpen ? (
               <div className={classNames(css.searchFiltersPanel)}>

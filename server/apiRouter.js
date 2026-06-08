@@ -43,6 +43,12 @@ const adminListVendors = require('./api/admin/list-vendors');
 const adminSetVendorTaxExempt = require('./api/admin/set-vendor-tax-exempt');
 const adminOrdersAwaitingDelivery = require('./api/admin/orders-awaiting-delivery');
 const adminMarkDelivered = require('./api/admin/mark-delivered');
+const adminSendPush = require('./api/admin/send-push');
+const {
+  getHandler: getAnnouncements,
+  getAllHandler: getAllAnnouncements,
+  setActiveHandler: setAnnouncementActive,
+} = require('./api/announcements');
 
 const createOnfleetTask = require('./api/create-onfleet-task');
 const onfleetWebhook = require('./api/onfleet-webhook');
@@ -97,6 +103,7 @@ router.use('/reconcile-delivery', bodyParser.json());
 router.use('/report-delivery-problem', bodyParser.json());
 router.use('/daily-order-count', bodyParser.json());
 router.use('/notifications', bodyParser.json());
+router.use('/announcements', bodyParser.json());
 router.use('/notify-followers', bodyParser.json());
 router.use('/device-tokens', bodyParser.json());
 router.use('/push/transition', bodyParser.json());
@@ -171,6 +178,12 @@ router.get('/admin/vendors', adminListVendors);
 router.post('/admin/set-vendor-tax-exempt', adminSetVendorTaxExempt);
 router.get('/admin/orders-awaiting-delivery', adminOrdersAwaitingDelivery);
 router.post('/admin/mark-delivered', adminMarkDelivered);
+
+// Admin Push Notification Center: broadcast a push + in-app announcement.
+router.post('/admin/send-push', adminSendPush);
+router.get('/announcements', getAnnouncements);
+router.get('/announcements/all', getAllAnnouncements);
+router.put('/announcements/active', setAnnouncementActive);
 
 // OnFleet delivery integration endpoints
 router.post('/create-onfleet-task', createOnfleetTask);

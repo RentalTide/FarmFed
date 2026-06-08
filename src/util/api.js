@@ -265,6 +265,42 @@ export const adminMarkDelivered = ({ transactionId }) => {
   });
 };
 
+// ====== Push Notification Center ====== //
+
+// Broadcast a push notification + in-app announcement to all app users (admin).
+export const sendPushBroadcast = ({ title, body, link }) => {
+  return request('/api/admin/send-push', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, body, link }),
+  });
+};
+
+// Full announcement history (admin).
+export const fetchAllAnnouncements = () => {
+  return request('/api/announcements/all', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
+// Active announcements for the in-app home banner (public).
+export const fetchAnnouncements = () => {
+  return request('/api/announcements', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
+// Toggle an announcement on/off (admin).
+export const setAnnouncementActive = ({ id, active }) => {
+  return request('/api/announcements/active', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, active }),
+  });
+};
+
 // Create an OnFleet delivery task for a shipping transaction.
 export const createOnfleetTask = ({ transactionId }) => {
   return request('/api/create-onfleet-task', {

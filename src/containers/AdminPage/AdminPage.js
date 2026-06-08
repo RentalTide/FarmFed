@@ -27,12 +27,16 @@ import {
   clearBulletinsUpdateSuccess,
   setVendorTaxExempt,
   markOrderDelivered,
+  sendPushBroadcast,
+  setAnnouncementActive,
+  clearSendPushSuccess,
 } from './AdminPage.duck';
 
 import DeliverySettingsTab from './DeliverySettingsTab/DeliverySettingsTab';
 import GeofenceTab from './GeofenceTab/GeofenceTab';
 import UserManagementTab from './UserManagementTab/UserManagementTab';
 import OrdersTab from './OrdersTab/OrdersTab';
+import PushNotificationsTab from './PushNotificationsTab/PushNotificationsTab';
 import PickupScheduleTab from './PickupScheduleTab/PickupScheduleTab';
 import TaxSettingsTab from './TaxSettingsTab/TaxSettingsTab';
 import BulletinBoardTab from './BulletinBoardTab/BulletinBoardTab';
@@ -43,6 +47,7 @@ const DELIVERY_TAB = 'delivery';
 const GEOFENCE_TAB = 'geofence';
 const USERS_TAB = 'users';
 const ORDERS_TAB = 'orders';
+const PUSH_TAB = 'push';
 const PICKUP_TAB = 'pickup';
 const TAX_TAB = 'tax';
 const BULLETIN_TAB = 'bulletin';
@@ -73,6 +78,11 @@ const AdminPageComponent = props => {
     ordersFetchError,
     markDeliveredInProgress,
     markDeliveredError,
+    announcements,
+    announcementsFetchInProgress,
+    sendPushInProgress,
+    sendPushSuccess,
+    sendPushError,
     pickupSettings,
     pickupUpdateInProgress,
     pickupUpdateSuccess,
@@ -102,6 +112,9 @@ const AdminPageComponent = props => {
     onClearBulletinsSuccess,
     onSetVendorTaxExempt,
     onMarkDelivered,
+    onSendPush,
+    onToggleAnnouncement,
+    onClearSendPushSuccess,
   } = props;
 
   const intl = useIntl();
@@ -136,6 +149,7 @@ const AdminPageComponent = props => {
     { id: GEOFENCE_TAB, label: 'AdminPage.geofenceTab', show: true },
     { id: USERS_TAB, label: 'AdminPage.usersTab', show: true },
     { id: ORDERS_TAB, label: 'AdminPage.ordersTab', show: true },
+    { id: PUSH_TAB, label: 'AdminPage.pushTab', show: true },
     { id: PICKUP_TAB, label: 'AdminPage.pickupTab', show: flags.pickupSchedule },
     { id: TAX_TAB, label: 'AdminPage.taxTab', show: flags.taxBreakdown },
     { id: BULLETIN_TAB, label: 'AdminPage.bulletinTab', show: flags.vendorBulletin },
@@ -211,6 +225,19 @@ const AdminPageComponent = props => {
               />
             )}
 
+            {activeTab === PUSH_TAB && (
+              <PushNotificationsTab
+                announcements={announcements}
+                fetchInProgress={announcementsFetchInProgress}
+                sendInProgress={sendPushInProgress}
+                sendSuccess={sendPushSuccess}
+                sendError={sendPushError}
+                onSend={onSendPush}
+                onToggleActive={onToggleAnnouncement}
+                onClearSuccess={onClearSendPushSuccess}
+              />
+            )}
+
             {activeTab === PICKUP_TAB && flags.pickupSchedule && (
               <PickupScheduleTab
                 pickupSettings={pickupSettings}
@@ -279,6 +306,11 @@ const mapStateToProps = state => {
     ordersFetchError,
     markDeliveredInProgress,
     markDeliveredError,
+    announcements,
+    announcementsFetchInProgress,
+    sendPushInProgress,
+    sendPushSuccess,
+    sendPushError,
     pickupSettings,
     pickupUpdateInProgress,
     pickupUpdateSuccess,
@@ -320,6 +352,11 @@ const mapStateToProps = state => {
     ordersFetchError,
     markDeliveredInProgress,
     markDeliveredError,
+    announcements,
+    announcementsFetchInProgress,
+    sendPushInProgress,
+    sendPushSuccess,
+    sendPushError,
     pickupSettings,
     pickupUpdateInProgress,
     pickupUpdateSuccess,
@@ -353,6 +390,9 @@ const mapDispatchToProps = dispatch => ({
   onClearBulletinsSuccess: () => dispatch(clearBulletinsUpdateSuccess()),
   onSetVendorTaxExempt: params => dispatch(setVendorTaxExempt(params)),
   onMarkDelivered: transactionId => dispatch(markOrderDelivered({ transactionId })),
+  onSendPush: params => dispatch(sendPushBroadcast(params)),
+  onToggleAnnouncement: params => dispatch(setAnnouncementActive(params)),
+  onClearSendPushSuccess: () => dispatch(clearSendPushSuccess()),
 });
 
 const AdminPage = compose(
