@@ -135,9 +135,6 @@
   border-radius: 50%;
   background-color: var(--marketplaceColor);
   color: var(--colorWhite);
-  font-size: 22px;
-  line-height: 1;
-  font-weight: var(--fontWeightBold);
   cursor: pointer;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
   transition: transform 0.12s ease, opacity 0.12s ease;
