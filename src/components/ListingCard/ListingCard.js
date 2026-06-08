@@ -1,5 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
+import { useDispatch } from 'react-redux';
 
 import { useConfiguration } from '../../context/configurationContext';
 
@@ -14,7 +15,8 @@ import { formatMoney } from '../../util/currency';
 import { ensureListing, ensureUser } from '../../util/data';
 import { richText } from '../../util/richText';
 import { createSlug } from '../../util/urlHelpers';
-import { isBookingProcessAlias } from '../../transactions/transaction';
+import { isBookingProcessAlias, isPurchaseProcessAlias } from '../../transactions/transaction';
+import { addItem, openCartPanel } from '../../ducks/cart.duck';
 
 import {
   AspectRatioWrapper,
@@ -193,7 +195,10 @@ export const ListingCard = props => {
     renderSizes,
     setActiveListing,
     showAuthorInfo = true,
+    showAddToCart = false,
   } = props;
+
+  const dispatch = useDispatch();
 
   const classes = classNames(rootClassName || css.root, className);
 
@@ -223,6 +228,39 @@ export const ListingCard = props => {
         onMouseLeave: () => setActiveListing(null),
       }
     : null;
+
+  // Quick add-to-cart (shown on the search grid). Only for in-stock, purchasable
+  // listings with a price. Mirrors the cart snapshot built on the listing page.
+  const currentStock = listing?.currentStock?.attributes?.quantity;
+  const isSoldOut = currentStock === 0;
+  const canQuickAdd =
+    showAddToCart &&
+    !!price &&
+    !isSoldOut &&
+    isPurchaseProcessAlias(publicData?.transactionProcessAlias);
+
+  const handleQuickAdd = e => {
+    // The card is wrapped in a link to the listing page — don't navigate.
+    e.preventDefault();
+    e.stopPropagation();
+    const listingSnapshot = {
+      id: currentListing.id,
+      attributes: {
+        title: currentListing.attributes.title,
+        price: currentListing.attributes.price,
+        publicData: currentListing.attributes.publicData,
+      },
+      images: currentListing.images?.map(img => ({ id: img.id, attributes: img.attributes })),
+      author: listing.author
+        ? {
+            id: listing.author.id,
+            attributes: { profile: { displayName: listing.author.attributes?.profile?.displayName } },
+          }
+        : null,
+    };
+    dispatch(addItem({ listingId: id, listing: listingSnapshot, quantity: 1, deliveryMethod: null }));
+    dispatch(openCartPanel());
+  };
 
   return (
     <NamedLink className={classes} name="ListingPage" params={{ id, slug }}>
@@ -264,6 +302,11 @@ export const ListingCard = props => {
             </div>
           ) : null}
         </div>
+        {canQuickAdd ? (
+          <button type="button" className={css.quickAddButton} onClick={handleQuickAdd}>
+            <FormattedMessage id="ListingCard.addToCart" />
+          </button>
+        ) : null}
       </div>
     </NamedLink>
   );

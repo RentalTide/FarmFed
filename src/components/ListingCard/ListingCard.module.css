@@ -119,6 +119,24 @@
   hyphens: auto;
 }
 
+.quickAddButton {
+  margin-top: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: var(--borderRadiusMedium, 6px);
+  border: 1px solid var(--marketplaceColor);
+  background-color: var(--marketplaceColor);
+  color: var(--colorWhite);
+  font-size: 13px;
+  font-weight: var(--fontWeightSemiBold);
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.quickAddButton:hover {
+  opacity: 0.9;
+}
+
 .soldOutBadge {
   display: inline-block;
   padding: 4px 10px;
