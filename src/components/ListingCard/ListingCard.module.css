@@ -162,6 +162,9 @@
 
 .imageOverlay {
   position: relative;
+  /* Contain the absolutely-positioned badge/quick-add button in their own
+     stacking context so they can't paint over the sticky topbar on mobile. */
+  isolation: isolate;
 }
 
 .soldOutOverlay {
