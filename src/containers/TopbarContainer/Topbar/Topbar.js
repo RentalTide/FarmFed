@@ -15,6 +15,7 @@ import {
   CartIcon,
   CartPanel,
   IconArrowHead,
+  IconSearch,
   LimitedAccessBanner,
   LinkedLogo,
   Modal,
@@ -516,6 +517,19 @@ const TopbarComponent = props => {
           className={css.mobileCartIcon}
         />
       </nav>
+      {showSearchForm ? (
+        <button
+          type="button"
+          className={css.mobileSearchBar}
+          onClick={() => redirectToURLWithModalState(history, location, 'mobilesearch')}
+          aria-label={intl.formatMessage({ id: 'Topbar.searchIcon' })}
+        >
+          <IconSearch className={css.mobileSearchIcon} />
+          <span className={css.mobileSearchText}>
+            <FormattedMessage id="Topbar.mobileSearchPlaceholder" />
+          </span>
+        </button>
+      ) : null}
       <div className={css.desktop}>
         <TopbarDesktop
           className={desktopClassName}

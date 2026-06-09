@@ -21,6 +21,20 @@ import { addMarketplaceEntities } from '../../ducks/marketplaceData.duck';
 // So, there's enough cards to fill all columns on full pagination pages
 const RESULT_PAGE_SIZE = 24;
 
+// ---- Daily shuffle -------------------------------------------------------
+// When enabled, the default browse order (i.e. when the user hasn't chosen an
+// explicit sort and isn't doing a keyword search) is a per-day random order,
+// backed by the listing metadata field `sortRandom`. The `yarn shuffle-listings`
+// job re-randomizes that value once per day.
+//
+// Keep ENABLE_DAILY_SHUFFLE = false until BOTH of these are done, otherwise the
+// default search will error on an unknown sort field:
+//   1. Register the search schema (one-time, for dev + live marketplaces):
+//        flex-cli search set --key sortRandom --type long --scope metadata -m <marketplace>
+//   2. Seed values by running the job once: `yarn shuffle-listings`
+const ENABLE_DAILY_SHUFFLE = false;
+const DAILY_SHUFFLE_SORT = 'meta_sortRandom';
+
 // ================ Helper Functions ================ //
 
 const resultIds = data => {
@@ -254,7 +268,21 @@ const searchListingsPayloadCreator = ({ searchParams, config }, thunkAPI) => {
   const datesMaybe = datesSearchParams(dates);
   const stockMaybe = stockFilters(datesMaybe);
   const seatsMaybe = seatsSearchParams(seats, datesMaybe);
-  const sortMaybe = sort === config.search.sortConfig.relevanceKey ? {} : { sort };
+  // Sort handling:
+  // - keyword relevance sort: omit `sort` so the API orders by relevance
+  // - explicit user sort: pass it through
+  // - no explicit sort + daily shuffle enabled + not a keyword search: default
+  //   to the per-day random order (meta_sortRandom)
+  // - otherwise: pass `sort` through (undefined => API default, newest first)
+  const hasKeywordSearch = !!restOfParams.keywords;
+  const sortMaybe =
+    sort === config.search.sortConfig.relevanceKey
+      ? {}
+      : sort
+      ? { sort }
+      : ENABLE_DAILY_SHUFFLE && !hasKeywordSearch
+      ? { sort: DAILY_SHUFFLE_SORT }
+      : { sort };
 
   const params = {
     // The params that are related to listing fields and categories are prepared here.

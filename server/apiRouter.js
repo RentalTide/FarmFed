@@ -32,6 +32,7 @@ const linkDeliveryItems = require('./api/link-delivery-items');
 const reconcileDelivery = require('./api/reconcile-delivery');
 const reportDeliveryProblem = require('./api/report-delivery-problem');
 const dailyOrderCount = require('./api/daily-order-count');
+const shuffleListings = require('./api/shuffle-listings');
 const { getNotificationsHandler, notifyFollowersHandler, markReadHandler } = require('./api/notifications');
 const { registerHandler: registerDeviceToken, unregisterHandler: unregisterDeviceToken } = require('./api/device-tokens');
 const pushTransition = require('./api/push-transition');
@@ -159,6 +160,10 @@ router.post('/report-delivery-problem', reportDeliveryProblem);
 
 // Daily order count for vendor order cap
 router.get('/daily-order-count', dailyOrderCount);
+
+// Daily listing shuffle: re-randomizes metadata.sortRandom on every listing.
+// Secret-protected; intended to be hit once per day by an external scheduler.
+router.post('/shuffle-listings', shuffleListings);
 
 // Notification endpoints
 router.get('/notifications', getNotificationsHandler);

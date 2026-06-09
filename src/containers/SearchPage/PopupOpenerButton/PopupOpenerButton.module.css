@@ -42,7 +42,7 @@
     padding: var(--marketplaceButtonSmallDesktopPadding);
     margin: 0;
 
-    font-weight: var(--fontWeightMedium);
+    font-weight: var(--fontWeightSemiBold);
     font-size: 13px;
     line-height: 20px;
   }
@@ -50,14 +50,16 @@
 
 .label {
   /* Button borders */
-  border: 1px solid var(--colorGrey100);
+  border: 2px solid var(--colorGrey300);
   border-radius: var(--borderRadiusMedium);
 
   background-color: var(--colorWhite);
+  color: var(--colorGrey800);
 
   &:hover,
   &:focus {
-    border-color: var(--colorGrey300);
+    border-color: var(--marketplaceColor);
+    color: var(--marketplaceColor);
   }
   &:disabled {
     border-color: var(--colorGrey100);
@@ -66,7 +68,7 @@
   @media (--viewportMedium) {
     &:hover,
     &:focus {
-      border-color: transparent;
+      border-color: var(--marketplaceColor);
     }
   }
 }
