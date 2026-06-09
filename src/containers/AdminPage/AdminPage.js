@@ -23,6 +23,9 @@ import {
   clearPickupUpdateSuccess,
   updateTaxSettings,
   clearTaxUpdateSuccess,
+  updateListingShuffleSettings,
+  runListingShuffle,
+  clearShuffleUpdateSuccess,
   updateBulletins,
   clearBulletinsUpdateSuccess,
   setVendorTaxExempt,
@@ -39,6 +42,7 @@ import OrdersTab from './OrdersTab/OrdersTab';
 import PushNotificationsTab from './PushNotificationsTab/PushNotificationsTab';
 import PickupScheduleTab from './PickupScheduleTab/PickupScheduleTab';
 import TaxSettingsTab from './TaxSettingsTab/TaxSettingsTab';
+import ListingShuffleTab from './ListingShuffleTab/ListingShuffleTab';
 import BulletinBoardTab from './BulletinBoardTab/BulletinBoardTab';
 
 import css from './AdminPage.module.css';
@@ -50,6 +54,7 @@ const ORDERS_TAB = 'orders';
 const PUSH_TAB = 'push';
 const PICKUP_TAB = 'pickup';
 const TAX_TAB = 'tax';
+const SHUFFLE_TAB = 'shuffle';
 const BULLETIN_TAB = 'bulletin';
 
 const AdminPageComponent = props => {
@@ -91,6 +96,12 @@ const AdminPageComponent = props => {
     taxUpdateInProgress,
     taxUpdateSuccess,
     taxError,
+    shuffleSettings,
+    shuffleUpdateInProgress,
+    shuffleUpdateSuccess,
+    shuffleRunInProgress,
+    shuffleRunResult,
+    shuffleError,
     bulletins,
     bulletinsUpdateInProgress,
     bulletinsUpdateSuccess,
@@ -108,6 +119,9 @@ const AdminPageComponent = props => {
     onClearPickupSuccess,
     onUpdateTaxSettings,
     onClearTaxSuccess,
+    onUpdateShuffleSettings,
+    onRunShuffle,
+    onClearShuffleSuccess,
     onUpdateBulletins,
     onClearBulletinsSuccess,
     onSetVendorTaxExempt,
@@ -152,6 +166,7 @@ const AdminPageComponent = props => {
     { id: PUSH_TAB, label: 'AdminPage.pushTab', show: true },
     { id: PICKUP_TAB, label: 'AdminPage.pickupTab', show: flags.pickupSchedule },
     { id: TAX_TAB, label: 'AdminPage.taxTab', show: flags.taxBreakdown },
+    { id: SHUFFLE_TAB, label: 'AdminPage.shuffleTab', show: flags.listingShuffle },
     { id: BULLETIN_TAB, label: 'AdminPage.bulletinTab', show: flags.vendorBulletin },
   ].filter(t => t.show);
 
@@ -263,6 +278,20 @@ const AdminPageComponent = props => {
               />
             )}
 
+            {activeTab === SHUFFLE_TAB && flags.listingShuffle && (
+              <ListingShuffleTab
+                shuffleSettings={shuffleSettings}
+                updateInProgress={shuffleUpdateInProgress}
+                updateSuccess={shuffleUpdateSuccess}
+                error={shuffleError}
+                runInProgress={shuffleRunInProgress}
+                runResult={shuffleRunResult}
+                onUpdateSettings={onUpdateShuffleSettings}
+                onRunNow={onRunShuffle}
+                onClearSuccess={onClearShuffleSuccess}
+              />
+            )}
+
             {activeTab === BULLETIN_TAB && flags.vendorBulletin && (
               <BulletinBoardTab
                 bulletins={bulletins}
@@ -319,6 +348,12 @@ const mapStateToProps = state => {
     taxUpdateInProgress,
     taxUpdateSuccess,
     taxError,
+    shuffleSettings,
+    shuffleUpdateInProgress,
+    shuffleUpdateSuccess,
+    shuffleRunInProgress,
+    shuffleRunResult,
+    shuffleError,
     bulletins,
     bulletinsUpdateInProgress,
     bulletinsUpdateSuccess,
@@ -365,6 +400,12 @@ const mapStateToProps = state => {
     taxUpdateInProgress,
     taxUpdateSuccess,
     taxError,
+    shuffleSettings,
+    shuffleUpdateInProgress,
+    shuffleUpdateSuccess,
+    shuffleRunInProgress,
+    shuffleRunResult,
+    shuffleError,
     bulletins,
     bulletinsUpdateInProgress,
     bulletinsUpdateSuccess,
@@ -386,6 +427,9 @@ const mapDispatchToProps = dispatch => ({
   onClearPickupSuccess: () => dispatch(clearPickupUpdateSuccess()),
   onUpdateTaxSettings: params => dispatch(updateTaxSettings(params)),
   onClearTaxSuccess: () => dispatch(clearTaxUpdateSuccess()),
+  onUpdateShuffleSettings: params => dispatch(updateListingShuffleSettings(params)),
+  onRunShuffle: () => dispatch(runListingShuffle()),
+  onClearShuffleSuccess: () => dispatch(clearShuffleUpdateSuccess()),
   onUpdateBulletins: params => dispatch(updateBulletins(params)),
   onClearBulletinsSuccess: () => dispatch(clearBulletinsUpdateSuccess()),
   onSetVendorTaxExempt: params => dispatch(setVendorTaxExempt(params)),

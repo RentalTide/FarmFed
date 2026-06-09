@@ -26,6 +26,7 @@ const appSettings = {
     inboxRedesign: true,         // #9 - New/Completed/Messages tabs
     deliveryProblemReport: true, // #10 - Problem reporting for deliveries
     vendorBulletin: false,        // #11 - Promotional vendor bulletin board
+    listingShuffle: true,        // #12 - Daily random listing order + admin controls
   },
 
   sdk: {

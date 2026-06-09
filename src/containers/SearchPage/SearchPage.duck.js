@@ -15,6 +15,7 @@ import { hasPermissionToViewData, isUserAuthorized } from '../../util/userHelper
 import { parse } from '../../util/urlHelpers';
 
 import { addMarketplaceEntities } from '../../ducks/marketplaceData.duck';
+import { fetchListingShuffleSettings } from '../../util/api';
 
 // Pagination page size might need to be dynamic on responsive page layouts
 // Current design has max 3 columns 12 is divisible by 2 and 3
@@ -22,18 +23,49 @@ import { addMarketplaceEntities } from '../../ducks/marketplaceData.duck';
 const RESULT_PAGE_SIZE = 24;
 
 // ---- Daily shuffle -------------------------------------------------------
-// When enabled, the default browse order (i.e. when the user hasn't chosen an
-// explicit sort and isn't doing a keyword search) is a per-day random order,
-// backed by the listing metadata field `sortRandom`. The `yarn shuffle-listings`
-// job re-randomizes that value once per day.
+// When enabled, the default browse order (no explicit sort + no keyword search)
+// is a per-day random order, backed by the listing metadata field `sortRandom`
+// (re-randomized by the shuffle-listings job). Whether it's active is an admin
+// setting (Admin > Listing Shuffle), read here with a short-lived cache so the
+// search path doesn't fetch it on every query.
 //
-// Keep ENABLE_DAILY_SHUFFLE = false until BOTH of these are done, otherwise the
-// default search will error on an unknown sort field:
+// Prerequisites before turning it on in the admin panel, otherwise the default
+// search will error on an unknown sort field:
 //   1. Register the search schema (one-time, for dev + live marketplaces):
 //        flex-cli search set --key sortRandom --type long --scope metadata -m <marketplace>
 //   2. Seed values by running the job once: `yarn shuffle-listings`
-const ENABLE_DAILY_SHUFFLE = false;
+//
+// Note: `request()` uses window.fetch, so this resolves to `false` during SSR;
+// the toggle therefore takes effect on client-side renders/navigations.
 const DAILY_SHUFFLE_SORT = 'meta_sortRandom';
+const SHUFFLE_SETTING_TTL_MS = 60 * 1000;
+let shuffleSettingCache = { value: false, expiresAt: 0 };
+let shuffleSettingInFlight = null;
+
+const getDailyShuffleEnabled = () => {
+  const now = Date.now();
+  if (now < shuffleSettingCache.expiresAt) {
+    return Promise.resolve(shuffleSettingCache.value);
+  }
+  if (shuffleSettingInFlight) {
+    return shuffleSettingInFlight;
+  }
+  shuffleSettingInFlight = fetchListingShuffleSettings()
+    .then(settings => {
+      const value = !!settings?.enabled;
+      shuffleSettingCache = { value, expiresAt: Date.now() + SHUFFLE_SETTING_TTL_MS };
+      shuffleSettingInFlight = null;
+      return value;
+    })
+    .catch(() => {
+      // SSR (no window.fetch) or endpoint error: fall back to "off" so search
+      // always works; cache briefly to avoid hammering on repeated failures.
+      shuffleSettingCache = { value: false, expiresAt: Date.now() + SHUFFLE_SETTING_TTL_MS };
+      shuffleSettingInFlight = null;
+      return false;
+    });
+  return shuffleSettingInFlight;
+};
 
 // ================ Helper Functions ================ //
 
@@ -49,7 +81,7 @@ const resultIds = data => {
 /////////////////////
 // Search Listings //
 /////////////////////
-const searchListingsPayloadCreator = ({ searchParams, config }, thunkAPI) => {
+const searchListingsPayloadCreator = async ({ searchParams, config }, thunkAPI) => {
   const { dispatch, rejectWithValue, extra: sdk } = thunkAPI;
   // SearchPage can enforce listing query to only those listings with valid listingType
   // NOTE: this only works if you have set 'enum' type search schema to listing's public data fields
@@ -275,14 +307,18 @@ const searchListingsPayloadCreator = ({ searchParams, config }, thunkAPI) => {
   //   to the per-day random order (meta_sortRandom)
   // - otherwise: pass `sort` through (undefined => API default, newest first)
   const hasKeywordSearch = !!restOfParams.keywords;
-  const sortMaybe =
-    sort === config.search.sortConfig.relevanceKey
-      ? {}
-      : sort
-      ? { sort }
-      : ENABLE_DAILY_SHUFFLE && !hasKeywordSearch
-      ? { sort: DAILY_SHUFFLE_SORT }
-      : { sort };
+  const isRelevanceSort = sort === config.search.sortConfig.relevanceKey;
+  const isExplicitSort = sort && !isRelevanceSort;
+  // Only consult the admin shuffle setting when we'd otherwise fall back to the
+  // API's default order (no explicit sort, not a keyword/relevance search).
+  const useDailyShuffle = !sort && !hasKeywordSearch ? await getDailyShuffleEnabled() : false;
+  const sortMaybe = isRelevanceSort
+    ? {}
+    : isExplicitSort
+    ? { sort }
+    : useDailyShuffle
+    ? { sort: DAILY_SHUFFLE_SORT }
+    : { sort };
 
   const params = {
     // The params that are related to listing fields and categories are prepared here.
