@@ -1,5 +1,6 @@
 const { getIntegrationSdk, handleError } = require('../api-util/sdk');
 const { shuffleAllListings } = require('../api-util/shuffleListings');
+const { recordListingShuffleRun } = require('../api-util/listingShuffleSettings');
 
 /**
  * HTTP trigger for the daily listing shuffle.
@@ -29,6 +30,11 @@ const handler = async (req, res) => {
     const integrationSdk = getIntegrationSdk();
     // eslint-disable-next-line no-console
     const result = await shuffleAllListings({ integrationSdk, log: msg => console.log(msg) });
+    await recordListingShuffleRun({
+      total: result.total,
+      updated: result.updated,
+      failures: result.failures.length,
+    });
 
     return res.status(200).json({ ok: true, ...result });
   } catch (e) {

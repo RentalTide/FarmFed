@@ -11,6 +11,9 @@ import {
   updatePickupSettings as updatePickupAPI,
   fetchTaxSettings as fetchTaxAPI,
   updateTaxSettings as updateTaxAPI,
+  fetchListingShuffleSettings as fetchShuffleAPI,
+  updateListingShuffleSettings as updateShuffleAPI,
+  runListingShuffle as runShuffleAPI,
   fetchAllBulletins as fetchBulletinsAPI,
   updateBulletins as updateBulletinsAPI,
   fetchVendors as fetchVendorsAPI,
@@ -206,6 +209,40 @@ export const updateTaxSettingsThunk = createAsyncThunk(
   }
 );
 
+// Listing shuffle thunks
+export const fetchListingShuffleSettingsThunk = createAsyncThunk(
+  'AdminPage/fetchListingShuffleSettings',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await fetchShuffleAPI();
+    } catch (e) {
+      return rejectWithValue(storableError(e));
+    }
+  }
+);
+
+export const updateListingShuffleSettingsThunk = createAsyncThunk(
+  'AdminPage/updateListingShuffleSettings',
+  async (params, { rejectWithValue }) => {
+    try {
+      return await updateShuffleAPI(params);
+    } catch (e) {
+      return rejectWithValue(storableError(e));
+    }
+  }
+);
+
+export const runListingShuffleThunk = createAsyncThunk(
+  'AdminPage/runListingShuffle',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await runShuffleAPI();
+    } catch (e) {
+      return rejectWithValue(storableError(e));
+    }
+  }
+);
+
 // Bulletin thunks
 export const fetchBulletinsThunk = createAsyncThunk(
   'AdminPage/fetchBulletins',
@@ -301,6 +338,14 @@ const initialState = {
   taxUpdateInProgress: false,
   taxUpdateSuccess: false,
   taxError: null,
+  // Listing Shuffle
+  shuffleSettings: null,
+  shuffleFetchInProgress: false,
+  shuffleUpdateInProgress: false,
+  shuffleUpdateSuccess: false,
+  shuffleRunInProgress: false,
+  shuffleRunResult: null,
+  shuffleError: null,
   // Bulletins
   bulletins: [],
   bulletinsFetchInProgress: false,
@@ -330,6 +375,9 @@ const adminPageSlice = createSlice({
     },
     clearTaxUpdateSuccess(state) {
       state.taxUpdateSuccess = false;
+    },
+    clearShuffleUpdateSuccess(state) {
+      state.shuffleUpdateSuccess = false;
     },
     clearBulletinsUpdateSuccess(state) {
       state.bulletinsUpdateSuccess = false;
@@ -498,6 +546,49 @@ const adminPageSlice = createSlice({
         state.taxUpdateInProgress = false;
         state.taxError = action.payload;
       })
+      // Listing Shuffle
+      .addCase(fetchListingShuffleSettingsThunk.pending, state => {
+        state.shuffleFetchInProgress = true;
+        state.shuffleError = null;
+      })
+      .addCase(fetchListingShuffleSettingsThunk.fulfilled, (state, action) => {
+        state.shuffleFetchInProgress = false;
+        state.shuffleSettings = action.payload;
+      })
+      .addCase(fetchListingShuffleSettingsThunk.rejected, (state, action) => {
+        state.shuffleFetchInProgress = false;
+        state.shuffleError = action.payload;
+      })
+      .addCase(updateListingShuffleSettingsThunk.pending, state => {
+        state.shuffleUpdateInProgress = true;
+        state.shuffleUpdateSuccess = false;
+        state.shuffleError = null;
+      })
+      .addCase(updateListingShuffleSettingsThunk.fulfilled, (state, action) => {
+        state.shuffleUpdateInProgress = false;
+        state.shuffleUpdateSuccess = true;
+        state.shuffleSettings = action.payload;
+      })
+      .addCase(updateListingShuffleSettingsThunk.rejected, (state, action) => {
+        state.shuffleUpdateInProgress = false;
+        state.shuffleError = action.payload;
+      })
+      .addCase(runListingShuffleThunk.pending, state => {
+        state.shuffleRunInProgress = true;
+        state.shuffleRunResult = null;
+        state.shuffleError = null;
+      })
+      .addCase(runListingShuffleThunk.fulfilled, (state, action) => {
+        state.shuffleRunInProgress = false;
+        state.shuffleRunResult = action.payload;
+        if (action.payload?.settings) {
+          state.shuffleSettings = action.payload.settings;
+        }
+      })
+      .addCase(runListingShuffleThunk.rejected, (state, action) => {
+        state.shuffleRunInProgress = false;
+        state.shuffleError = action.payload;
+      })
       // Bulletins
       .addCase(fetchBulletinsThunk.pending, state => {
         state.bulletinsFetchInProgress = true;
@@ -624,6 +715,7 @@ export const {
   clearGeofenceUpdateSuccess,
   clearPickupUpdateSuccess,
   clearTaxUpdateSuccess,
+  clearShuffleUpdateSuccess,
   clearBulletinsUpdateSuccess,
   clearSendPushSuccess,
 } = adminPageSlice.actions;
@@ -694,6 +786,18 @@ export const updateTaxSettings = params => dispatch => {
   return dispatch(updateTaxSettingsThunk(params)).unwrap();
 };
 
+export const fetchListingShuffleSettings = () => dispatch => {
+  return dispatch(fetchListingShuffleSettingsThunk()).unwrap();
+};
+
+export const updateListingShuffleSettings = params => dispatch => {
+  return dispatch(updateListingShuffleSettingsThunk(params)).unwrap();
+};
+
+export const runListingShuffle = () => dispatch => {
+  return dispatch(runListingShuffleThunk()).unwrap();
+};
+
 export const fetchBulletins = () => dispatch => {
   return dispatch(fetchBulletinsThunk()).unwrap();
 };
@@ -721,6 +825,7 @@ export const loadData = () => dispatch => {
     dispatch(fetchAnnouncements()),
     dispatch(fetchPickupSettings()),
     dispatch(fetchTaxSettings()),
+    dispatch(fetchListingShuffleSettings()),
     dispatch(fetchBulletins()),
     dispatch(fetchVendors()),
   ]);

@@ -353,6 +353,30 @@ export const updateTaxSettings = body => {
   });
 };
 
+// ====== Listing Shuffle ====== //
+
+export const fetchListingShuffleSettings = () => {
+  return request('/api/listing-shuffle-settings', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
+export const updateListingShuffleSettings = body => {
+  return request('/api/listing-shuffle-settings', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+};
+
+export const runListingShuffle = () => {
+  return request('/api/listing-shuffle-settings/run', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
 // ====== Bulletin Board ====== //
 
 export const fetchBulletins = () => {

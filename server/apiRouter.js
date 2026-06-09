@@ -33,6 +33,11 @@ const reconcileDelivery = require('./api/reconcile-delivery');
 const reportDeliveryProblem = require('./api/report-delivery-problem');
 const dailyOrderCount = require('./api/daily-order-count');
 const shuffleListings = require('./api/shuffle-listings');
+const {
+  getHandler: getShuffleSettings,
+  putHandler: putShuffleSettings,
+  runHandler: runShuffleNow,
+} = require('./api/listing-shuffle-settings');
 const { getNotificationsHandler, notifyFollowersHandler, markReadHandler } = require('./api/notifications');
 const { registerHandler: registerDeviceToken, unregisterHandler: unregisterDeviceToken } = require('./api/device-tokens');
 const pushTransition = require('./api/push-transition');
@@ -103,6 +108,7 @@ router.use('/link-delivery-items', bodyParser.json());
 router.use('/reconcile-delivery', bodyParser.json());
 router.use('/report-delivery-problem', bodyParser.json());
 router.use('/daily-order-count', bodyParser.json());
+router.use('/listing-shuffle-settings', bodyParser.json());
 router.use('/notifications', bodyParser.json());
 router.use('/announcements', bodyParser.json());
 router.use('/notify-followers', bodyParser.json());
@@ -164,6 +170,12 @@ router.get('/daily-order-count', dailyOrderCount);
 // Daily listing shuffle: re-randomizes metadata.sortRandom on every listing.
 // Secret-protected; intended to be hit once per day by an external scheduler.
 router.post('/shuffle-listings', shuffleListings);
+
+// Admin-managed shuffle settings: read status, toggle the default-sort shuffle,
+// and trigger an immediate re-shuffle from the admin panel.
+router.get('/listing-shuffle-settings', getShuffleSettings);
+router.put('/listing-shuffle-settings', putShuffleSettings);
+router.post('/listing-shuffle-settings/run', runShuffleNow);
 
 // Notification endpoints
 router.get('/notifications', getNotificationsHandler);

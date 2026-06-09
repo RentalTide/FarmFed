@@ -81,9 +81,7 @@
   /* Font */
   height: var(--topbarHeightDesktop);
   line-height: unset;
-  /* Persistent marketplace-colored underline so the search field stands out */
   border: none;
-  border-bottom: 2px solid var(--marketplaceColor);
   padding-top: 0;
   padding-bottom: 0;
 
@@ -97,9 +95,9 @@
 
   &:hover,
   &:focus {
+    border-bottom-color: var(--marketplaceColor);
     outline: none;
-    border: none;
-    border-bottom: 2px solid var(--marketplaceColorDark);
+    border: 0;
     box-shadow: none;
   }
 
@@ -113,9 +111,6 @@
     text-overflow: ellipsis;
     overflow-x: hidden;
     transition: var(--transitionStyleButton);
-    /* Bolder, darker prompt for visibility */
-    font-weight: var(--fontWeightSemiBold);
-    color: var(--colorGrey700);
   }
 
   @media (--viewportMedium) {

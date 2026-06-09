@@ -353,6 +353,7 @@ settingsStore
     'bulletin-settings',
     'device-tokens',
     'announcements',
+    'listing-shuffle-settings',
   ])
   .catch(e => console.error('[settingsStore] init failed:', e.message));
 

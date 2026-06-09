@@ -158,8 +158,15 @@
 }
 
 .mobileSearchText {
+  /* Stay on a single line; ellipsis if too wide for the viewport */
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
   font-weight: var(--fontWeightSemiBold);
-  font-size: 15px;
+  font-size: 14px;
   line-height: 18px;
   letter-spacing: 0.2px;
   color: var(--colorGrey700);
