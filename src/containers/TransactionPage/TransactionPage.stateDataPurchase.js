@@ -17,6 +17,7 @@ export const getStateDataForPurchaseProcess = (txInfo, processInfo) => {
   const isProviderBanned = transaction?.provider?.attributes?.banned;
   const isCustomerBanned = transaction?.customer?.attributes?.banned;
   const isShippable = transaction?.attributes?.protectedData?.deliveryMethod === 'shipping';
+  const isPickup = transaction?.attributes?.protectedData?.deliveryMethod === 'pickup';
   const _ = CONDITIONAL_RESOLVER_WILDCARD;
 
   const {
@@ -68,34 +69,39 @@ export const getStateDataForPurchaseProcess = (txInfo, processInfo) => {
       return { processName, processState, showDetailCardHeadings: true };
     })
     .cond([states.PURCHASED, CUSTOMER], () => {
+      // Customers no longer mark orders received. They just see the order
+      // status and wait for delivery, after which a 24h dispute window opens.
       return {
         processName,
         processState,
         showDetailCardHeadings: true,
-        showActionButtons: true,
         showExtraInfo: true,
-        primaryButtonProps: actionButtonProps(transitions.MARK_RECEIVED_FROM_PURCHASED, CUSTOMER),
       };
     })
     .cond([states.PURCHASED, PROVIDER], () => {
-      // FarmFed (the operator) performs delivery after the vendor drops items
-      // off at the hub, so vendors no longer mark orders delivered — that's done
-      // via operator-mark-delivered (manually or by the OnFleet webhook). The
-      // vendor just sees the order status here, with no "mark delivered" button.
+      // FarmFed (the operator) performs delivery for shipped orders after the
+      // vendor drops items off at the hub, so vendors don't mark those
+      // delivered — operator-mark-delivered handles it (manually or via the
+      // OnFleet webhook). For PICKUP orders the vendor hands the order to the
+      // customer directly, so they get a "mark delivered" button.
       return {
         processName,
         processState,
         showDetailCardHeadings: true,
+        showActionButtons: isPickup,
+        primaryButtonProps: isPickup
+          ? actionButtonProps(transitions.MARK_DELIVERED, PROVIDER)
+          : null,
       };
     })
     .cond([states.DELIVERED, CUSTOMER], () => {
+      // The order is delivered. Customers no longer mark it received — it
+      // auto-completes 24h after delivery. Within that window they may dispute.
       return {
         processName,
         processState,
         showDetailCardHeadings: true,
         showDispute: true,
-        showActionButtons: true,
-        primaryButtonProps: actionButtonProps(transitions.MARK_RECEIVED, CUSTOMER),
       };
     })
     // Only the customer reviews the vendor now (vendors don't review customers),

@@ -170,9 +170,10 @@ export const graph = {
 
     [states.PURCHASED]: {
       on: {
+        // Provider mark-delivered is only surfaced for pickup orders; the
+        // operator marks shipped orders delivered.
         [transitions.MARK_DELIVERED]: states.DELIVERED,
         [transitions.OPERATOR_MARK_DELIVERED]: states.DELIVERED,
-        [transitions.MARK_RECEIVED_FROM_PURCHASED]: states.RECEIVED,
         [transitions.AUTO_CANCEL]: states.CANCELED,
         [transitions.CANCEL]: states.CANCELED,
       },
@@ -182,7 +183,8 @@ export const graph = {
 
     [states.DELIVERED]: {
       on: {
-        [transitions.MARK_RECEIVED]: states.RECEIVED,
+        // Customers no longer mark received; the order auto-completes 24h after
+        // delivery (auto-mark-received), during which it can be disputed.
         [transitions.AUTO_MARK_RECEIVED]: states.RECEIVED,
         [transitions.DISPUTE]: states.DISPUTED,
         [transitions.OPERATOR_DISPUTE]: states.DISPUTED,

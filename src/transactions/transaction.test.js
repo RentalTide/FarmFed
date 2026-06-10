@@ -33,10 +33,12 @@ describe('transaction utils for default-purchase', () => {
     transition: transitions.MARK_DELIVERED,
   });
 
+  // Customers no longer mark received; the order auto-completes 24h after
+  // delivery via the system auto-mark-received transition.
   const transitionMarkReceived = createTxTransition({
     createdAt: new Date(Date.UTC(2017, 10, 9, 8, 10)),
-    by: TX_TRANSITION_ACTOR_CUSTOMER,
-    transition: transitions.MARK_RECEIVED,
+    by: TX_TRANSITION_ACTOR_SYSTEM,
+    transition: transitions.AUTO_MARK_RECEIVED,
   });
 
   const transitionReviewed = createTxTransition({
@@ -55,7 +57,7 @@ describe('transaction utils for default-purchase', () => {
   });
 
   const txReceived = createTransaction({
-    lastTransition: transitions.MARK_RECEIVED,
+    lastTransition: transitions.AUTO_MARK_RECEIVED,
     customer: createUser('user1'),
     provider: createUser('user2'),
     listing: createListing('Listing'),
