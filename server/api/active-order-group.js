@@ -1,27 +1,11 @@
 const { getSdk, handleError } = require('../api-util/sdk');
-const { getPickupSettings } = require('../api-util/pickupSchedule');
+const { isCutoffPassed } = require('../api-util/pickupSchedule');
 
 const handler = async (req, res) => {
   const sdk = getSdk(req, res);
 
   try {
-    const settings = getPickupSettings();
-    const dayMap = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
-
-    const now = new Date();
-    const cutoffDayNum = dayMap[settings.cutoffDay];
-    const [cutoffHour, cutoffMinute] = settings.cutoffTime.split(':').map(Number);
-
-    const currentDay = now.getDay();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    const isPastCutoff =
-      currentDay > cutoffDayNum ||
-      (currentDay === cutoffDayNum &&
-        (currentHour > cutoffHour ||
-          (currentHour === cutoffHour && currentMinute >= cutoffMinute)));
-
-    if (isPastCutoff) {
+    if (isCutoffPassed()) {
       return res.status(200).json({ orderGroupId: null, canAddToOrder: false });
     }
 

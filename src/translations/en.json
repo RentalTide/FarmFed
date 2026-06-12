@@ -1646,6 +1646,7 @@
   "AdminPage.pickupDaysLabel": "Delivery Days",
   "AdminPage.cutoffDayLabel": "Order Cutoff Day",
   "AdminPage.cutoffTimeLabel": "Order Cutoff Time",
+  "AdminPage.timezoneLabel": "Timezone (cutoff and delivery days use this timezone)",
   "AdminPage.nextPickupDate": "Next delivery date",
   "AdminPage.nextPickupLabel": "Next delivery:",
   "AdminPage.pickupSaveButton": "Save Delivery Schedule",

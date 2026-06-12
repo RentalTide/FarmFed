@@ -28,6 +28,19 @@ const cardStyles = {
   },
 };
 
+// The server returns the next delivery date as a date-only string
+// (YYYY-MM-DD) in the marketplace timezone. Parse it as calendar parts —
+// `new Date('YYYY-MM-DD')` would interpret it as UTC midnight and shift the
+// displayed weekday back a day for viewers west of UTC.
+const formatPickupDate = dateStr => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
+};
+
 const CartItemRow = ({ item, intl }) => {
   const { listing, quantity } = item;
   const title = listing?.attributes?.title || '';
@@ -576,7 +589,7 @@ const CartCheckoutPageContent = props => {
           <div className={css.pickupDateInfo}>
             <FormattedMessage
               id="CartCheckoutPage.nextDeliveryDate"
-              values={{ date: new Date(nextPickupDate).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }) }}
+              values={{ date: formatPickupDate(nextPickupDate) }}
             />
             {pickupCutoffPassed ? (
               <p className={css.cutoffWarning}>

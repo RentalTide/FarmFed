@@ -1,4 +1,10 @@
-const { getPickupSettings, setPickupSettings, getNextPickupDate, isCutoffPassed } = require('../api-util/pickupSchedule');
+const {
+  getPickupSettings,
+  setPickupSettings,
+  getNextPickupDate,
+  isCutoffPassed,
+  isValidTimezone,
+} = require('../api-util/pickupSchedule');
 const { getSdk, handleError } = require('../api-util/sdk');
 
 const VALID_DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
@@ -23,7 +29,7 @@ const putHandler = (req, res) => {
         return res.status(403).json({ error: 'Forbidden: admin access required' });
       }
 
-      const { pickupDays, cutoffDay, cutoffTime } = req.body || {};
+      const { pickupDays, cutoffDay, cutoffTime, timezone } = req.body || {};
 
       if (!Array.isArray(pickupDays) || pickupDays.length === 0) {
         return res.status(400).json({ error: 'pickupDays must be a non-empty array' });
@@ -41,9 +47,17 @@ const putHandler = (req, res) => {
         return res.status(400).json({ error: 'Invalid cutoff time format (expected HH:MM)' });
       }
 
-      return setPickupSettings({ pickupDays, cutoffDay, cutoffTime }).then(() => {
+      // Keep the previously saved timezone if the request doesn't include one.
+      const resolvedTimezone = timezone || getPickupSettings().timezone;
+      if (!isValidTimezone(resolvedTimezone)) {
+        return res.status(400).json({ error: 'Invalid timezone (expected IANA name, e.g. America/Toronto)' });
+      }
+
+      return setPickupSettings({ pickupDays, cutoffDay, cutoffTime, timezone: resolvedTimezone }).then(() => {
         const nextPickupDate = getNextPickupDate();
-        res.status(200).json({ pickupDays, cutoffDay, cutoffTime, nextPickupDate });
+        res
+          .status(200)
+          .json({ pickupDays, cutoffDay, cutoffTime, timezone: resolvedTimezone, nextPickupDate });
       });
     })
     .catch(e => handleError(res, e));
