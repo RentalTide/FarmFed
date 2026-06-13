@@ -265,6 +265,16 @@ export const adminMarkDelivered = ({ transactionId }) => {
   });
 };
 
+// Operator-mark a delivered order received — admin only. Escape hatch to push
+// orders stuck in the "delivered" state through to completion (pays out vendor).
+export const adminMarkReceived = ({ transactionId }) => {
+  return request('/api/admin/mark-received', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ transactionId }),
+  });
+};
+
 // ====== Push Notification Center ====== //
 
 // Broadcast a push notification + in-app announcement to all app users (admin).

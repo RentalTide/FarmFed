@@ -84,14 +84,22 @@
    :actions [],
    :from :state/purchased,
    :to :state/delivered}
-  ;; Customers no longer mark orders received. Once delivered, the customer has
-  ;; a 24h window to dispute; if they don't, auto-mark-received fires, pays out
-  ;; the vendor, and completes the order.
+  ;; Delivered = done. Customers never mark orders received. The moment an order
+  ;; is marked delivered (by the operator/OnFleet, or by the vendor for pickup),
+  ;; this fires immediately — no delay, no customer step — pays out the vendor,
+  ;; and moves to received, from which auto-complete instantly completes it.
   {:name :transition/auto-mark-received,
-   :at
-   {:fn/plus
-    [{:fn/timepoint [:time/first-entered-state :state/delivered]}
-     {:fn/period ["P1D"]}]},
+   :at {:fn/timepoint [:time/first-entered-state :state/delivered]},
+   :actions [{:name :action/stripe-create-payout}],
+   :from :state/delivered,
+   :to :state/received}
+  ;; Operator escape hatch: push a delivered order straight to received (and so
+  ;; on to completed) without waiting for the scheduled auto-mark-received. Used
+  ;; to clear orders that are stuck in delivered — e.g. ones still pinned to an
+  ;; older process version whose auto-mark-received timer hasn't fired yet.
+  ;; Mirrors the payout action of auto-mark-received so the vendor is paid.
+  {:name :transition/operator-mark-received,
+   :actor :actor.role/operator,
    :actions [{:name :action/stripe-create-payout}],
    :from :state/delivered,
    :to :state/received}
@@ -264,6 +272,16 @@
    :template :purchase-order-auto-marked-as-received-customer}
   {:name :notification/purchase-order-auto-marked-as-received-provider,
    :on :transition/auto-mark-received,
+   :to :actor.role/provider,
+   :template :purchase-order-auto-marked-as-received-provider}
+  ;; Reuse the auto-mark-received templates for the operator escape hatch so the
+  ;; customer and vendor get the same "order received" notification.
+  {:name :notification/purchase-order-operator-marked-as-received-customer,
+   :on :transition/operator-mark-received,
+   :to :actor.role/customer,
+   :template :purchase-order-auto-marked-as-received-customer}
+  {:name :notification/purchase-order-operator-marked-as-received-provider,
+   :on :transition/operator-mark-received,
    :to :actor.role/provider,
    :template :purchase-order-auto-marked-as-received-provider}
   {:name :notification/order-disputed,

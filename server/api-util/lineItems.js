@@ -12,6 +12,25 @@ const { haversineDistanceMiles } = require('./distance');
 const { geocodeAddress } = require('./geocode');
 const { getTaxSettings } = require('./taxSettings');
 
+// Card processing fee, charged to the customer once per transaction. Every
+// Sharetribe transaction is a separate Stripe charge with its own fixed fee
+// (30¢), and Stripe's fees otherwise come entirely out of the marketplace
+// commission — so a cart with N vendors + delivery passes N+1 of these
+// through to the customer. Customer-only line item -> platform revenue.
+const PROCESSING_FEE_CENTS = parseInt(process.env.PROCESSING_FEE_CENTS || '30', 10);
+
+const getProcessingFeeLineItems = currency =>
+  PROCESSING_FEE_CENTS > 0
+    ? [
+        {
+          code: 'line-item/processing-fee',
+          unitPrice: new Money(PROCESSING_FEE_CENTS, currency),
+          quantity: 1,
+          includeFor: ['customer'],
+        },
+      ]
+    : [];
+
 /**
  * Get quantity and add extra line-items that are related to delivery method.
  * For shipping, distance is measured from the FarmFed hub (admin-configurable
@@ -260,6 +279,7 @@ exports.transactionLineItems = async (listing, orderData, providerCommission, cu
         quantity: 1,
         includeFor: ['customer', 'provider'],
       },
+      ...getProcessingFeeLineItems(currency),
     ];
   }
 
@@ -378,7 +398,12 @@ exports.transactionLineItems = async (listing, orderData, providerCommission, cu
     ...taxLineItems,
     ...getProviderCommissionMaybe(providerCommission, order, currency),
     ...customerCommissionLineItems,
+    // Per-charge card processing fee (product purchases only — bookings and
+    // negotiation flows are unused on FarmFed).
+    ...(unitType === 'item' ? getProcessingFeeLineItems(currency) : []),
   ];
 
   return lineItems;
 };
+
+exports.PROCESSING_FEE_CENTS = PROCESSING_FEE_CENTS;

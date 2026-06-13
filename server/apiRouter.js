@@ -49,6 +49,7 @@ const adminListVendors = require('./api/admin/list-vendors');
 const adminSetVendorTaxExempt = require('./api/admin/set-vendor-tax-exempt');
 const adminOrdersAwaitingDelivery = require('./api/admin/orders-awaiting-delivery');
 const adminMarkDelivered = require('./api/admin/mark-delivered');
+const adminMarkReceived = require('./api/admin/mark-received');
 const adminSendPush = require('./api/admin/send-push');
 const {
   getHandler: getAnnouncements,
@@ -195,6 +196,7 @@ router.get('/admin/vendors', adminListVendors);
 router.post('/admin/set-vendor-tax-exempt', adminSetVendorTaxExempt);
 router.get('/admin/orders-awaiting-delivery', adminOrdersAwaitingDelivery);
 router.post('/admin/mark-delivered', adminMarkDelivered);
+router.post('/admin/mark-received', adminMarkReceived);
 
 // Admin Push Notification Center: broadcast a push + in-app announcement.
 router.post('/admin/send-push', adminSendPush);

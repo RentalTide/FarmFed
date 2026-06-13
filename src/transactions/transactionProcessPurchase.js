@@ -60,6 +60,10 @@ export const transitions = {
   // If customer doesn't mark the product received manually, it can happen automatically
   AUTO_MARK_RECEIVED: 'transition/auto-mark-received',
 
+  // Operator can push a stuck delivered order to received without waiting for
+  // auto-mark-received (e.g. clearing orders pinned to an older process version).
+  OPERATOR_MARK_RECEIVED: 'transition/operator-mark-received',
+
   // When provider has marked the product delivered, customer or operator can dispute the transaction
   DISPUTE: 'transition/dispute',
   OPERATOR_DISPUTE: 'transition/operator-dispute',
@@ -184,8 +188,10 @@ export const graph = {
     [states.DELIVERED]: {
       on: {
         // Customers no longer mark received; the order auto-completes 24h after
-        // delivery (auto-mark-received), during which it can be disputed.
+        // delivery (auto-mark-received), during which it can be disputed. The
+        // operator can also push it to received manually (escape hatch).
         [transitions.AUTO_MARK_RECEIVED]: states.RECEIVED,
+        [transitions.OPERATOR_MARK_RECEIVED]: states.RECEIVED,
         [transitions.DISPUTE]: states.DISPUTED,
         [transitions.OPERATOR_DISPUTE]: states.DISPUTED,
       },
@@ -243,6 +249,7 @@ export const isRelevantPastTransition = transition => {
     transitions.CANCEL,
     transitions.MARK_DELIVERED,
     transitions.OPERATOR_MARK_DELIVERED,
+    transitions.OPERATOR_MARK_RECEIVED,
     transitions.DISPUTE,
     transitions.OPERATOR_DISPUTE,
     transitions.AUTO_COMPLETE,

@@ -113,6 +113,9 @@ const CartCheckoutPageContent = props => {
   }, [savedCard, paymentChoice, cardReady]);
   const [estimatedDelivery, setEstimatedDelivery] = useState(null);
   const [estimatedFee, setEstimatedFee] = useState(null);
+  // Per-charge card processing fee (cents), from the server so it stays in
+  // sync with the line item added in server/api-util/lineItems.js.
+  const [processingFeeCents, setProcessingFeeCents] = useState(0);
   const [estimatingBreakdown, setEstimatingBreakdown] = useState(false);
   const [selectedDeliveryMethod, setSelectedDeliveryMethod] = useState(null);
   const [deliveryRateCents, setDeliveryRateCents] = useState(null);
@@ -236,6 +239,7 @@ const CartCheckoutPageContent = props => {
         if (cancelled) return;
         const feeCents = res?.data?.feeCents;
         setEstimatedFee(feeCents > 0 ? feeCents : null);
+        setProcessingFeeCents(Number(res?.data?.processingFeeCents) || 0);
       })
       .catch(() => {
         if (!cancelled) setEstimatedFee(null);
@@ -488,7 +492,21 @@ const CartCheckoutPageContent = props => {
   const showDeliveryRow = hasShippingItems && (estimatingBreakdown || estimatedDelivery != null);
   const deliveryAmount = estimatedDelivery || 0;
   const feeAmount = estimatedFee || 0;
-  const grandTotal = subtotal + deliveryAmount + feeAmount;
+
+  // Card processing fee: one per Stripe charge. Each cart item is its own
+  // transaction/charge, plus one more when this checkout creates a standalone
+  // delivery transaction (mirrors canStandaloneDelivery in the duck — joining
+  // an existing order group reuses its delivery transaction).
+  const joiningExistingOrder = appSettings.featureFlags.addToExistingOrder && !!activeOrderGroup;
+  const willCreateDeliveryTx =
+    !!process.env.REACT_APP_DELIVERY_LISTING_ID &&
+    hasShippingItems &&
+    deliveryAmount > 0 &&
+    !joiningExistingOrder;
+  const chargeCount = cartItems.length + (willCreateDeliveryTx ? 1 : 0);
+  const processingAmount = processingFeeCents > 0 ? processingFeeCents * chargeCount : 0;
+
+  const grandTotal = subtotal + deliveryAmount + feeAmount + processingAmount;
   const formattedTotal = grandTotal > 0 ? formatMoney(intl, new Money(grandTotal, currency)) : '';
   const formattedDelivery = estimatedDelivery != null
     ? formatMoney(intl, new Money(estimatedDelivery, currency))
@@ -845,6 +863,22 @@ const CartCheckoutPageContent = props => {
                       <FormattedMessage id="CartCheckoutPage.marketplaceFee" />
                     </span>
                     <span className={css.subtotalAmount}>{formattedFee}</span>
+                  </div>
+                ) : null}
+                {processingAmount > 0 ? (
+                  <div className={css.deliveryRow}>
+                    <span className={css.subtotalLabel}>
+                      <FormattedMessage
+                        id="CartCheckoutPage.processingFee"
+                        values={{
+                          count: chargeCount,
+                          fee: formatMoney(intl, new Money(processingFeeCents, currency)),
+                        }}
+                      />
+                    </span>
+                    <span className={css.subtotalAmount}>
+                      {formatMoney(intl, new Money(processingAmount, currency))}
+                    </span>
                   </div>
                 ) : null}
               </>

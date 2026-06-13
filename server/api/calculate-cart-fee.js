@@ -4,6 +4,7 @@ const {
   serialize,
   fetchCommission,
 } = require('../api-util/sdk');
+const { PROCESSING_FEE_CENTS } = require('../api-util/lineItems');
 
 /**
  * Calculate the FarmFed customer commission for an entire cart ONCE.
@@ -41,7 +42,7 @@ module.exports = (req, res) => {
       res
         .status(200)
         .set('Content-Type', 'application/transit+json')
-        .send(serialize({ data: { feeCents, percentage, minimumCents } }))
+        .send(serialize({ data: { feeCents, percentage, minimumCents, processingFeeCents: PROCESSING_FEE_CENTS } }))
         .end();
     })
     .catch(e => handleError(res, e));

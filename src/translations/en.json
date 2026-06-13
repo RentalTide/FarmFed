@@ -154,6 +154,7 @@
   "CartCheckoutPage.deliveryEstimateFailed": "Unable to estimate delivery fee. Please check your address.",
   "CartCheckoutPage.deliveryFeeHint": "Enter your delivery address below to see the delivery fee — it's calculated from the distance between each vendor and your address.",
   "CartCheckoutPage.marketplaceFee": "FarmFed fee",
+  "CartCheckoutPage.processingFee": "Card processing ({count} × {fee})",
   "CartCheckoutPage.estimatingDelivery": "Calculating...",
   "CartCheckoutPage.total": "Total",
   "CartCheckoutPage.trackDelivery": "Track delivery",
