@@ -37,10 +37,24 @@ const handler = async (req, res) => {
         return pd.isDeliveryOrder === true && pd.orderGroupId === orderGroupId;
       });
       const deliveryTransactionId = deliveryTx?.id?.uuid || null;
-      return res.status(200).json({ orderGroupId, deliveryTransactionId, canAddToOrder: true });
+      // Inherit the original order's delivery choice so the buyer doesn't have
+      // to pick pickup vs. delivery again. Prefer the stored deliveryMethod;
+      // otherwise infer from whether the group has a standalone delivery
+      // transaction (shipping) or not (pickup).
+      const deliveryMethod =
+        withGroup.attributes.protectedData.deliveryMethod ||
+        (deliveryTransactionId ? 'shipping' : 'pickup');
+      return res
+        .status(200)
+        .json({ orderGroupId, deliveryTransactionId, deliveryMethod, canAddToOrder: true });
     }
 
-    res.status(200).json({ orderGroupId: null, deliveryTransactionId: null, canAddToOrder: false });
+    res.status(200).json({
+      orderGroupId: null,
+      deliveryTransactionId: null,
+      deliveryMethod: null,
+      canAddToOrder: false,
+    });
   } catch (e) {
     handleError(res, e);
   }

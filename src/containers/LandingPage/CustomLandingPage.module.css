@@ -1,0 +1,232 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ================= (a) Hero ================= */
+
+.hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 420px;
+  padding: 48px 24px;
+  text-align: center;
+
+  /* TODO: swap this for a produce hero photo (e.g. ../../assets/hero-produce.jpg).
+     A dark gradient overlay keeps the white heading readable over any photo. */
+  background-image: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)),
+    url('../../assets/biketribe-brandImage-1500.jpg');
+  background-size: cover;
+  background-position: center center;
+
+  @media (--viewportMedium) {
+    min-height: 520px;
+    padding: 80px 24px;
+  }
+}
+
+.heroContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 640px;
+}
+
+.heroTitle {
+  margin: 0 0 28px 0;
+  color: var(--colorWhite);
+  font-weight: var(--fontWeightBold);
+  font-size: 36px;
+  line-height: 1.1;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+
+  @media (--viewportMedium) {
+    font-size: 56px;
+  }
+}
+
+.heroButton {
+  display: inline-block;
+  padding: 14px 36px;
+  border-radius: var(--borderRadiusMedium, 6px);
+  background-color: var(--marketplaceColor);
+  color: var(--colorWhite);
+  font-weight: var(--fontWeightSemiBold, 600);
+  font-size: 18px;
+  text-decoration: none;
+  transition: var(--transitionStyleButton);
+}
+
+.heroButton:hover {
+  background-color: var(--marketplaceColorDark, var(--marketplaceColor));
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+/* ================= (b) Trust badges ================= */
+
+.badges {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: var(--contentMaxWidthPages, 1056px);
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px 16px;
+
+  @media (--viewportMedium) {
+    gap: 24px;
+    padding: 32px 24px;
+  }
+}
+
+.badge {
+  flex: 1 1 0;
+  min-width: 96px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 8px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: var(--borderRadiusMedium, 8px);
+  text-align: center;
+  background-color: var(--colorWhite);
+}
+
+.badgeIcon {
+  display: inline-flex;
+  color: var(--marketplaceColor);
+}
+
+.badgeLabel {
+  color: var(--colorGrey700);
+  font-size: 13px;
+  font-weight: var(--fontWeightMedium);
+  line-height: 1.2;
+}
+
+/* ================= (c) Featured products ================= */
+
+.featured {
+  max-width: var(--contentMaxWidthPages, 1056px);
+  width: 100%;
+  margin: 0 auto;
+  padding: 16px 16px 8px 16px;
+
+  @media (--viewportMedium) {
+    padding: 24px 24px 8px 24px;
+  }
+}
+
+.featuredHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.featuredTitle {
+  margin: 0;
+  font-weight: var(--fontWeightBold);
+  font-size: 22px;
+
+  @media (--viewportMedium) {
+    font-size: 28px;
+  }
+}
+
+.viewAll {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--marketplaceColor);
+  font-size: 14px;
+  font-weight: var(--fontWeightMedium);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.viewAll:hover {
+  text-decoration: underline;
+}
+
+.viewAllArrow {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.productGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+
+  /* One clean row of three from tablet up — no scrolling, no second row. */
+  @media (--viewportSmall) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.productCard {
+  /* ListingCard brings its own styling; nothing needed here, but the hook
+     stays so spacing can be tuned from the parent. */
+}
+
+.featuredLoading {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
+}
+
+.featuredEmpty {
+  padding: 24px 0;
+  color: var(--colorGrey500);
+  text-align: center;
+}
+
+/* ================= (d) Farmer CTA ================= */
+
+.farmerCta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: var(--contentMaxWidthPages, 1056px);
+  width: calc(100% - 32px);
+  margin: 24px auto 40px auto;
+  padding: 16px 20px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: var(--borderRadiusMedium, 8px);
+  background-color: var(--colorGrey50, #fafafa);
+  color: var(--colorGrey700);
+  font-weight: var(--fontWeightMedium);
+  text-decoration: none;
+  transition: var(--transitionStyleButton);
+
+  @media (--viewportMedium) {
+    width: calc(100% - 48px);
+  }
+}
+
+.farmerCta:hover {
+  border-color: var(--marketplaceColor);
+  text-decoration: none;
+}
+
+.farmerIcon {
+  display: inline-flex;
+  color: var(--marketplaceColor);
+}
+
+.farmerText {
+  flex: 1;
+}
+
+.farmerArrow {
+  color: var(--marketplaceColor);
+  font-size: 18px;
+}

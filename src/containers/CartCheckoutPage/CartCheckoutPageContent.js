@@ -142,6 +142,7 @@ const CartCheckoutPageContent = props => {
   // Feature 6: Add to existing order group
   const [activeOrderGroup, setActiveOrderGroup] = useState(null);
   const [activeDeliveryTxId, setActiveDeliveryTxId] = useState(null);
+  const [activeDeliveryMethod, setActiveDeliveryMethod] = useState(null);
   const [addToExistingOrder, setAddToExistingOrder] = useState(false);
   useEffect(() => {
     if (!appSettings.featureFlags.addToExistingOrder) return;
@@ -150,10 +151,19 @@ const CartCheckoutPageContent = props => {
         if (data.canAddToOrder && data.orderGroupId) {
           setActiveOrderGroup(data.orderGroupId);
           setActiveDeliveryTxId(data.deliveryTransactionId || null);
+          setActiveDeliveryMethod(data.deliveryMethod || null);
         }
       })
       .catch(() => {});
   }, []);
+
+  // When the buyer opts to add to their existing order, inherit that order's
+  // delivery choice (pickup vs. shipping) so they don't have to pick again.
+  useEffect(() => {
+    if (addToExistingOrder && activeDeliveryMethod) {
+      setSelectedDeliveryMethod(activeDeliveryMethod);
+    }
+  }, [addToExistingOrder, activeDeliveryMethod]);
 
   const stripeRef = useRef(null);
   const cardRef = useRef(null);
@@ -488,21 +498,30 @@ const CartCheckoutPageContent = props => {
   const currency = cartItems[0]?.listing?.attributes?.price?.currency || 'USD';
   const formattedSubtotal = subtotal > 0 ? formatMoney(intl, new Money(subtotal, currency)) : '';
 
-  const showBreakdown = estimatingBreakdown || estimatedFee != null || estimatedDelivery != null;
-  const showDeliveryRow = hasShippingItems && (estimatingBreakdown || estimatedDelivery != null);
-  const deliveryAmount = estimatedDelivery || 0;
-  const feeAmount = estimatedFee || 0;
+  // When the buyer is adding to an existing order, the marketplace fee and
+  // delivery were already paid on the original order — the new items piggyback
+  // with no additional fee or delivery charge (the server zeroes both). Reflect
+  // that here so the displayed total matches what's actually charged, instead
+  // of re-showing the full fees.
+  const addingToExistingOrder = addToExistingOrder && !!activeOrderGroup;
+
+  const deliveryAmount = addingToExistingOrder ? 0 : estimatedDelivery || 0;
+  const feeAmount = addingToExistingOrder ? 0 : estimatedFee || 0;
+  const showFeeRow = !addingToExistingOrder && estimatedFee != null;
+  const showDeliveryRow =
+    !addingToExistingOrder && hasShippingItems && (estimatingBreakdown || estimatedDelivery != null);
+  const showBreakdown =
+    estimatingBreakdown || showFeeRow || showDeliveryRow || addingToExistingOrder;
 
   // Card processing fee: one per Stripe charge. Each cart item is its own
   // transaction/charge, plus one more when this checkout creates a standalone
   // delivery transaction (mirrors canStandaloneDelivery in the duck — joining
   // an existing order group reuses its delivery transaction).
-  const joiningExistingOrder = appSettings.featureFlags.addToExistingOrder && !!activeOrderGroup;
   const willCreateDeliveryTx =
     !!process.env.REACT_APP_DELIVERY_LISTING_ID &&
     hasShippingItems &&
     deliveryAmount > 0 &&
-    !joiningExistingOrder;
+    !addingToExistingOrder;
   const chargeCount = cartItems.length + (willCreateDeliveryTx ? 1 : 0);
   const processingAmount = processingFeeCents > 0 ? processingFeeCents * chargeCount : 0;
 
@@ -545,12 +564,24 @@ const CartCheckoutPageContent = props => {
             {addToExistingOrder ? (
               <p className={css.addToOrderNote}>
                 <FormattedMessage id="CartCheckoutPage.addToExistingOrderNote" />
+                {activeDeliveryMethod ? (
+                  <>
+                    {' '}
+                    <FormattedMessage
+                      id={
+                        activeDeliveryMethod === 'pickup'
+                          ? 'CartCheckoutPage.inheritedPickup'
+                          : 'CartCheckoutPage.inheritedShipping'
+                      }
+                    />
+                  </>
+                ) : null}
               </p>
             ) : null}
           </div>
         ) : null}
 
-        {shippingAvailable || pickupAvailable ? (
+        {(shippingAvailable || pickupAvailable) && !(addingToExistingOrder && activeDeliveryMethod) ? (
           <div className={css.deliveryMethodSection}>
             <h3 className={css.sectionTitle}>
               <FormattedMessage id="CartCheckoutPage.deliveryMethodTitle" />
@@ -857,7 +888,7 @@ const CartCheckoutPageContent = props => {
                     <FormattedMessage id="CartCheckoutPage.deliveryEstimateFailed" />
                   </p>
                 ) : null}
-                {estimatedFee != null ? (
+                {showFeeRow ? (
                   <div className={css.deliveryRow}>
                     <span className={css.subtotalLabel}>
                       <FormattedMessage id="CartCheckoutPage.marketplaceFee" />

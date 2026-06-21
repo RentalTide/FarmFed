@@ -15,9 +15,13 @@ const { getTaxSettings } = require('./taxSettings');
 // Card processing fee, charged to the customer once per transaction. Every
 // Sharetribe transaction is a separate Stripe charge with its own fixed fee
 // (30¢), and Stripe's fees otherwise come entirely out of the marketplace
-// commission — so a cart with N vendors + delivery passes N+1 of these
+// commission — so a cart with N vendors + delivery would pass N+1 of these
 // through to the customer. Customer-only line item -> platform revenue.
-const PROCESSING_FEE_CENTS = parseInt(process.env.PROCESSING_FEE_CENTS || '30', 10);
+//
+// DISABLED by default (0): showing "12 × $0.30" to buyers reads badly, so the
+// fee is absorbed into the marketplace commission instead. Set the
+// PROCESSING_FEE_CENTS env var to re-enable a per-charge fee if ever needed.
+const PROCESSING_FEE_CENTS = parseInt(process.env.PROCESSING_FEE_CENTS || '0', 10);
 
 const getProcessingFeeLineItems = currency =>
   PROCESSING_FEE_CENTS > 0
