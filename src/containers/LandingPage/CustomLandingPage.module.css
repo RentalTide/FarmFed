@@ -114,7 +114,9 @@
 /* ================= (c) Featured products ================= */
 
 .featured {
-  max-width: var(--contentMaxWidthPages, 1056px);
+  /* Narrower than the full content width so the three featured cards stay a
+     compact single row rather than stretching large on wide screens. */
+  max-width: 900px;
   width: 100%;
   margin: 0 auto;
   padding: 16px 16px 8px 16px;
@@ -195,39 +197,45 @@
 .farmerCta {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
-  max-width: var(--contentMaxWidthPages, 1056px);
+  max-width: 680px;
   width: calc(100% - 32px);
-  margin: 24px auto 40px auto;
-  padding: 16px 20px;
-  border: 1px solid var(--colorGrey100);
+  margin: 28px auto 48px auto;
+  padding: 18px 28px;
   border-radius: var(--borderRadiusMedium, 8px);
-  background-color: var(--colorGrey50, #fafafa);
-  color: var(--colorGrey700);
-  font-weight: var(--fontWeightMedium);
+  background-color: var(--marketplaceColor);
+  color: var(--colorWhite);
+  font-weight: var(--fontWeightBold);
+  font-size: 18px;
+  text-align: center;
   text-decoration: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
   transition: var(--transitionStyleButton);
 
   @media (--viewportMedium) {
-    width: calc(100% - 48px);
+    font-size: 20px;
+    padding: 20px 32px;
   }
 }
 
 .farmerCta:hover {
-  border-color: var(--marketplaceColor);
+  background-color: var(--marketplaceColorDark, var(--marketplaceColor));
   text-decoration: none;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
 }
 
 .farmerIcon {
   display: inline-flex;
-  color: var(--marketplaceColor);
+  color: var(--colorWhite);
 }
 
 .farmerText {
-  flex: 1;
+  flex: 0 1 auto;
 }
 
 .farmerArrow {
-  color: var(--marketplaceColor);
-  font-size: 18px;
+  color: var(--colorWhite);
+  font-size: 20px;
 }
