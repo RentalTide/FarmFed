@@ -137,7 +137,7 @@ const CustomLandingPage = props => {
                 listing={l}
                 showAddToCart
                 showAuthorInfo
-                renderSizes="(max-width: 549px) 50vw, 33vw"
+                renderSizes="33vw"
               />
             ))}
           </div>

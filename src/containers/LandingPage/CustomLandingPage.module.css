@@ -163,12 +163,13 @@
 
 .productGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  /* Always one clean row of three — no second row, no blank trailing cell.
+     Tighter gutter on phones so three cards fit comfortably. */
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
 
-  /* One clean row of three from tablet up — no scrolling, no second row. */
   @media (--viewportSmall) {
-    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
   }
 }
 

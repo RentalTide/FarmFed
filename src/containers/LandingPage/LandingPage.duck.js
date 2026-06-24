@@ -20,6 +20,19 @@ const searchEnablesCustomLanding = search => /[?&]newlanding=true(?:&|$)/.test(s
 export const shouldUseCustomLandingPage = search =>
   useCustomLandingPage || searchEnablesCustomLanding(search);
 
+// The operator/hub-owned standalone "Delivery" listing must never appear among
+// featured products — it's an internal listing used to charge delivery, not a
+// shoppable product. We exclude it by id and by its delivery process alias.
+const DELIVERY_LISTING_ID = process.env.REACT_APP_DELIVERY_LISTING_ID;
+const isDeliveryListing = l => {
+  const { publicData } = l.attributes || {};
+  const alias = publicData?.transactionProcessAlias || '';
+  return (
+    (DELIVERY_LISTING_ID && l.id?.uuid === DELIVERY_LISTING_ID) ||
+    alias.startsWith('default-delivery')
+  );
+};
+
 // How many listings to display in the "Featured Products" row.
 const FEATURED_DISPLAY_COUNT = 3;
 
@@ -144,7 +157,7 @@ export const fetchFeaturedListings = config => (dispatch, getState, sdk) => {
     .then(response => {
       dispatch(addMarketplaceEntities(response));
       const published = response.data.data.filter(
-        l => !l.attributes.deleted && l.attributes.state === 'published'
+        l => !l.attributes.deleted && l.attributes.state === 'published' && !isDeliveryListing(l)
       );
       const listingIds = pickFeaturedListings(published).map(l => l.id);
       dispatch(fetchFeaturedSuccess(listingIds));
