@@ -17,6 +17,7 @@ import {
   NotificationBadge,
 } from '../../../../components';
 
+import appSettings from '../../../../config/settings';
 import css from './TopbarMobileMenu.module.css';
 
 const CustomLinkComponent = ({ linkConfig, currentPage }) => {
@@ -181,6 +182,13 @@ const TopbarMobileMenu = props => {
             </NamedLink>
           </li>
           {manageListingsLinkMaybe}
+          {appSettings.featureFlags.vendorFollow ? (
+            <li className={classNames(css.navigationLink, currentPageClass('FollowedVendorsPage'))}>
+              <NamedLink name="FollowedVendorsPage">
+                <FormattedMessage id="TopbarMobileMenu.followedVendorsLink" />
+              </NamedLink>
+            </li>
+          ) : null}
           <li className={classNames(css.navigationLink, currentPageClass('ProfileSettingsPage'))}>
             <NamedLink name="ProfileSettingsPage">
               <FormattedMessage id="TopbarMobileMenu.profileSettingsLink" />

@@ -12,6 +12,14 @@ export const ASSET_NAME = 'landing-page';
 // Toggle via REACT_APP_CUSTOM_LANDING_PAGE in the environment.
 export const useCustomLandingPage = process.env.REACT_APP_CUSTOM_LANDING_PAGE === 'true';
 
+// Per-request override: append ?newlanding=true to the homepage URL to preview
+// the custom design even when the env flag is off (e.g. to demo it on prod).
+const searchEnablesCustomLanding = search => /[?&]newlanding=true(?:&|$)/.test(search || '');
+
+// The homepage uses the custom design if the env flag is on OR the URL opts in.
+export const shouldUseCustomLandingPage = search =>
+  useCustomLandingPage || searchEnablesCustomLanding(search);
+
 // How many listings to display in the "Featured Products" row.
 const FEATURED_DISPLAY_COUNT = 3;
 
@@ -150,7 +158,7 @@ export const fetchFeaturedListings = config => (dispatch, getState, sdk) => {
 };
 
 export const loadData = (params, search, config) => dispatch => {
-  if (useCustomLandingPage) {
+  if (shouldUseCustomLandingPage(search)) {
     return dispatch(fetchFeaturedListings(config));
   }
   // Hosted PageBuilder landing page (default).

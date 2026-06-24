@@ -355,7 +355,9 @@ export const fetchFollowStatusThunk = createAsyncThunk(
   ({ authorId }, { rejectWithValue }) => {
     return fetchFollowedVendors()
       .then(response => {
-        const followedVendorIds = response.data || [];
+        // The /api/follow-vendor endpoint returns { followedVendors: [...] }
+        // directly (the request helper does not wrap it in `.data`).
+        const followedVendorIds = response?.followedVendors || [];
         const isFollowing = followedVendorIds.includes(authorId);
         return { isFollowing };
       })

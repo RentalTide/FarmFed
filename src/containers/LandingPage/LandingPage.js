@@ -3,6 +3,7 @@ import loadable from '@loadable/component';
 import { array, bool, object } from 'prop-types';
 import { compose } from 'redux';
 import { connect } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 
 import { camelize } from '../../util/string';
 import { propTypes } from '../../util/types';
@@ -13,7 +14,7 @@ import StaticPage from '../PageBuilder/StaticPage.js';
 import { getListingsById } from '../../ducks/marketplaceData.duck.js';
 
 import FallbackPage from './FallbackPage';
-import { ASSET_NAME, useCustomLandingPage } from './LandingPage.duck';
+import { ASSET_NAME, shouldUseCustomLandingPage } from './LandingPage.duck';
 import CustomLandingPage from './CustomLandingPage.js';
 // Reuse the PageBuilder layout classes so the custom homepage frame (topbar /
 // main / footer grid) matches every other page on the site.
@@ -76,7 +77,12 @@ const HostedHomepage = ({ pageAssetsData, inProgress, error }) => (
 );
 
 export const LandingPageComponent = props => {
-  return useCustomLandingPage ? <CustomHomepage {...props} /> : <HostedHomepage {...props} />;
+  const location = useLocation();
+  return shouldUseCustomLandingPage(location?.search) ? (
+    <CustomHomepage {...props} />
+  ) : (
+    <HostedHomepage {...props} />
+  );
 };
 
 LandingPageComponent.propTypes = {

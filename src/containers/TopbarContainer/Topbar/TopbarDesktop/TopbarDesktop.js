@@ -16,6 +16,7 @@ import {
   NotificationBell,
 } from '../../../../components';
 
+import appSettings from '../../../../config/settings';
 import TopbarSearchForm from '../TopbarSearchForm/TopbarSearchForm';
 import CustomLinksMenu from './CustomLinksMenu/CustomLinksMenu';
 
@@ -84,6 +85,17 @@ const ProfileMenu = ({ currentPage, currentUser, onLogout, showManageListingsLin
             >
               <span className={css.menuItemBorder} />
               <FormattedMessage id="TopbarDesktop.yourListingsLink" />
+            </NamedLink>
+          </MenuItem>
+        ) : null}
+        {appSettings.featureFlags.vendorFollow ? (
+          <MenuItem key="FollowedVendorsPage">
+            <NamedLink
+              className={classNames(css.menuLink, currentPageClass('FollowedVendorsPage'))}
+              name="FollowedVendorsPage"
+            >
+              <span className={css.menuItemBorder} />
+              <FormattedMessage id="TopbarDesktop.followedVendorsLink" />
             </NamedLink>
           </MenuItem>
         ) : null}

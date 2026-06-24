@@ -1,0 +1,82 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 24px 96px;
+
+  @media (--viewportMedium) {
+    padding: 40px 24px 120px;
+  }
+}
+
+.title {
+  margin: 0 0 24px;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 48px 0;
+}
+
+.error {
+  color: var(--colorFail);
+}
+
+.vendorList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.vendorItem {
+  border-bottom: 1px solid var(--colorGrey100);
+}
+
+.vendorLink {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 4px;
+  color: var(--colorGrey700);
+  text-decoration: none;
+  transition: var(--transitionStyleButton);
+
+  &:hover {
+    text-decoration: none;
+    color: var(--marketplaceColor);
+  }
+}
+
+.vendorAvatar {
+  flex-shrink: 0;
+}
+
+.vendorName {
+  flex: 1;
+  font-weight: var(--fontWeightSemiBold);
+  composes: textLarge from global;
+}
+
+.vendorArrow {
+  color: var(--colorGrey300);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.empty {
+  padding: 32px 0;
+  text-align: center;
+}
+
+.emptyText {
+  margin: 0 0 16px;
+  color: var(--colorGrey500);
+}
+
+.browseLink {
+  display: inline-block;
+  color: var(--marketplaceColor);
+  font-weight: var(--fontWeightSemiBold);
+}

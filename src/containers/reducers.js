@@ -8,6 +8,7 @@ import CartCheckoutPage from './CartCheckoutPage/CartCheckoutPage.duck';
 import CheckoutPage from './CheckoutPage/CheckoutPage.duck';
 import ContactDetailsPage from './ContactDetailsPage/ContactDetailsPage.duck';
 import EditListingPage from './EditListingPage/EditListingPage.duck';
+import FollowedVendorsPage from './FollowedVendorsPage/FollowedVendorsPage.duck';
 import InboxPage from './InboxPage/InboxPage.duck';
 import LandingPage from './LandingPage/LandingPage.duck';
 import ListingPage from './ListingPage/ListingPage.duck';
@@ -31,6 +32,7 @@ export {
   CheckoutPage,
   ContactDetailsPage,
   EditListingPage,
+  FollowedVendorsPage,
   InboxPage,
   LandingPage,
   ListingPage,
