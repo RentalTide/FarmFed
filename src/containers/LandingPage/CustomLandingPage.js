@@ -135,7 +135,6 @@ const CustomLandingPage = props => {
                 key={l.id.uuid}
                 className={css.productCard}
                 listing={l}
-                showAddToCart
                 showAuthorInfo
                 renderSizes="33vw"
               />

@@ -18,7 +18,7 @@
 
   /* Dark gradient overlay keeps the white heading readable over the photo. */
   background-image: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)),
-    url('../../assets/farmfed-hero-1500.jpg');
+    url('../../assets/farmfed-hero-1250.jpg');
   background-size: cover;
   background-position: center center;
 
