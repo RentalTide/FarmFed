@@ -149,7 +149,7 @@ const CustomLandingPage = props => {
       </section>
 
       {/* (d) Farmer CTA */}
-      <NamedLink name="NewListingPage" className={css.farmerCta}>
+      <NamedLink name="CMSPage" params={{ pageId: 'new_vendors' }} className={css.farmerCta}>
         <span className={css.farmerIcon}>
           <IconFarmer />
         </span>
