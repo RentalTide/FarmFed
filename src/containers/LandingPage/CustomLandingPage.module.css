@@ -10,28 +10,29 @@
 .hero {
   position: relative;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-end;
+  justify-content: flex-start;
   min-height: 420px;
   padding: 48px 24px;
-  text-align: center;
+  text-align: left;
 
-  /* Dark gradient overlay keeps the white heading readable over the photo. */
-  background-image: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45)),
+  /* Keep the photo bright (per client mockup); a soft bottom-left gradient
+     keeps the white heading readable where the text sits. */
+  background-image: linear-gradient(to top, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0) 55%),
     url('../../assets/farmfed-hero-1250.jpg');
   background-size: cover;
   background-position: center center;
 
   @media (--viewportMedium) {
     min-height: 520px;
-    padding: 80px 24px;
+    padding: 64px 48px;
   }
 }
 
 .heroContent {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   max-width: 640px;
 }
 
