@@ -34,12 +34,14 @@ const IconTruck = () => (
 );
 
 const IconVerified = () => (
-  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" aria-hidden="true">
-    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7" />
+  <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+    {/* Twitter-style verified badge: solid disc, bold white check. */}
+    <circle cx="12" cy="12" r="10" fill="currentColor" />
     <path
-      d="m8 12 2.5 2.5L16 9"
-      stroke="currentColor"
-      strokeWidth="1.7"
+      d="m7.6 12.4 2.9 2.9 5.9-6.2"
+      fill="none"
+      stroke="#fff"
+      strokeWidth="2.4"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
