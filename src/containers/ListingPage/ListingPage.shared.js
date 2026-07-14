@@ -9,8 +9,6 @@ import {
   NO_ACCESS_PAGE_INITIATE_TRANSACTIONS,
   NO_ACCESS_PAGE_USER_PENDING_APPROVAL,
   createSlug,
-  parse,
-  stringify,
 } from '../../util/urlHelpers';
 import { REQUEST } from '../../transactions/transaction';
 
@@ -228,7 +226,6 @@ export const handleNavigateToRequestQuotePage = parameters => () => {
 export const handleSubmit = parameters => values => {
   const {
     history,
-    location,
     params,
     currentUser,
     getListing,
@@ -303,18 +300,6 @@ export const handleSubmit = parameters => values => {
         deliveryMethod: deliveryMethod || null,
       })
     );
-
-    // On mobile the order form lives in a modal kept open by the `orderOpen` search param.
-    // Drop it so the modal unmounts and the cart panel is what the buyer lands on.
-    if (location?.search && parse(location.search).orderOpen) {
-      const { orderOpen, ...restSearchParams } = parse(location.search);
-      const searchString = stringify(restSearchParams);
-      history.replace(
-        `${location.pathname}${searchString ? `?${searchString}` : ''}`,
-        location.state
-      );
-    }
-
     dispatch(openCartPanel());
     return;
   }
