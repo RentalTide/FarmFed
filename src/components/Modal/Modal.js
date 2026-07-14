@@ -108,8 +108,11 @@ export class ModalComponent extends Component {
       onManageDisableScrolling(id, this.props.isOpen);
 
       // Because we are using portal,
-      // we need to set the focus inside Modal manually
-      if (this.props.usePortal) {
+      // we need to set the focus inside Modal manually.
+      // ModalInMobile passes `usePortal && isOpen`, so usePortal can flip to false in the
+      // same update that closes the modal. Gate on either value, otherwise the `inert` set
+      // when opening is never removed and #page stays unclickable until a reload.
+      if (prevProps.usePortal || this.props.usePortal) {
         if (this.props.isOpen) {
           this.refDiv.current.focus();
           document.getElementById(PAGE_ROOT_ID)?.setAttribute('inert', '');

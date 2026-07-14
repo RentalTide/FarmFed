@@ -284,6 +284,7 @@ export const ListingPageComponent = props => {
   });
   const onSubmit = handleSubmit({
     ...commonParams,
+    location,
     currentUser,
     callSetInitialValues,
     getListing,
