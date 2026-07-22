@@ -1,8 +1,6 @@
-const { getSdk, handleError } = require('../api-util/sdk');
+const { getIntegrationSdk, handleError } = require('../api-util/sdk');
 
 const handler = async (req, res) => {
-  const sdk = getSdk(req, res);
-
   try {
     const { transactionId, category, description } = req.body || {};
 

@@ -18,6 +18,23 @@ import { setCurrentUserHasOrders } from '../../ducks/user.duck';
 const DELIVERY_LISTING_ID = process.env.REACT_APP_DELIVERY_LISTING_ID;
 const DELIVERY_PROCESS_ALIAS = 'default-delivery/release-1';
 
+// Local API failures come back wrapped as { message: 'Local API request
+// failed', statusText, data } — the real Sharetribe cause is in statusText (and
+// data.errors), while `message` is a generic wrapper. Surface the real reason
+// so failed orders are diagnosable instead of all reading "Local API request
+// failed".
+const realErrorMessage = e => {
+  const apiErrorTitle = e?.data?.errors?.[0]?.title;
+  const isGenericWrapper = e?.message === 'Local API request failed';
+  return (
+    apiErrorTitle ||
+    (isGenericWrapper ? e?.statusText : e?.message) ||
+    e?.statusText ||
+    e?.message ||
+    null
+  );
+};
+
 // Generate a unique order-group id so all transactions in one cart checkout
 // (the items plus the standalone delivery) can be reconciled together.
 const generateOrderGroupId = () => {
@@ -300,12 +317,15 @@ const processCartCheckoutPayloadCreator = async (
         ...(trackingURL ? { trackingURL } : {}),
       });
     } catch (e) {
-      log.error(e, 'cart-checkout-item-failed', { listingId: item.listingId });
+      log.error(e, 'cart-checkout-item-failed', {
+        listingId: item.listingId,
+        reason: realErrorMessage(e),
+      });
       results.push({
         listingId: item.listingId,
         title: item.listing?.attributes?.title,
         success: false,
-        error: e.message || 'Transaction failed',
+        error: realErrorMessage(e) || 'Transaction failed',
       });
 
       // If first item fails (card decline), stop processing
@@ -415,20 +435,40 @@ const processCartCheckoutPayloadCreator = async (
         orderGroupId: effectiveGroupId,
       });
     } catch (e) {
-      log.error(e, 'cart-checkout-delivery-failed', { orderGroupId: effectiveGroupId });
+      log.error(e, 'cart-checkout-delivery-failed', {
+        orderGroupId: effectiveGroupId,
+        reason: realErrorMessage(e),
+      });
       // Items already succeeded — surface a non-fatal delivery error rather
       // than failing the whole checkout.
-      results.push({ isDelivery: true, success: false, error: e.message || 'Delivery charge failed' });
+      results.push({
+        isDelivery: true,
+        success: false,
+        error: realErrorMessage(e) || 'Delivery charge failed',
+      });
     }
   } else if (orderGroupId && deliveryTransactionId && successfulShippingItemIds.length > 0) {
     // Add-to-existing-order: attach the newly ordered shipping items to the
     // existing standalone delivery transaction so reconciliation treats the
     // whole group as one order. No new delivery fee is charged (items carry
-    // $0 shipping).
-    await linkDeliveryItems({
-      deliveryTransactionId,
-      itemTransactionIds: successfulShippingItemIds,
-    });
+    // $0 shipping). The items are already paid for — a linking failure must not
+    // reject the whole checkout, so it's logged and surfaced, not thrown.
+    try {
+      await linkDeliveryItems({
+        deliveryTransactionId,
+        itemTransactionIds: successfulShippingItemIds,
+      });
+    } catch (e) {
+      log.error(e, 'cart-checkout-delivery-link-failed', {
+        deliveryTransactionId,
+        reason: realErrorMessage(e),
+      });
+      results.push({
+        isDelivery: true,
+        success: false,
+        error: realErrorMessage(e) || 'Failed to link items to delivery',
+      });
+    }
   }
 
   // Clear successful items from cart
