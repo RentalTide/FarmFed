@@ -182,6 +182,8 @@
   "CartPanel.emptyCart": "Your cart is empty. Browse listings to add items.",
   "CartPanel.subtotal": "Subtotal",
   "CartPanel.title": "Your Cart",
+  "CategoryRows.loading": "Loading fresh picks…",
+  "CategoryRows.seeAll": "See all",
   "CheckoutPage.bookingTimeNotAvailableMessage": "Unfortunately, the requested time has just been booked.",
   "CheckoutPage.chargeDisabledMessage": "The transaction can't move forward because the provider's payout information is incomplete. Please contact support.",
   "CheckoutPage.correctQuantityInformationMissing": "The order data is missing correct quantity information",

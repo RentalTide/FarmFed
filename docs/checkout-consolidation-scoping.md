@@ -67,14 +67,28 @@ separate charge. Do the same thing for the whole order:
 
 - One transaction against an operator-owned **"Order"** listing carrying the full cart as line items → **one Stripe
   PaymentIntent, one receipt email**, rendered natively from that process's own template (no email provider needed).
-- Per-vendor **fulfillment** transactions on a new process with stock actions but **no Stripe actions** — $0, purely
-  the accept/decline/fulfil workflow. Because each is still anchored to its real listing, **stock reservation keeps
-  working natively**, which is exactly what Option B breaks.
-- Vendors are paid from the platform balance via Stripe transfers rather than destination charges.
+- **Per-line-item** fulfillment transactions on a new process with stock actions but **no Stripe actions** — $0,
+  purely the accept/decline/fulfil workflow. Because each is still anchored to its real listing, **stock reservation
+  keeps working natively**, which is exactly what Option B breaks.
+- Vendors are paid from the platform balance via Stripe transfers (*separate charges and transfers*) rather than
+  destination charges.
+
+> **Correction (was "per-vendor").** Fulfillment transactions must be **one per line item, not one per vendor**.
+> `:action/create-pending-stock-reservation` reserves stock on the transaction's own listing only, so a vendor with
+> three items in the cart needs three transactions or two of those listings never get reserved. Consequence:
+> Sharetribe transaction count stays at N+1 — only the *Stripe charge* count drops to 1. This makes the volume-fee
+> question below decisive rather than incidental. Going per-vendor to claw those back requires hand-reserving stock
+> for non-anchor listings, which reintroduces Option B's oversell risk.
 
 **What this fixes:** the customer sees one charge and gets one email. Stripe's $0.30 is paid once instead of N
-times. Partial refunds (one farm declines) get *easier* — one PaymentIntent, partially refunded, instead of
+times (the percentage component scales with value and is unchanged, so the saving tracks item count, not order
+size). Partial refunds (one farm declines) get *easier* — one PaymentIntent, partially refunded, instead of
 unwinding N charges.
+
+**Hardest part of the build:** ordering across two systems with no shared rollback. Stock must be reserved on all N
+fulfillment transactions *before* the PaymentIntent is confirmed, with a clean release of all of them if any
+reservation or the payment itself fails — otherwise the buyer is charged for produce that sold out mid-checkout.
+This drives the estimate more than the Stripe plumbing does.
 
 **Open question that must be answered before committing:** whether Sharetribe's volume fee is a percentage of
 transaction value or a flat per-transaction charge. If it's percentage-of-value, the $0 fulfillment transactions

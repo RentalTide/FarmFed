@@ -668,18 +668,31 @@ describe('Duck', () => {
     // update this test accordingly!
     return loadData(null, null, config)(dispatch, getState, sdk).then(data => {
       const actions = dispatchedActions(dispatch);
-      expect(actions).toHaveLength(3);
+      const byType = type => actions.filter(a => a.type === type);
 
-      // First action should be searchListings.pending
-      expect(actions[0].type).toBe('SearchPage/searchListings/pending');
-      expect(actions[0].meta.arg.searchParams).toEqual(searchParams);
+      // The flat grid query is unchanged.
+      const gridPending = byType('SearchPage/searchListings/pending');
+      expect(gridPending).toHaveLength(1);
+      expect(gridPending[0].meta.arg.searchParams).toEqual(searchParams);
 
-      // Second action should be addMarketplaceEntities
-      expect(actions[1]).toEqual(addMarketplaceEntities(fakeResponse([l1, l2]), sanitizeConfig));
+      const gridFulfilled = byType('SearchPage/searchListings/fulfilled');
+      expect(gridFulfilled).toHaveLength(1);
+      expect(gridFulfilled[0].payload).toEqual(fakeResponse([l1, l2]));
 
-      // Third action should be searchListings.fulfilled
-      expect(actions[2].type).toBe('SearchPage/searchListings/fulfilled');
-      expect(actions[2].payload).toEqual(fakeResponse([l1, l2]));
+      expect(actions).toContainEqual(
+        addMarketplaceEntities(fakeResponse([l1, l2]), sanitizeConfig)
+      );
+
+      // A default browse view additionally fetches one row per top-level
+      // category. Those queries run in parallel with the grid query, so
+      // assert by action type rather than by position.
+      const categoryIds = config.categoryConfiguration.categories.map(c => c.id);
+      const rowsFulfilled = byType('SearchPage/searchCategoryRows/fulfilled');
+      expect(rowsFulfilled).toHaveLength(1);
+      expect(Object.keys(rowsFulfilled[0].payload).sort()).toEqual([...categoryIds].sort());
+
+      // One entity-storing action per query: the grid, plus each category row.
+      expect(byType('marketplaceData/addEntities')).toHaveLength(1 + categoryIds.length);
     });
   });
 

@@ -60,6 +60,8 @@ import {
   getSearchPageResourceLocatorStringParams,
 } from './SearchPage.shared';
 
+import { shouldShowCategoryRows } from './SearchPage.duck';
+import CategoryRows from './CategoryRows/CategoryRows';
 import FilterComponent from './FilterComponent';
 import MainPanelHeader from './MainPanelHeader/MainPanelHeader';
 import SearchFiltersMobile from './SearchFiltersMobile/SearchFiltersMobile';
@@ -244,6 +246,8 @@ export class SearchPageComponent extends Component {
       params: currentPathParams = {},
       currentUser,
       bulletins,
+      listingsByCategory = {},
+      categoryRowsInProgress,
     } = this.props;
 
     // If the search page variant is of type /s/:listingType, this defines the :listingType
@@ -338,6 +342,19 @@ export class SearchPageComponent extends Component {
       validQueryParams,
       filterConfigs
     );
+
+    // An untouched browse view is shown as horizontally scrolling rows, one per
+    // top-level category, instead of a flat grid. The moment any filter, search,
+    // sort or page change happens we fall back to the grid, so the controls
+    // always act on the result set actually on screen.
+    //
+    // Both conditions matter: the second one alone would keep rendering stale
+    // rows for a moment after the user applies a filter, since the previous
+    // rows stay in state until the next fetch resolves.
+    const { page: pageParam = 1 } = parse(location.search);
+    const showCategoryRows =
+      shouldShowCategoryRows(validQueryParams, Number(pageParam)) &&
+      (categoryRowsInProgress || Object.keys(listingsByCategory).length > 0);
 
     const showCreateListingsLink = showCreateListingLinkForUser(config, currentUser);
     const sortBy = mode => {
@@ -499,15 +516,24 @@ export class SearchPageComponent extends Component {
                     <FormattedMessage id="SearchPage.invalidDatesFilter" />
                   </H5>
                 ) : null}
-                <SearchResultsPanel
-                  className={css.searchListingsPanel}
-                  listings={listings}
-                  pagination={listingsAreLoaded ? pagination : null}
-                  search={parse(location.search)}
-                  isMapVariant={false}
-                  listingTypeParam={listingTypePathParam}
-                  intl={intl}
-                />
+                {showCategoryRows ? (
+                  <CategoryRows
+                    categories={listingCategories}
+                    listingsByCategory={listingsByCategory}
+                    inProgress={categoryRowsInProgress}
+                    listingTypeParam={listingTypePathParam}
+                  />
+                ) : (
+                  <SearchResultsPanel
+                    className={css.searchListingsPanel}
+                    listings={listings}
+                    pagination={listingsAreLoaded ? pagination : null}
+                    search={parse(location.search)}
+                    isMapVariant={false}
+                    listingTypeParam={listingTypePathParam}
+                    intl={intl}
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -619,8 +645,18 @@ const mapStateToProps = state => {
     searchInProgress,
     searchListingsError,
     searchParams,
+    categoryRowResultIds = {},
+    categoryRowsInProgress,
   } = state.SearchPage;
   const listings = getListingsById(state, currentPageResultIds);
+
+  const listingsByCategory = Object.keys(categoryRowResultIds).reduce(
+    (acc, categoryId) => ({
+      ...acc,
+      [categoryId]: getListingsById(state, categoryRowResultIds[categoryId]),
+    }),
+    {}
+  );
 
   return {
     currentUser,
@@ -630,6 +666,8 @@ const mapStateToProps = state => {
     searchInProgress,
     searchListingsError,
     searchParams,
+    listingsByCategory,
+    categoryRowsInProgress,
   };
 };
 

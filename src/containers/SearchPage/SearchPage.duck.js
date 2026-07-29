@@ -373,6 +373,60 @@ export const searchListings = createAsyncThunk(
   searchListingsPayloadCreator
 );
 
+///////////////////
+// Category rows //
+///////////////////
+// The default browse view (no filters, no keywords, no sort, page 1) renders one
+// horizontally scrolling row per top-level category instead of a flat grid.
+// Each row is its own listings query so every row is populated independently —
+// grouping a single page of results client-side would leave rows empty or
+// lopsided depending on what happened to land on page 1.
+const CATEGORY_ROW_PAGE_SIZE = 12;
+
+const searchCategoryRowsPayloadCreator = async (
+  { categoryIds = [], searchParams, config },
+  thunkAPI
+) => {
+  const { dispatch, extra: sdk } = thunkAPI;
+  const sanitizeConfig = { listingFields: config?.listing?.listingFields };
+
+  const responses = await Promise.all(
+    categoryIds.map(id =>
+      sdk.listings
+        .query({ ...searchParams, pub_categoryLevel1: id, perPage: CATEGORY_ROW_PAGE_SIZE })
+        .then(response => {
+          dispatch(addMarketplaceEntities(response, sanitizeConfig));
+          return { id, ids: resultIds(response.data) };
+        })
+        // A single failing category must not blank the whole page — that row
+        // just renders empty and gets skipped.
+        .catch(() => ({ id, ids: [] }))
+    )
+  );
+
+  return responses.reduce((acc, { id, ids }) => ({ ...acc, [id]: ids }), {});
+};
+
+export const searchCategoryRows = createAsyncThunk(
+  'SearchPage/searchCategoryRows',
+  searchCategoryRowsPayloadCreator
+);
+
+// Category rows replace the flat grid only on an untouched browse view. As soon
+// as the user filters, searches, sorts or pages, we go back to the flat grid so
+// the result set the controls act on is the one being displayed.
+const ROW_SUPPRESSING_PARAMS = ['keywords', 'price', 'dates', 'seats', 'sort'];
+
+export const shouldShowCategoryRows = (queryParams = {}, page = 1) => {
+  if (page > 1) {
+    return false;
+  }
+  return !Object.keys(queryParams).some(
+    key =>
+      ROW_SUPPRESSING_PARAMS.includes(key) || key.startsWith('pub_') || key.startsWith('meta_')
+  );
+};
+
 // ================ Slice ================ //
 
 const searchPageSlice = createSlice({
@@ -384,6 +438,9 @@ const searchPageSlice = createSlice({
     searchListingsError: null,
     currentPageResultIds: [],
     activeListingId: null,
+    categoryRowResultIds: {},
+    categoryRowsInProgress: false,
+    categoryRowsError: null,
   },
   reducers: {
     setActiveListing: (state, action) => {
@@ -408,6 +465,22 @@ const searchPageSlice = createSlice({
         console.error(action.payload);
         state.searchInProgress = false;
         state.searchListingsError = action.payload;
+      });
+
+    // Category rows
+    builder
+      .addCase(searchCategoryRows.pending, state => {
+        state.categoryRowsInProgress = true;
+        state.categoryRowsError = null;
+      })
+      .addCase(searchCategoryRows.fulfilled, (state, action) => {
+        state.categoryRowResultIds = action.payload;
+        state.categoryRowsInProgress = false;
+      })
+      .addCase(searchCategoryRows.rejected, (state, action) => {
+        state.categoryRowsInProgress = false;
+        state.categoryRowsError = action.payload;
+        state.categoryRowResultIds = {};
       });
   },
 });
@@ -452,6 +525,39 @@ export const loadData = (params, search, config) => (dispatch, getState, sdk) =>
   } = config.layout.listingImage;
   const aspectRatio = aspectHeight / aspectWidth;
 
+  // Field selection shared by the flat grid query and the per-category row
+  // queries, so cards render identically in both layouts.
+  const listingQueryFields = {
+    include: ['author', 'images'],
+    'fields.listing': [
+      'title',
+      'geolocation',
+      'price',
+      'deleted',
+      'state',
+      'publicData.listingType',
+      'publicData.transactionProcessAlias',
+      'publicData.unitType',
+      'publicData.cardStyle',
+      // These help rendering of 'purchase' listings,
+      // when transitioning from search page to listing page
+      'publicData.pickupEnabled',
+      'publicData.shippingEnabled',
+      'publicData.priceVariationsEnabled',
+      'publicData.priceVariants',
+    ],
+    'fields.user': ['profile.displayName', 'profile.abbreviatedName'],
+    'fields.image': [
+      'variants.scaled-small',
+      'variants.scaled-medium',
+      `variants.${variantPrefix}`,
+      `variants.${variantPrefix}-2x`,
+    ],
+    ...createImageVariantConfig(`${variantPrefix}`, 400, aspectRatio),
+    ...createImageVariantConfig(`${variantPrefix}-2x`, 800, aspectRatio),
+    'limit.images': 1,
+  };
+
   const searchListingsCall = searchListings({
     searchParams: {
       ...rest,
@@ -459,37 +565,45 @@ export const loadData = (params, search, config) => (dispatch, getState, sdk) =>
       ...listingTypeVariantMaybe,
       page,
       perPage: RESULT_PAGE_SIZE,
-      include: ['author', 'images'],
-      'fields.listing': [
-        'title',
-        'geolocation',
-        'price',
-        'deleted',
-        'state',
-        'publicData.listingType',
-        'publicData.transactionProcessAlias',
-        'publicData.unitType',
-        'publicData.cardStyle',
-        // These help rendering of 'purchase' listings,
-        // when transitioning from search page to listing page
-        'publicData.pickupEnabled',
-        'publicData.shippingEnabled',
-        'publicData.priceVariationsEnabled',
-        'publicData.priceVariants',
-      ],
-      'fields.user': ['profile.displayName', 'profile.abbreviatedName'],
-      'fields.image': [
-        'variants.scaled-small',
-        'variants.scaled-medium',
-        `variants.${variantPrefix}`,
-        `variants.${variantPrefix}-2x`,
-      ],
-      ...createImageVariantConfig(`${variantPrefix}`, 400, aspectRatio),
-      ...createImageVariantConfig(`${variantPrefix}-2x`, 800, aspectRatio),
-      'limit.images': 1,
+      ...listingQueryFields,
     },
     config,
   });
 
-  return dispatch(searchListingsCall);
+  // On an untouched browse view, also fetch one page per top-level category for
+  // the horizontal rows. Runs alongside the flat grid query rather than instead
+  // of it: the grid data still backs the result count in the panel header, and
+  // it's already there if the user starts filtering.
+  const categoryIds = (config.categoryConfiguration?.categories || []).map(c => c.id);
+  const wantsCategoryRows = shouldShowCategoryRows(rest, page) && categoryIds.length > 0;
+
+  if (!wantsCategoryRows) {
+    return dispatch(searchListingsCall);
+  }
+
+  // Row queries go straight to sdk.listings.query, so unlike the grid call they
+  // need real API params — `listingTypePathParam` is an internal marker that the
+  // searchListings payload creator translates, and it would be rejected here.
+  const rowListingTypeMaybe = listingTypePathParam
+    ? { pub_listingType: listingTypePathParam }
+    : {};
+  // Keep rows inside the same map area the grid is searching.
+  const boundsMaybe = rest.bounds ? { bounds: rest.bounds } : {};
+
+  const categoryRowsCall = searchCategoryRows({
+    categoryIds,
+    searchParams: {
+      ...originMaybe,
+      ...boundsMaybe,
+      ...rowListingTypeMaybe,
+      // Rows mirror the grid's stock handling so sold-out produce doesn't
+      // surface in a row that the grid would have filtered out.
+      minStock: 1,
+      stockMode: 'match-undefined',
+      ...listingQueryFields,
+    },
+    config,
+  });
+
+  return Promise.all([dispatch(searchListingsCall), dispatch(categoryRowsCall)]);
 };
