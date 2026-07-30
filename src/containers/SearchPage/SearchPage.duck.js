@@ -415,16 +415,23 @@ export const searchCategoryRows = createAsyncThunk(
 // Category rows replace the flat grid only on an untouched browse view. As soon
 // as the user filters, searches, sorts or pages, we go back to the flat grid so
 // the result set the controls act on is the one being displayed.
-const ROW_SUPPRESSING_PARAMS = ['keywords', 'price', 'dates', 'seats', 'sort'];
+// Params that don't narrow the result set, so they can be present while the view
+// still counts as untouched.
+const ROW_NEUTRAL_PARAMS = ['page', 'mapSearch'];
 
 export const shouldShowCategoryRows = (queryParams = {}, page = 1) => {
   if (page > 1) {
     return false;
   }
-  return !Object.keys(queryParams).some(
-    key =>
-      ROW_SUPPRESSING_PARAMS.includes(key) || key.startsWith('pub_') || key.startsWith('meta_')
-  );
+  // Allowlist rather than a blocklist of known filter params: a keyword search
+  // (`keywords`), a location search (`address` + `bounds`), a sort and every
+  // extended-data filter all have to fall back to the flat grid, and which
+  // param names exist is marketplace-specific because the filters come from
+  // hosted config. Anything unrecognised therefore has to count as "the user
+  // narrowed the search" — the failure mode of the opposite default is showing
+  // the untouched browse rows next to a result count for a search the rows
+  // don't reflect.
+  return Object.keys(queryParams).every(key => ROW_NEUTRAL_PARAMS.includes(key));
 };
 
 // ================ Slice ================ //
@@ -445,6 +452,14 @@ const searchPageSlice = createSlice({
   reducers: {
     setActiveListing: (state, action) => {
       state.activeListingId = action.payload;
+    },
+    // Row results outlive the search that fetched them: nothing else in this
+    // slice clears them, so a filtered or keyword search would otherwise render
+    // the previous browse view's rows underneath its own result count.
+    clearCategoryRows: state => {
+      state.categoryRowResultIds = {};
+      state.categoryRowsInProgress = false;
+      state.categoryRowsError = null;
     },
   },
   extraReducers: builder => {
@@ -486,7 +501,7 @@ const searchPageSlice = createSlice({
 });
 
 // Export the action creator
-export const { setActiveListing } = searchPageSlice.actions;
+export const { setActiveListing, clearCategoryRows } = searchPageSlice.actions;
 
 export default searchPageSlice.reducer;
 
@@ -575,9 +590,13 @@ export const loadData = (params, search, config) => (dispatch, getState, sdk) =>
   // of it: the grid data still backs the result count in the panel header, and
   // it's already there if the user starts filtering.
   const categoryIds = (config.categoryConfiguration?.categories || []).map(c => c.id);
-  const wantsCategoryRows = shouldShowCategoryRows(rest, page) && categoryIds.length > 0;
+  // queryParams, not `rest`: `address` and `origin` are destructured out above,
+  // and a location search that only produced an address would otherwise read as
+  // an untouched browse view.
+  const wantsCategoryRows = shouldShowCategoryRows(queryParams, page) && categoryIds.length > 0;
 
   if (!wantsCategoryRows) {
+    dispatch(clearCategoryRows());
     return dispatch(searchListingsCall);
   }
 

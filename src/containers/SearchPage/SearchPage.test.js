@@ -696,6 +696,40 @@ describe('Duck', () => {
     });
   });
 
+  it('loadData() skips the category rows and clears stale ones when the search is narrowed', () => {
+    const getState = () => ({
+      ...initialState,
+      user: { currentUser },
+      auth: { isAuthenticated: true },
+    });
+
+    const sdk = {
+      currentUser: { show: sdkFn(fakeResponse(currentUser)) },
+      listings: { query: sdkFn(fakeResponse([l1, l2])) },
+      authInfo: sdkFn({}),
+    };
+
+    // A keyword search is the case that regressed: `keywords` survives in the
+    // URL but is dropped from the page's validated filter params unless the
+    // marketplace has a keyword filter configured, so the row-visibility test
+    // has to read the raw URL. Same story for a location search (?address=...).
+    const narrowedSearches = ['?keywords=eggs', '?address=Toronto&bounds=1,1,0,0', '?page=2'];
+
+    return Promise.all(
+      narrowedSearches.map(search => {
+        const dispatch = createFakeDispatch(getState, sdk);
+        return loadData(null, search, config)(dispatch, getState, sdk).then(() => {
+          const actions = dispatchedActions(dispatch);
+          const types = actions.map(a => a.type);
+
+          expect(types).toContain('SearchPage/searchListings/pending');
+          expect(types).not.toContain('SearchPage/searchCategoryRows/pending');
+          expect(types).toContain('SearchPage/clearCategoryRows');
+        });
+      })
+    );
+  });
+
   it('loadData() for restricted viewing rights user does not load listings', () => {
     currentUser.effectivePermissionSet.attributes.read = 'permissions/deny';
 

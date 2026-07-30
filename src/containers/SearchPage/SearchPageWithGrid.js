@@ -360,9 +360,18 @@ export class SearchPageComponent extends Component {
     // Both conditions matter: the second one alone would keep rendering stale
     // rows for a moment after the user applies a filter, since the previous
     // rows stay in state until the next fetch resolves.
-    const { page: pageParam = 1 } = parse(location.search);
+    //
+    // The test runs on the raw URL params, not on validQueryParams, and has to:
+    // loadData decides whether to fetch rows from the same raw params, and
+    // validQueryParams has already dropped everything that isn't a configured
+    // filter — `keywords` among them, unless the marketplace happens to have a
+    // keyword filter in its hosted search config. Reading the filtered set here
+    // is what let a keyword search render the browse rows next to that search's
+    // own result count.
+    const rawUrlQueryParams = parse(location.search);
+    const { page: pageParam = 1 } = rawUrlQueryParams;
     const showCategoryRows =
-      shouldShowCategoryRows(validQueryParams, Number(pageParam)) &&
+      shouldShowCategoryRows(rawUrlQueryParams, Number(pageParam)) &&
       (categoryRowsInProgress || Object.keys(listingsByCategory).length > 0);
 
     // Once the rows give way to a filtered grid — clicking "See all" on a
@@ -370,7 +379,7 @@ export class SearchPageComponent extends Component {
     // back to the browse view, so offer one. The link drops every query param,
     // which is exactly the state that renders the category rows again.
     const showBackToBrowse =
-      !showCategoryRows && (Object.keys(validQueryParams).length > 0 || Number(pageParam) > 1);
+      !showCategoryRows && Object.keys(omit(rawUrlQueryParams, 'mapSearch')).length > 0;
     const backToBrowseRoute = getSearchPageResourceLocatorStringParams(
       routeConfiguration,
       location
