@@ -5,9 +5,19 @@
 
   /* Top Bar's drop shadow should always be visible */
   z-index: var(--zIndexTopbar);
-  position: relative;
+
+  /* Logo row + mobile search field stay pinned while the results scroll under
+     them, matching the landing page (PageBuilder). Needs its own background:
+     the band around the search field is transparent by default, so listings
+     would show through it once the page scrolls. */
+  position: sticky;
+  top: 0;
+  background-color: var(--colorWhite);
+  /* Separates the pinned bar from the results sliding underneath it. */
+  box-shadow: var(--boxShadow);
 
   @media (--viewportMedium) {
+    box-shadow: none;
     position: fixed;
     top: 0;
     left: 0;
@@ -201,6 +211,47 @@
   }
 }
 
+/* ================ Back to browse ================ */
+
+.backToBrowseLink {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 8px;
+
+  margin: 12px 0 0 0;
+  padding: 6px 12px 6px 10px;
+
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: var(--fontWeightMedium);
+  color: var(--colorGrey700);
+  text-decoration: none;
+
+  border: 1px solid var(--colorGrey100);
+  border-radius: 20px;
+  background-color: var(--colorWhite);
+
+  &:hover {
+    text-decoration: none;
+    border-color: var(--marketplaceColor);
+    color: var(--marketplaceColor);
+  }
+
+  &:hover .backToBrowseIcon {
+    fill: var(--marketplaceColor);
+    stroke: var(--marketplaceColor);
+  }
+
+  @media (--viewportMedium) {
+    margin: 0 0 4px 0;
+  }
+}
+
+.backToBrowseIcon {
+  flex-shrink: 0;
+}
+
 .error {
   color: var(--colorFail);
 }
@@ -240,7 +291,7 @@
 }
 
 .searchFiltersMobileList {
-  padding: 16px 0;
+  padding: 8px 0 12px 0;
 
   @media (--viewportMedium) {
     display: none;

@@ -15,9 +15,9 @@ const SCROLL_STEP_RATIO = 0.8;
 // Sub-pixel layout rounding means scrollLeft rarely hits the exact bounds.
 const SCROLL_EDGE_TOLERANCE = 8;
 
-// Cards in a row are a fixed width rather than a share of the viewport, so the
-// image sizes hint is mostly static.
-const CARD_RENDER_SIZES = ['(max-width: 767px) 60vw', '260px'].join(', ');
+// Cards are a fraction of the row width (see --cardsPerView), which on mobile
+// is roughly a quarter of the viewport and on desktop caps out at 300px.
+const CARD_RENDER_SIZES = ['(max-width: 767px) 30vw', '300px'].join(', ');
 
 const IconArrow = ({ direction }) => (
   <svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">

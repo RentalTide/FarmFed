@@ -1,10 +1,12 @@
 @import '../../../styles/customMediaQueries.css';
 
 .root {
+  --cardGap: 10px;
+
   display: flex;
   flex-direction: column;
-  gap: 32px;
-  padding: 12px 0 24px 0;
+  gap: 22px;
+  padding: 4px 0 24px 0;
 
   /* The rows are wider than the viewport by design. Every box between here and
      the scroller has to allow shrinking below its content width, or the
@@ -12,8 +14,10 @@
   min-width: 0;
 
   @media (--viewportMedium) {
-    gap: 44px;
-    padding: 16px 0 40px 0;
+    --cardGap: 16px;
+
+    gap: 30px;
+    padding: 8px 0 40px 0;
   }
 }
 
@@ -29,6 +33,23 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+}
+
+/* Faint rule between category rows. Sits in the middle of the gap because the
+   row above owns half of it and the row below the other half. The negative
+   right margin lets the line run to the screen edge on mobile, matching the
+   card row that bleeds past the page padding. */
+.row + .row {
+  border-top: 1px solid var(--colorGrey100);
+  padding-top: 22px;
+  margin-right: -24px;
+  padding-right: 24px;
+
+  @media (--viewportMedium) {
+    padding-top: 30px;
+    margin-right: 0;
+    padding-right: 0;
+  }
 }
 
 .rowHeader {
@@ -80,7 +101,7 @@
 
 .scroller {
   display: flex;
-  gap: 16px;
+  gap: var(--cardGap);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -106,7 +127,6 @@
   padding-right: 24px;
 
   @media (--viewportMedium) {
-    gap: 20px;
     margin-right: 0;
     padding-right: 0;
   }
@@ -116,19 +136,22 @@
   display: none;
 }
 
+/* Cards are sized off the row's own visible width instead of a fixed px value,
+   so the same number of them fits at every viewport: 3.5 cards plus the 3 gaps
+   between them fill the row exactly, and the half card peeking at the right
+   edge is what tells the user the row scrolls.
+   The percentage resolves against the scroller's content box (its visible
+   width), not its much wider scroll width.
+   Browse density knob: to show n cards, divide by n and multiply the gap by
+   ceil(n) - 1 (e.g. 2.5 cards -> `(100% - 2 * var(--cardGap)) / 2.5`). */
 .cardItem {
   flex: 0 0 auto;
-  width: 60vw;
-  max-width: 260px;
+  width: calc((100% - 3 * var(--cardGap)) / 3.5);
   scroll-snap-align: start;
 
-  @media (--viewportSmall) {
-    width: 240px;
-  }
-
-  @media (--viewportMedium) {
-    width: 260px;
-  }
+  /* On very wide screens 3.5-per-view would blow the cards up past the size the
+     grid variant uses; cap them and let more than 3.5 show instead. */
+  max-width: 300px;
 }
 
 .listingCard {

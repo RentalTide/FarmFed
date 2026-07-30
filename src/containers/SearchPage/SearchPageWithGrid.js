@@ -41,7 +41,16 @@ import {
 import { getListingsById } from '../../ducks/marketplaceData.duck';
 import { manageDisableScrolling, isScrollingDisabled } from '../../ducks/ui.duck';
 
-import { H3, H5, NamedRedirect, Page, VendorBulletin, AnnouncementBanner } from '../../components';
+import {
+  H3,
+  H5,
+  IconArrowHead,
+  NamedLink,
+  NamedRedirect,
+  Page,
+  VendorBulletin,
+  AnnouncementBanner,
+} from '../../components';
 import { fetchBulletins } from '../../util/api';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
@@ -356,6 +365,17 @@ export class SearchPageComponent extends Component {
       shouldShowCategoryRows(validQueryParams, Number(pageParam)) &&
       (categoryRowsInProgress || Object.keys(listingsByCategory).length > 0);
 
+    // Once the rows give way to a filtered grid — clicking "See all" on a
+    // category row, picking a filter, running a search — there is no obvious way
+    // back to the browse view, so offer one. The link drops every query param,
+    // which is exactly the state that renders the category rows again.
+    const showBackToBrowse =
+      !showCategoryRows && (Object.keys(validQueryParams).length > 0 || Number(pageParam) > 1);
+    const backToBrowseRoute = getSearchPageResourceLocatorStringParams(
+      routeConfiguration,
+      location
+    );
+
     const showCreateListingsLink = showCreateListingLinkForUser(config, currentUser);
     const sortBy = mode => {
       return sortConfig.active ? (
@@ -447,6 +467,17 @@ export class SearchPageComponent extends Component {
 
           <div id="main-content" className={css.layoutWrapperMain} role="main">
             <div className={css.searchResultContainer}>
+              {showBackToBrowse ? (
+                <NamedLink
+                  className={css.backToBrowseLink}
+                  name={backToBrowseRoute.routeName}
+                  params={backToBrowseRoute.pathParams}
+                  to={{ search: '' }}
+                >
+                  <IconArrowHead direction="left" size="small" className={css.backToBrowseIcon} />
+                  <FormattedMessage id="SearchPage.backToBrowse" />
+                </NamedLink>
+              ) : null}
               <SearchFiltersMobile
                 className={css.searchFiltersMobileList}
                 urlQueryParams={validQueryParams}

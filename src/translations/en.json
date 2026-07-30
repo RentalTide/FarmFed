@@ -1112,6 +1112,7 @@
   "SearchMapPriceLabel.price": "{priceValue}",
   "SearchMapPriceLabel.priceStartingFrom": "From {priceValue}",
   "SearchMapPriceLabel.screenreader.mapMarkerWithoutPrice": "Listing without price",
+  "SearchPage.backToBrowse": "Back to all categories",
   "SearchPage.createListing": "Post a new listing",
   "SearchPage.detailNo": "No",
   "SearchPage.detailYes": "Yes",

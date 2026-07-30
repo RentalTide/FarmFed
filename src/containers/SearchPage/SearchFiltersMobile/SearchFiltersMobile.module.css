@@ -6,15 +6,17 @@
   justify-content: space-between;
   background-color: var(--colorGrey50);
 
-  /* sticky result summary in mobile */
-  position: sticky;
-  top: 0;
+  /* Not sticky: the Topbar (logo row + search field) is what stays pinned on
+     mobile now, and a second sticky band under it would eat a third of the
+     screen before the first listing. */
+  position: relative;
   z-index: 1;
 }
 
 .searchResultSummary {
   composes: h3 from global;
-  margin-top: 6px;
+  margin-top: 0;
+  margin-bottom: 8px;
 
   display: flex;
   justify-content: space-between;

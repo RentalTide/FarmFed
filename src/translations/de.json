@@ -925,6 +925,7 @@
   "SearchMapPriceLabel.price": "{priceValue}",
   "SearchMapPriceLabel.priceStartingFrom": "Ab {priceValue}",
   "SearchMapPriceLabel.screenreader.mapMarkerWithoutPrice": "Eintrag ohne Preis",
+  "SearchPage.backToBrowse": "Zurück zu allen Kategorien",
   "SearchPage.createListing": "Neuen Eintrag erstellen",
   "SearchPage.detailNo": "Nein",
   "SearchPage.detailYes": "Ja",
